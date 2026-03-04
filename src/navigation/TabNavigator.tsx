@@ -1,6 +1,7 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
+import SearchScreen from "../screens/SearchScreen";
 
 const Tab = createBottomTabNavigator();
 
@@ -25,7 +26,7 @@ export function TabNavigator() {
           if (route.name === "Explore") {
             iconName = focused ? "search" : "search-outline";
           } else if (route.name === "WatchList") {
-            iconName = focused ? "bookmark" : "bookmark.outline";
+            iconName = focused ? "bookmark" : "bookmark-outline";
           } else {
             iconName = focused ? "settings" : "settings-outline";
           }

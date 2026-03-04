@@ -8,23 +8,31 @@ import {
   TouchableOpacity,
   Dimensions,
   Pressable,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+
+import { tmdbApi } from "../services/api";
+import { Film } from "../types/film";
 
 const { width } = Dimensions.get("window");
 const COLUMN_WIDTH = width / 2 - 20; // Dynamic calculation for column's width
 
 export default function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [films, setFilms] = useState<Film[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  // TODO Delete ->Test data (placeholders)
-  const dummyMovies = [
-    { id: "1", title: "Inception", year: "2010" },
-    { id: "2", title: "Interstellar", year: "2014" },
-    { id: "3", title: "The Dark Knight", year: "2008" },
-    { id: "4", title: "Dunkirk", year: "2017" },
-    { id: "5", title: "Oppenheimer", year: "2023" },
-  ];
+  const handleSearch = async (search: string) => {
+    setSearchQuery(search);
+    if (search.length > 2) {
+      // Perform search only if more than 2 characters
+      setLoading(true);
+      const results = await tmdbApi.searchFilms(search);
+      setFilms(results);
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -40,20 +48,26 @@ export default function SearchScreen() {
           style={styles.searchInput}
           placeholder="Search a film or TV-serie"
           value={searchQuery}
-          onChangeText={setSearchQuery}
+          onChangeText={handleSearch}
         />
       </View>
 
       {/* Results List */}
       <FlatList
-        data={dummyMovies}
+        data={films}
         keyExtractor={(item) => item.id}
         numColumns={2}
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
           <Pressable style={styles.filmCard}>
             <View style={styles.posterPlaceholder}>
-              <Ionicons name="image-outline" size={40} color="#475569" />
+              <Image
+                source={{
+                  uri: `https://image.tmdb.org/t/p/w500${item.poster_path}`,
+                }}
+                style={styles.posterImage}
+                resizeMode="cover"
+              />
             </View>
             <Text style={styles.filmTitle} numberOfLines={1}>
               {item.title}
@@ -107,6 +121,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 10,
+  },
+  posterImage: {
+    width: '100%',
+    height: '100%',
+    overflow: "hidden",
   },
   filmTitle: {
     color: "#FFF",
