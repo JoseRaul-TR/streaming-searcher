@@ -31,6 +31,7 @@ export const tmdbApi = {
             : m.first_air_date
               ? m.first_ard_date.split("-")[0]
               : "N/A",
+          overview: m.overview,
           poster_path: m.poster_path,
         }),
       );

@@ -1,5 +1,6 @@
 import React from "react";
-import { StyleSheet, View, Text, Pressable, SafeAreaView } from "react-native";
+import { StyleSheet, View, Text, Pressable } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
 type Props = {
@@ -7,8 +8,15 @@ type Props = {
 };
 
 export default function OnboardingScreen({ onFinish }: Props) {
+  const insets = useSafeAreaInsets();
+
   return (
-    <SafeAreaView style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        { paddingTop: insets.top, paddingBottom: insets.bottom },
+      ]}
+    >
       <View style={styles.content}>
         <View style={styles.iconContainer}>
           <Ionicons name="film" size={100} color="#60A5FA" />
@@ -24,7 +32,7 @@ export default function OnboardingScreen({ onFinish }: Props) {
           <Ionicons name="arrow-forward" size={20} color="#FFF" />
         </Pressable>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

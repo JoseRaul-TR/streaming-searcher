@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -6,22 +6,22 @@ import {
   Image,
   ScrollView,
   Pressable,
-  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/RootNavigator";
 
-type Props = NativeStackScreenProps<RootStackParamList, "MovieDetails">;
+type Props = NativeStackScreenProps<RootStackParamList, "DetailsModal">;
 
-export default function MovieDetailsScreen({ route, navigation }: Props) {
-  const { id, title, year, poster_path } = route.params;
+export default function DetailsModal({ route, navigation }: Props) {
+  const { id, title, year, overview, poster_path } = route.params;
+
+  const [isInfoExpanded, setInfoIsExpanded] = useState(false);
 
   return (
     <View style={styles.mainContainer}>
-      <Pressable style={styles.closeButton} onPress={() => navigation.goBack()}>
-        <Ionicons name="close" size={24} color="#FFF" />
-      </Pressable>
+      {/* Visual cue "Swipe to close" */}
+      <View style={styles.modalHandle} />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -44,6 +44,23 @@ export default function MovieDetailsScreen({ route, navigation }: Props) {
             <View style={styles.yearBadge}>
               <Text style={styles.yearText}>{year}</Text>
             </View>
+            <View style={styles.overviewSection}>
+              <Pressable onPress={() => setInfoIsExpanded(!isInfoExpanded)}>
+                <Text
+                  style={styles.overviewText}
+                  numberOfLines={isInfoExpanded ? undefined : 3}
+                >
+                  {overview || "No description available."}
+                </Text>
+
+                {/* Only display "more info" button if overview is long enough */}
+                {overview && overview.length > 100 && (
+                  <Text style={styles.readMore}>
+                    {isInfoExpanded ? "Show less" : "Read more"}
+                  </Text>
+                )}
+              </Pressable>
+            </View>
           </View>
         </View>
 
@@ -52,7 +69,7 @@ export default function MovieDetailsScreen({ route, navigation }: Props) {
 
         {/* Streaming Providers */}
         <View style={styles.providersSection}>
-          <Text style={styles.providersSectionTitle}>Streaming Platforms</Text>
+          <Text style={styles.providersSectionTitle}>Where can I watch it?</Text>
           <View>
             <Ionicons name="tv-outline" size={24} color="#475569" />
             <Text style={styles.placeholderText}>Loading providers...</Text>
@@ -68,29 +85,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#0F172A", // Azul oscuro profundo
   },
-  closeButton: {
-    position: "absolute",
-    top: Platform.OS === "ios" ? 50 : 20, // Ajuste para el notch de iOS
-    left: 20,
-    zIndex: 99,
-    backgroundColor: "rgba(255, 255, 255, 0.15)", // Efecto cristal
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
+  modalHandle: {
+    width: 40,
+    height: 5,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    borderRadius: 3,
+    alignSelf: "center",
+    marginTop: 10,
   },
   scrollContent: {
-    paddingTop: Platform.OS === "ios" ? 100 : 70, // Espacio para no chocar con el botón
     paddingHorizontal: 20,
+    paddingTop: 15,
     paddingBottom: 40,
   },
   header: {
     flexDirection: "row",
     alignItems: "flex-start",
-    marginBottom: 25,
+    marginBottom: 15,
   },
   posterContainer: {
     shadowColor: "#000",
@@ -112,7 +123,7 @@ const styles = StyleSheet.create({
   },
   title: {
     color: "#FFFFFF",
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "800",
     lineHeight: 28,
     marginBottom: 8,
@@ -126,8 +137,25 @@ const styles = StyleSheet.create({
   },
   yearText: {
     color: "#94A3B8",
-    fontSize: 14,
+    fontSize: 10,
     fontWeight: "600",
+  },
+  overviewSection: {
+    marginTop: 12,
+    flex: 1,
+  },
+  readMore: {
+    color: "#60A5FA",
+    fontWeight: "500",
+    marginTop: 4,
+    paddingVertical: 2,
+  },
+  overviewText: {
+    color: "#94A3B8",
+    fontSize: 14,
+    fontWeight: "400",
+    lineHeight: 15,
+    textAlign: "left",
   },
   separator: {
     height: 1,
@@ -135,20 +163,21 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   providersSection: {
-    marginTop: 20,
+    marginTop: 15,
   },
   providersSectionTitle: {
     color: "#F8FAFC",
     fontSize: 18,
     fontWeight: "700",
     marginBottom: 15,
+    textAlign: "center",
   },
   providersPlaceholder: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#1E293B",
-    padding: 20,
-    borderRadius: 16,
+    padding: 15,
+    borderRadius: 12,
     borderStyle: "dashed",
     borderWidth: 1,
     borderColor: "#334155",

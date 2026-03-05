@@ -69,10 +69,11 @@ export default function SearchScreen() {
           <Pressable
             style={styles.movieCard}
             onPress={() =>
-              navigation.navigate("MovieDetails", {
+              navigation.navigate("DetailsModal", {
                 id: item.id,
                 title: item.title,
                 year: item.year,
+                overview: item.overview,
                 poster_path: item.poster_path
               })
             }

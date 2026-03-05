@@ -3,16 +3,17 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import { TabNavigator } from "./TabNavigator";
 
-import MovieDetailsScreen from "../screens/MovieDetailsScreen";
+import DetailsModal from "../screens/DetailsModal";
 import OnboardingScreen from "../screens/OnboardingScreen";
 
 export type RootStackParamList = {
   Onboarding: undefined;
   MainTabs: undefined;
-  MovieDetails: {
+  DetailsModal: {
     id: number;
     title: string;
     year: string;
+    overview: string;
     poster_path?: string | null | undefined;
   };
 };
@@ -41,15 +42,13 @@ export default function RootNavigator() {
       <Stack.Group
         screenOptions={{
           presentation: "modal",
-          headerShown: true,
-          headerStyle: { backgroundColor: "#1E293B" },
-          headerTintColor: "#FFF",
+          headerShown: false,
+          gestureEnabled: true,
         }}
       >
         <Stack.Screen
-          name="MovieDetails"
-          component={MovieDetailsScreen}
-          options={({ route }) => ({ title: route.params.title })}
+          name="DetailsModal"
+          component={DetailsModal}
         />
       </Stack.Group>
     </Stack.Navigator>

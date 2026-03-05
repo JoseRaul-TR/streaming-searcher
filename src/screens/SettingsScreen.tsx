@@ -1,5 +1,5 @@
 import { Text } from "react-native";
 
 export default function SettingsScreen() {
-  return <Text>Settings Comming Soon</Text>;
+  return <Text>Settings Coming Soon</Text>;
 }

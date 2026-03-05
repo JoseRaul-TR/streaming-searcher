@@ -26,9 +26,9 @@ export function TabNavigator() {
         tabBarIcon: ({ focused, color, size }) => {
           let iconName: keyof typeof Ionicons.glyphMap;
 
-          if (route.name === "Explore") {
+          if (route.name === "Search") {
             iconName = focused ? "search" : "search-outline";
-          } else if (route.name === "WatchList") {
+          } else if (route.name === "Watchlist") {
             iconName = focused ? "bookmark" : "bookmark-outline";
           } else {
             iconName = focused ? "settings" : "settings-outline";
@@ -39,9 +39,9 @@ export function TabNavigator() {
       })}
     >
       <Tab.Screen
-        name="Explore"
+        name="Search"
         component={SearchScreen}
-        options={{ title: "Explore" }}
+        options={{ title: "Search" }}
       />
       <Tab.Screen
         name="Watchlist"
