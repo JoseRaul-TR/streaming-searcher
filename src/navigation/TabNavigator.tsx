@@ -1,7 +1,10 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
+
 import SearchScreen from "../screens/SearchScreen";
+import WatchlistScreen from "../screens/WatchListScreen";
+import SettingsScreen from "../screens/SettingsScreen";
 
 const Tab = createBottomTabNavigator();
 
@@ -9,7 +12,7 @@ export function TabNavigator() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        headerStyle: { background: "#0F172A" },
+        headerStyle: { backgroundColor: "#0F172A" },
         headerTitleStyle: { color: "#FFF", fontWeight: "bold" },
         tabBarStyle: {
           backgroundColor: "#0F172A",

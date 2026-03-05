@@ -1,41 +1,57 @@
-import React from "react";
+import React, { useState } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+
+import { TabNavigator } from "./TabNavigator";
+
+import MovieDetailsScreen from "../screens/MovieDetailsScreen";
+import OnboardingScreen from "../screens/OnboardingScreen";
 
 export type RootStackParamList = {
   Onboarding: undefined;
   MainTabs: undefined;
-  MovieDetails: { id: number; title: string };
+  MovieDetails: {
+    id: number;
+    title: string;
+    year: string;
+    poster_path?: string | null | undefined;
+  };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
-const Tab = createBottomTabNavigator();
 
 export default function RootNavigator() {
-  const isAppFirstTimeOpened = true; // Later will be storage with AsyncStorage
+  const [showOnboarding, setShowOnboarding] = useState(true);
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {isAppFirstTimeOpened && (
-        <Stack.Screen name="Onboarding" component={OnboardingPlaceholder} />
+      {showOnboarding ? (
+        <Stack.Screen name="Onboarding">
+          {(props) => (
+            <OnboardingScreen
+              {...props}
+              onFinish={() => setShowOnboarding(false)}
+            />
+          )}
+        </Stack.Screen>
+      ) : (
+        <Stack.Screen name="MainTabs" component={TabNavigator} />
       )}
-      <Stack.Screen name="MainTabs" component={TabNavigator} />
 
       {/* Modal definition */}
-      <Stack.Group screenOptions={{ presentation: "fullScreenModal" }}>
-        <Stack.Screen name="MovieDetails" component={DetailsPlaceholder} />
+      <Stack.Group
+        screenOptions={{
+          presentation: "modal",
+          headerShown: true,
+          headerStyle: { backgroundColor: "#1E293B" },
+          headerTintColor: "#FFF",
+        }}
+      >
+        <Stack.Screen
+          name="MovieDetails"
+          component={MovieDetailsScreen}
+          options={({ route }) => ({ title: route.params.title })}
+        />
       </Stack.Group>
     </Stack.Navigator>
   );
-}
-
-// TODO - Fast placeholder to avoid errors at the moment.
-function OnboardingPlaceholder() {
-  return null;
-}
-function TabNavigator() {
-  return null;
-}
-function DetailsPlaceholder() {
-  return null;
 }

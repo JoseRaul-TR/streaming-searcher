@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useNavigation } from "@react-navigation/native";
+import { RootStackParamList } from "../navigation/RootNavigator";
 import {
   StyleSheet,
   View,
@@ -13,23 +15,27 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 
 import { tmdbApi } from "../services/api";
-import { Film } from "../types/film";
+import { Movie } from "../types/movie";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 const { width } = Dimensions.get("window");
 const COLUMN_WIDTH = width / 2 - 20; // Dynamic calculation for column's width
 
 export default function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [films, setFilms] = useState<Film[]>([]);
+  const [movies, setMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const handleSearch = async (search: string) => {
     setSearchQuery(search);
     if (search.length > 2) {
       // Perform search only if more than 2 characters
       setLoading(true);
-      const results = await tmdbApi.searchFilms(search);
-      setFilms(results);
+      const results = await tmdbApi.searchMovies(search);
+      setMovies(results);
       setLoading(false);
     }
   };
@@ -46,7 +52,8 @@ export default function SearchScreen() {
         />
         <TextInput
           style={styles.searchInput}
-          placeholder="Search a film or TV-serie"
+          placeholder="Search for a movie or a TV-serie"
+          placeholderTextColor="#94A3B8"
           value={searchQuery}
           onChangeText={handleSearch}
         />
@@ -54,12 +61,22 @@ export default function SearchScreen() {
 
       {/* Results List */}
       <FlatList
-        data={films}
-        keyExtractor={(item) => item.id}
+        data={movies}
+        keyExtractor={(item) => item.id.toString()}
         numColumns={2}
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
-          <Pressable style={styles.filmCard}>
+          <Pressable
+            style={styles.movieCard}
+            onPress={() =>
+              navigation.navigate("MovieDetails", {
+                id: item.id,
+                title: item.title,
+                year: item.year,
+                poster_path: item.poster_path
+              })
+            }
+          >
             <View style={styles.posterPlaceholder}>
               <Image
                 source={{
@@ -69,10 +86,10 @@ export default function SearchScreen() {
                 resizeMode="cover"
               />
             </View>
-            <Text style={styles.filmTitle} numberOfLines={1}>
+            <Text style={styles.movieTitle} numberOfLines={1}>
               {item.title}
             </Text>
-            <Text style={styles.filmYear}>{item.year}</Text>
+            <Text style={styles.movieYear}>{item.year}</Text>
           </Pressable>
         )}
       />
@@ -105,7 +122,7 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: 10,
   },
-  filmCard: {
+  movieCard: {
     width: COLUMN_WIDTH,
     margin: 10,
     backgroundColor: "#1E293B",
@@ -121,19 +138,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 10,
-  },
-  posterImage: {
-    width: '100%',
-    height: '100%',
     overflow: "hidden",
   },
-  filmTitle: {
+  posterImage: {
+    width: "100%",
+    height: "100%",
+    overflow: "hidden",
+  },
+  movieTitle: {
     color: "#FFF",
     fontWeight: "bold",
     fontSize: 14,
     textAlign: "center",
   },
-  filmYear: {
+  movieYear: {
     color: "#94A3B8",
     fontSize: 12,
     marginTop: 4,
