@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+
 import { useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import {
@@ -7,15 +9,15 @@ import {
   Text,
   TextInput,
   FlatList,
-  TouchableOpacity,
   Dimensions,
   Pressable,
   Image,
+  ActivityIndicator,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, Feather } from "@expo/vector-icons";
 
 import { tmdbApi } from "../services/api";
-import { Movie } from "../types/movie";
+import { SearchedItem } from "../types/searchedItem";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 const { width } = Dimensions.get("window");
@@ -23,22 +25,21 @@ const COLUMN_WIDTH = width / 2 - 20; // Dynamic calculation for column's width
 
 export default function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [movies, setMovies] = useState<Movie[]>([]);
-  const [loading, setLoading] = useState(false);
 
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
-  const handleSearch = async (search: string) => {
-    setSearchQuery(search);
-    if (search.length > 2) {
-      // Perform search only if more than 2 characters
-      setLoading(true);
-      const results = await tmdbApi.searchMovies(search);
-      setMovies(results);
-      setLoading(false);
-    }
-  };
+  // TanStack Query manages loading, error and data automatically
+  const {
+    data: results = [],
+    isLoading,
+    isFetching,
+  } = useQuery({
+    queryKey: ["search", searchQuery],
+    queryFn: () => tmdbApi.searchedItem(searchQuery),
+    enabled: searchQuery.length > 2, // Perform search if more than 2 characters in TextInput
+    staleTime: 1000 * 60 * 5, // Cache every 5 mins
+  });
 
   return (
     <View style={styles.container}>
@@ -55,37 +56,64 @@ export default function SearchScreen() {
           placeholder="Search for a movie or a TV-serie"
           placeholderTextColor="#94A3B8"
           value={searchQuery}
-          onChangeText={handleSearch}
+          onChangeText={setSearchQuery}
         />
+        {(isLoading || isFetching) && (
+          <ActivityIndicator color="#60A5FA" style={{ marginLeft: 10 }} />
+        )}
       </View>
 
       {/* Results List */}
       <FlatList
-        data={movies}
-        keyExtractor={(item) => item.id.toString()}
+        data={results}
+        keyExtractor={(item) => `${item.media_type}-${item.id}`} // To avoid collisions between Movies/TV ID
         numColumns={2}
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
           <Pressable
-            style={styles.movieCard}
+            style={styles.card}
             onPress={() =>
               navigation.navigate("DetailsModal", {
-                id: item.id,
-                title: item.title,
-                year: item.year,
-                overview: item.overview,
-                poster_path: item.poster_path
+                ...item,
               })
             }
           >
-            <View style={styles.posterPlaceholder}>
-              <Image
-                source={{
-                  uri: `https://image.tmdb.org/t/p/w500${item.poster_path}`,
-                }}
-                style={styles.posterImage}
-                resizeMode="cover"
-              />
+            <View style={styles.posterContainer}>
+              {item.poster_path ? (
+                <Image
+                  source={{
+                    uri: `https://image.tmdb.org/t/p/w500${item.poster_path}`,
+                  }}
+                  style={styles.posterImage}
+                  resizeMode="cover"
+                />
+              ) : (
+                /* Show placeholders depending of media_type if no poster_path */
+                <View style={styles.posterPlaceholderInside}>
+                  {item.media_type === "movie" && (
+                    <Ionicons name="film-outline" size={50} color="#475569" />
+                  )}
+                  {item.media_type === "tv" && (
+                    <Feather name="tv" size={50} color="#475569" />
+                  )}
+                  {item.media_type === "person" && (
+                    <Ionicons name="person-outline" size={50} color="#475569" />
+                  )}
+                </View>
+              )}
+
+              {/* Badge media type (Movie or TV-serie) */}
+              <View style={styles.typeBadge}>
+                {item.media_type === "movie" && (
+                  <Ionicons name="film" size={14} color="#FFF" />
+                )}
+                {item.media_type === "tv" && (
+                  <Feather name="tv" size={14} color="#FFF" />
+                )}
+                {item.media_type === "person" && (
+                  <Ionicons name="person-circle" size={14} color="#FFF" />
+                )}
+              </View>
             </View>
             <Text style={styles.movieTitle} numberOfLines={1}>
               {item.title}
@@ -123,7 +151,7 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: 10,
   },
-  movieCard: {
+  card: {
     width: COLUMN_WIDTH,
     margin: 10,
     backgroundColor: "#1E293B",
@@ -131,20 +159,37 @@ const styles = StyleSheet.create({
     padding: 10,
     alignItems: "center",
   },
-  posterPlaceholder: {
+  posterContainer: {
     width: "100%",
     height: 180,
     backgroundColor: "#334155",
     borderRadius: 8,
+    overflow: "hidden",
+    position: "relative",
+    marginBottom: 10,
+  },
+  posterPlaceholderInside: {
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 10,
-    overflow: "hidden",
+    backgroundColor: "#1E293B",
+  },
+  typeBadge: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    backgroundColor: "rgba(15, 23, 42, 0.7)",
+    padding: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
   },
   posterImage: {
     width: "100%",
     height: "100%",
-    overflow: "hidden",
   },
   movieTitle: {
     color: "#FFF",

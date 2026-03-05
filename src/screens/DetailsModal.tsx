@@ -7,14 +7,14 @@ import {
   ScrollView,
   Pressable,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, Feather } from "@expo/vector-icons";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/RootNavigator";
 
 type Props = NativeStackScreenProps<RootStackParamList, "DetailsModal">;
 
 export default function DetailsModal({ route, navigation }: Props) {
-  const { id, title, year, overview, poster_path } = route.params;
+  const { id, title, year, overview, poster_path, media_type } = route.params;
 
   const [isInfoExpanded, setInfoIsExpanded] = useState(false);
 
@@ -30,11 +30,42 @@ export default function DetailsModal({ route, navigation }: Props) {
         {/* Header with Info and Poster */}
         <View style={styles.header}>
           <View style={styles.posterContainer}>
-            <Image
-              source={{ uri: `https://image.tmdb.org/t/p/w500${poster_path}` }}
-              style={styles.poster}
-              resizeMode="cover"
-            />
+            {poster_path ? (
+              <Image
+                source={{
+                  uri: `https://image.tmdb.org/t/p/w500${poster_path}`,
+                }}
+                style={styles.poster}
+                resizeMode="cover"
+              />
+            ) : (
+              /* Combined poster size with plageholder background */
+              <View style={[styles.poster, styles.placeholderInside]}>
+                <Ionicons
+                  name={
+                    media_type === "person" ? "person-outline" : "film-outline"
+                  }
+                  size={40}
+                  color="#475569"
+                />
+                <Text style={styles.placeholderInsideText}>
+                  {media_type === "person" ? "No Photo" : "No Poster"}
+                </Text>
+              </View>
+            )}
+
+            {/* Badge de tipo sobre el póster del Modal */}
+            <View style={styles.typeBadge}>
+              {media_type === "movie" && (
+                <Ionicons name="film" size={16} color="#FFF" />
+              )}
+              {media_type === "tv" && (
+                <Feather name="tv" size={16} color="#FFF" />
+              )}
+              {media_type === "person" && (
+                <Ionicons name="person-circle" size={16} color="#FFF" />
+              )}
+            </View>
           </View>
 
           <View style={styles.infoTextContainer}>
@@ -54,7 +85,7 @@ export default function DetailsModal({ route, navigation }: Props) {
                 </Text>
 
                 {/* Only display "more info" button if overview is long enough */}
-                {overview && overview.length > 100 && (
+                {overview && overview.length > 70 && (
                   <Text style={styles.readMore}>
                     {isInfoExpanded ? "Show less" : "Read more"}
                   </Text>
@@ -69,7 +100,9 @@ export default function DetailsModal({ route, navigation }: Props) {
 
         {/* Streaming Providers */}
         <View style={styles.providersSection}>
-          <Text style={styles.providersSectionTitle}>Where can I watch it?</Text>
+          <Text style={styles.providersSectionTitle}>
+            Where can I watch it?
+          </Text>
           <View>
             <Ionicons name="tv-outline" size={24} color="#475569" />
             <Text style={styles.placeholderText}>Loading providers...</Text>
@@ -104,6 +137,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   posterContainer: {
+    position: "relative",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -116,6 +150,33 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: "#1E293B",
   },
+  typeBadge: {
+    position: "absolute",
+    top: 6,
+    left: 6,
+    backgroundColor: "rgba(15, 23, 42, 0.8)",
+    padding: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.15)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 20,
+  },
+  placeholderInside: {
+    backgroundColor: "#1E293B",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 12,
+  },
+  placeholderInsideText: {
+    color: "#475569",
+    fontSize: 12,
+    marginTop: 10,
+    fontWeight: "bold",
+    textAlign: "center",
+    paddingHorizontal: 5,
+  },
   infoTextContainer: {
     flex: 1,
     marginLeft: 20,
@@ -123,38 +184,37 @@ const styles = StyleSheet.create({
   },
   title: {
     color: "#FFFFFF",
-    fontSize: 20,
+    fontSize: 15,
     fontWeight: "800",
-    lineHeight: 28,
+    lineHeight: 20,
     marginBottom: 8,
   },
   yearBadge: {
     backgroundColor: "#1E293B",
     alignSelf: "flex-start",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    padding: 5,
     borderRadius: 6,
   },
   yearText: {
     color: "#94A3B8",
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: "600",
   },
   overviewSection: {
-    marginTop: 12,
+    paddingTop: 3,
     flex: 1,
   },
   readMore: {
     color: "#60A5FA",
     fontWeight: "500",
-    marginTop: 4,
+    marginTop: 3,
     paddingVertical: 2,
   },
   overviewText: {
     color: "#94A3B8",
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "400",
-    lineHeight: 15,
+    lineHeight: 12,
     textAlign: "left",
   },
   separator: {

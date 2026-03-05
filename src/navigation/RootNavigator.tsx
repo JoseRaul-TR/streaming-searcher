@@ -14,7 +14,8 @@ export type RootStackParamList = {
     title: string;
     year: string;
     overview: string;
-    poster_path?: string | null | undefined;
+    poster_path?: string | null;
+    media_type: 'movie' | 'tv' | 'person';
   };
 };
 
