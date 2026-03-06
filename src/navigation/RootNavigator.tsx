@@ -12,8 +12,8 @@ export type RootStackParamList = {
   DetailsModal: {
     id: number;
     title: string;
-    year: string;
-    overview: string;
+    year: string;     // O string | undefined
+    overview: string; // O string | undefined
     poster_path?: string | null;
     media_type: 'movie' | 'tv' | 'person';
   };
