@@ -1,14 +1,12 @@
 import React from "react";
+import { useRouter } from "expo-router";
 import { StyleSheet, View, Text, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
-type Props = {
-  onFinish: () => void;
-};
-
-export default function OnboardingScreen({ onFinish }: Props) {
+export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
 
   return (
     <View
@@ -27,7 +25,10 @@ export default function OnboardingScreen({ onFinish }: Props) {
           Find where to watch movies and TV-series
         </Text>
 
-        <Pressable style={styles.button} onPress={onFinish}>
+        <Pressable
+          style={styles.button}
+          onPress={() => router.replace("/(tabs)/explore")}
+        >
           <Text style={styles.buttonText}>Let's start</Text>
           <Ionicons name="arrow-forward" size={20} color="#FFF" />
         </Pressable>

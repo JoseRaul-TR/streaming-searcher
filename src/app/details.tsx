@@ -7,14 +7,19 @@ import {
   ScrollView,
   Pressable,
 } from "react-native";
+import { useLocalSearchParams } from "expo-router";
 import { Ionicons, Feather } from "@expo/vector-icons";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../navigation/RootNavigator";
 
-type Props = NativeStackScreenProps<RootStackParamList, "DetailsModal">;
 
-export default function DetailsModal({ route, navigation }: Props) {
-  const { id, title, year, overview, poster_path, media_type } = route.params;
+export default function DetailsModal() {
+  const { id, title, year, overview, poster_path, media_type } = useLocalSearchParams<{
+    id: string;
+    title: string;
+    year: string;
+    overview: string,
+    poster_path?: string;
+    media_type: "movie" | "tv" | "person";
+  }>();
 
   const [isInfoExpanded, setInfoIsExpanded] = useState(false);
 

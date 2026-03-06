@@ -3,6 +3,11 @@
   "compilerOptions": {
     /* Strict Inheritance */
     "strict": true,
+    
+    /* Path Aliases */
+    "paths": {
+      "@/*": ["./src/*"]
+    },
 
     /* Code Quality & Security */
     "noUnusedLocals": true,
@@ -12,11 +17,27 @@
 
     /* Type Rigor */
     "noImplicitOverride": true,
+    // "exactOptionalPropertyTypes": true, // Nota: Puede dar problemas con algunas librerías de RN, actívalo solo si es necesario.
     "noPropertyAccessFromIndexSignature": true,
-    "exactOptionalPropertyTypes": true,
 
     /* Robustness in the environment */
     "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true
-  }
+    "skipLibCheck": true,
+
+    /* Expo Router Integration */
+    "moduleResolution": "bundler",
+    "plugins": [
+      {
+        "name": "expo-router"
+      }
+    ]
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts",
+    "src/app/**/*.ts",
+    "src/app/**/*.tsx"
+  ]
 }

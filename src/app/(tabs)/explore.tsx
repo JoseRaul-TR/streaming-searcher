@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigation } from "@react-navigation/native";
 import {
   StyleSheet,
   View,
@@ -13,19 +12,16 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Ionicons, Feather } from "@expo/vector-icons";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../navigation/RootNavigator";
-import { tmdbApi } from "../services/api";
-import { SearchedItem } from "../types/searchedItem";
+import { useRouter } from "expo-router";
+import { SearchedItem } from "../../types/searchedItem";
+import { tmdbApi } from "../../services/api";
 
 const { width } = Dimensions.get("window");
 const COLUMN_WIDTH = (width - 40) / 2; // Dynamic calculation for column's width
 
 export default function SearchScreen() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-
-  const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   // TanStack Query manages loading, error and data automatically
   const {
@@ -103,13 +99,16 @@ export default function SearchScreen() {
           <Pressable
             style={styles.card}
             onPress={() =>
-              navigation.navigate("DetailsModal", {
-                id: item.id,
-                title: item.title,
-                year: item.year ?? "N/A",
-                overview: item.overview ?? "",
-                poster_path: item.poster_path,
-                media_type: item.media_type,
+              router.push({
+                pathname: "/details",
+                params: {
+                  id: item.id,
+                  title: item.title,
+                  year: item.year ?? "N/A",
+                  overview: item.overview ?? "",
+                  poster_path: item.poster_path ?? "",
+                  media_type: item.media_type,
+                },
               })
             }
           >
