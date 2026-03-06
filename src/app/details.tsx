@@ -6,22 +6,56 @@ import {
   Image,
   ScrollView,
   Pressable,
+  ActivityIndicator,
+  Linking,
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { Ionicons, Feather } from "@expo/vector-icons";
+import { useQuery } from "@tanstack/react-query";
 
+import { tmdbApi } from "@/services/api";
+import { useUserStore } from "@/store/useUserStore";
+import { Provider } from "@/types/providers";
 
 export default function DetailsModal() {
-  const { id, title, year, overview, poster_path, media_type } = useLocalSearchParams<{
-    id: string;
-    title: string;
-    year: string;
-    overview: string,
-    poster_path?: string;
-    media_type: "movie" | "tv" | "person";
-  }>();
+  const { id, title, year, overview, poster_path, media_type } =
+    useLocalSearchParams<{
+      id: string;
+      title: string;
+      year: string;
+      overview: string;
+      poster_path?: string;
+      media_type: "movie" | "tv" | "person";
+    }>();
 
   const [isInfoExpanded, setInfoIsExpanded] = useState(false);
+  const { country } = useUserStore();
+
+  // Fetch from TMDB Providers API
+  const { data: providers, isLoading } = useQuery({
+    queryKey: ["providers", id, media_type, country],
+    queryFn: () => tmdbApi.getWatchProviders(id, media_type, country),
+    enabled: media_type !== "person", // Never fetch if media_type is "person"
+  });
+
+  // Helper function to render providers logos
+  const renderProviderIcons = (list: Provider[]) => (
+    <View style={styles.providerIconsGrid}>
+      {list.map((provider) => (
+        <View key={provider.provider_id} style={styles.providerItem}>
+          <Image
+            source={{
+              uri: `https://image.tmdb.org/t/p/original${provider.logo_path}`,
+            }}
+            style={styles.providerLogo}
+          />
+          <Text style={styles.providerName} numberOfLines={1}>
+            {provider.provider_name}
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
 
   return (
     <View style={styles.mainContainer}>
@@ -106,12 +140,72 @@ export default function DetailsModal() {
         {/* Streaming Providers */}
         <View style={styles.providersSection}>
           <Text style={styles.providersSectionTitle}>
-            Where can I watch it?
+            Where can you watch it?
           </Text>
-          <View>
-            <Ionicons name="tv-outline" size={24} color="#475569" />
-            <Text style={styles.placeholderText}>Loading providers...</Text>
-          </View>
+
+          {media_type === "person" ? (
+            <Text style={styles.noProvidersText}>
+              Streaming info only available for movies and TV shows.
+            </Text>
+          ) : isLoading ? (
+            <ActivityIndicator color="#60A5FA" style={{ marginTop: 20 }} />
+          ) : !providers ||
+            (!providers.free?.length &&
+              !providers.flatrate?.length &&
+              !providers.rent?.length &&
+              !providers.buy?.length) ? (
+            <View style={styles.emptyProviders}>
+              <Ionicons name="alert-circle-outline" size={24} color="#475569" />
+              <Text style={styles.noProvidersText}>
+                Not available in {country} currently.
+              </Text>
+            </View>
+          ) : (
+            <View>
+              {/* CATEGORY – Free */}
+              {providers.free && providers.free.length > 0 && (
+                <View style={styles.categoryRow}>
+                  <Text style={styles.categoryTitle}>Free</Text>
+                  {renderProviderIcons(providers.free)}
+                </View>
+              )}
+
+              {/* CATEGORY – Subscription (Flatrate) */}
+              {providers.flatrate && providers.flatrate.length > 0 && (
+                <View style={styles.categoryRow}>
+                  <Text style={styles.categoryTitle}>Stream</Text>
+                  {renderProviderIcons(providers.flatrate)}
+                </View>
+              )}
+
+              {/* CATEGORY – Rent */}
+              {providers.rent && providers.rent.length > 0 && (
+                <View style={styles.categoryRow}>
+                  <Text style={styles.categoryTitle}>Rent</Text>
+                  {renderProviderIcons(providers.rent)}
+                </View>
+              )}
+
+              {/* CATEGORY – Buy */}
+              {providers.buy && providers.buy.length > 0 && (
+                <View style={styles.categoryRow}>
+                  <Text style={styles.categoryTitle}>Buy</Text>
+                  {renderProviderIcons(providers.buy)}
+                </View>
+              )}
+
+              {/* JustWatch Badge */}
+              {providers.link && (
+                <Pressable
+                  style={styles.justWatchButton}
+                  onPress={() => Linking.openURL(providers.link)}
+                >
+                  <Text style={styles.justWatchText}>Data provided by</Text>
+                  <Text style={styles.justWatchBrand}>JustWatch</Text>
+                </Pressable>
+              )}
+            </View>
+          )}
         </View>
       </ScrollView>
     </View>
@@ -228,28 +322,74 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   providersSection: {
-    marginTop: 15,
+    marginTop: 10,
   },
   providersSectionTitle: {
     color: "#F8FAFC",
     fontSize: 18,
     fontWeight: "700",
-    marginBottom: 15,
+    marginBottom: 20,
     textAlign: "center",
   },
-  providersPlaceholder: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#1E293B",
-    padding: 15,
-    borderRadius: 12,
-    borderStyle: "dashed",
-    borderWidth: 1,
-    borderColor: "#334155",
+  categoryRow: {
+    marginBottom: 20,
   },
-  placeholderText: {
+  categoryTitle: {
     color: "#64748B",
-    marginLeft: 10,
-    fontSize: 15,
+    fontSize: 12,
+    fontWeight: "bold",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginBottom: 10,
+  },
+  providerIconsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 15,
+  },
+  providerItem: {
+    alignItems: "center",
+    width: 60,
+  },
+  providerLogo: {
+    width: 50,
+    height: 50,
+    borderRadius: 12,
+    backgroundColor: "#1E293B",
+  },
+  providerName: {
+    color: "#94A3B8",
+    fontSize: 10,
+    marginTop: 5,
+    textAlign: "center",
+  },
+  noProvidersText: {
+    color: "#64748B",
+    textAlign: "center",
+    marginTop: 10,
+    fontSize: 14,
+  },
+  emptyProviders: {
+    alignItems: "center",
+    padding: 20,
+  },
+  justWatchButton: {
+    marginTop: 20,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.03)",
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  justWatchText: {
+    color: "#475569",
+    fontSize: 11,
+  },
+  justWatchBrand: {
+    color: "#F8FAFC",
+    fontSize: 11,
+    fontWeight: "bold",
+    marginLeft: 4,
   },
 });

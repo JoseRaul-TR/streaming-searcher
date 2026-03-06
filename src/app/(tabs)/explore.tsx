@@ -13,8 +13,8 @@ import {
 } from "react-native";
 import { Ionicons, Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { SearchedItem } from "../../types/searchedItem";
 import { tmdbApi } from "../../services/api";
+import { SearchedItem } from "@/types/searchedItem";
 
 const { width } = Dimensions.get("window");
 const COLUMN_WIDTH = (width - 40) / 2; // Dynamic calculation for column's width
@@ -30,7 +30,7 @@ export default function SearchScreen() {
     isFetching,
   } = useQuery<SearchedItem[]>({
     queryKey: ["search", searchQuery],
-    queryFn: () => tmdbApi.searchedItem(searchQuery),
+    queryFn: () => tmdbApi.searchItem(searchQuery),
     enabled: searchQuery.length > 2, // Perform search if more than 2 characters in TextInput
     staleTime: 1000 * 60 * 5, // Cache search results for 5 mins. If user perform same search twice or more it saves unnecessary API fetches
   });
