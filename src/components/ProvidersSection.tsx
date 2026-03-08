@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
   logo: {
     width: 50,
     height: 50,
-    borderRadius: 12,
+    borderRadius: 50,
     backgroundColor: "#1E293B",
   },
   name: {

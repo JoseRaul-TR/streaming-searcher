@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#1E293B",
     paddingVertical: 16,
     paddingHorizontal: 18,
-    borderRadius: 14,
+    borderRadius: 52,
     overflow: "hidden",
   },
   rowLeft: {
