@@ -13,14 +13,14 @@ export default function TabsLayout() {
           height: 60,
           paddingBottom: 10,
         },
-        tabBarActiveTintColor: "#960000",
+        tabBarActiveTintColor: "#60A5FA",
         tabBarInactiveTintColor: "#94A3B8",
       }}
     >
       <Tabs.Screen
-        name="explore"
+        name="index"
         options={{
-          title: "Explore",
+          title: "Search",
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons
               name={focused ? "search" : "search-outline"}
@@ -30,7 +30,7 @@ export default function TabsLayout() {
           ),
         }}
       />
-       <Tabs.Screen
+      <Tabs.Screen
         name="watchlist"
         options={{
           title: "Watchlist",
@@ -43,7 +43,7 @@ export default function TabsLayout() {
           ),
         }}
       />
-       <Tabs.Screen
+      <Tabs.Screen
         name="settings"
         options={{
           title: "Settings",

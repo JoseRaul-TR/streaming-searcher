@@ -9,15 +9,19 @@ import {
   ActivityIndicator,
   Linking,
 } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons, Feather } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { tmdbApi } from "@/services/api";
 import { useUserStore } from "@/store/useUserStore";
-import { Provider } from "@/types/providers";
+import { ProviderSection } from "@/components/ProvidersSection";
 
-export default function DetailsModal() {
+export default function DetailsScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+
   const { id, title, year, overview, poster_path, media_type } =
     useLocalSearchParams<{
       id: string;
@@ -28,47 +32,45 @@ export default function DetailsModal() {
       media_type: "movie" | "tv" | "person";
     }>();
 
-  const [isInfoExpanded, setInfoIsExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const { country } = useUserStore();
 
-  // Fetch from TMDB Providers API
   const { data: providers, isLoading } = useQuery({
     queryKey: ["providers", id, media_type, country],
     queryFn: () => tmdbApi.getWatchProviders(id, media_type, country),
-    enabled: media_type !== "person", // Never fetch if media_type is "person"
+    enabled: media_type !== "person",
   });
 
-  // Helper function to render providers logos
-  const renderProviderIcons = (list: Provider[]) => (
-    <View style={styles.providerIconsGrid}>
-      {list.map((provider) => (
-        <View key={provider.provider_id} style={styles.providerItem}>
-          <Image
-            source={{
-              uri: `https://image.tmdb.org/t/p/original${provider.logo_path}`,
-            }}
-            style={styles.providerLogo}
-          />
-          <Text style={styles.providerName} numberOfLines={1}>
-            {provider.provider_name}
-          </Text>
-        </View>
-      ))}
-    </View>
-  );
+  const hasProviders =
+    providers?.free?.length ||
+    providers?.flatrate?.length ||
+    providers?.rent?.length ||
+    providers?.buy?.length;
 
   return (
-    <View style={styles.mainContainer}>
-      {/* Visual cue "Swipe to close" */}
-      <View style={styles.modalHandle} />
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Header bar with close button */}
+      <View style={styles.topBar}>
+        <Pressable
+          style={styles.closeButton}
+          onPress={() => router.back()}
+          android_ripple={{ color: "rgba(255,255,255,0.1)", borderless: true }}
+          hitSlop={10}
+        >
+          <Ionicons name="arrow-back" size={24} color="#94A3B8" />
+        </Pressable>
+        <Text style={styles.topBarTitle} numberOfLines={1}>
+          {title}
+        </Text>
+      </View>
 
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header with Info and Poster */}
+        {/* Poster + Info */}
         <View style={styles.header}>
-          <View style={styles.posterContainer}>
+          <View style={styles.posterWrap}>
             {poster_path ? (
               <Image
                 source={{
@@ -78,8 +80,7 @@ export default function DetailsModal() {
                 resizeMode="cover"
               />
             ) : (
-              /* Combined poster size with plageholder background */
-              <View style={[styles.poster, styles.placeholderInside]}>
+              <View style={[styles.poster, styles.posterPlaceholder]}>
                 <Ionicons
                   name={
                     media_type === "person" ? "person-outline" : "film-outline"
@@ -87,14 +88,11 @@ export default function DetailsModal() {
                   size={40}
                   color="#475569"
                 />
-                <Text style={styles.placeholderInsideText}>
-                  {media_type === "person" ? "No Photo" : "No Poster"}
-                </Text>
               </View>
             )}
 
-            {/* Badge de tipo sobre el póster del Modal */}
-            <View style={styles.typeBadge}>
+            {/* Media type badge */}
+            <View style={styles.badge}>
               {media_type === "movie" && (
                 <Ionicons name="film" size={16} color="#FFF" />
               )}
@@ -107,104 +105,69 @@ export default function DetailsModal() {
             </View>
           </View>
 
-          <View style={styles.infoTextContainer}>
+          <View style={styles.info}>
             <Text style={styles.title} numberOfLines={3}>
               {title}
             </Text>
             <View style={styles.yearBadge}>
               <Text style={styles.yearText}>{year}</Text>
             </View>
-            <View style={styles.overviewSection}>
-              <Pressable onPress={() => setInfoIsExpanded(!isInfoExpanded)}>
-                <Text
-                  style={styles.overviewText}
-                  numberOfLines={isInfoExpanded ? undefined : 3}
-                >
-                  {overview || "No description available."}
+            <Pressable onPress={() => setExpanded(!expanded)}>
+              <Text
+                style={styles.overview}
+                numberOfLines={expanded ? undefined : 3}
+              >
+                {overview || "No description available."}
+              </Text>
+              {overview && overview.length > 70 && (
+                <Text style={styles.readMore}>
+                  {expanded ? "Show less" : "Read more"}
                 </Text>
-
-                {/* Only display "more info" button if overview is long enough */}
-                {overview && overview.length > 70 && (
-                  <Text style={styles.readMore}>
-                    {isInfoExpanded ? "Show less" : "Read more"}
-                  </Text>
-                )}
-              </Pressable>
-            </View>
+              )}
+            </Pressable>
           </View>
         </View>
 
-        {/* Separating line */}
         <View style={styles.separator} />
 
         {/* Streaming Providers */}
-        <View style={styles.providersSection}>
-          <Text style={styles.providersSectionTitle}>
-            Where can you watch it?
-          </Text>
+        <View style={styles.providers}>
+          <Text style={styles.providersTitle}>Where can you watch it?</Text>
 
           {media_type === "person" ? (
-            <Text style={styles.noProvidersText}>
+            <Text style={styles.noProviders}>
               Streaming info only available for movies and TV shows.
             </Text>
           ) : isLoading ? (
             <ActivityIndicator color="#60A5FA" style={{ marginTop: 20 }} />
-          ) : !providers ||
-            (!providers.free?.length &&
-              !providers.flatrate?.length &&
-              !providers.rent?.length &&
-              !providers.buy?.length) ? (
+          ) : !hasProviders ? (
             <View style={styles.emptyProviders}>
               <Ionicons name="alert-circle-outline" size={24} color="#475569" />
-              <Text style={styles.noProvidersText}>
+              <Text style={styles.noProviders}>
                 Not available in {country} currently.
               </Text>
             </View>
           ) : (
-            <View>
-              {/* CATEGORY – Free */}
-              {providers.free && providers.free.length > 0 && (
-                <View style={styles.categoryRow}>
-                  <Text style={styles.categoryTitle}>Free</Text>
-                  {renderProviderIcons(providers.free)}
-                </View>
-              )}
+            <>
+              <ProviderSection title="Free" providers={providers?.free ?? []} />
+              <ProviderSection
+                title="Stream"
+                providers={providers?.flatrate ?? []}
+              />
+              <ProviderSection title="Rent" providers={providers?.rent ?? []} />
+              <ProviderSection title="Buy" providers={providers?.buy ?? []} />
 
-              {/* CATEGORY – Subscription (Flatrate) */}
-              {providers.flatrate && providers.flatrate.length > 0 && (
-                <View style={styles.categoryRow}>
-                  <Text style={styles.categoryTitle}>Stream</Text>
-                  {renderProviderIcons(providers.flatrate)}
-                </View>
-              )}
-
-              {/* CATEGORY – Rent */}
-              {providers.rent && providers.rent.length > 0 && (
-                <View style={styles.categoryRow}>
-                  <Text style={styles.categoryTitle}>Rent</Text>
-                  {renderProviderIcons(providers.rent)}
-                </View>
-              )}
-
-              {/* CATEGORY – Buy */}
-              {providers.buy && providers.buy.length > 0 && (
-                <View style={styles.categoryRow}>
-                  <Text style={styles.categoryTitle}>Buy</Text>
-                  {renderProviderIcons(providers.buy)}
-                </View>
-              )}
-
-              {/* JustWatch Badge */}
-              {providers.link && (
+              {providers?.link && (
                 <Pressable
-                  style={styles.justWatchButton}
-                  onPress={() => Linking.openURL(providers.link)}
+                  style={styles.justWatch}
+                  onPress={() => Linking.openURL(providers.link!)}
+                  android_ripple={{ color: "rgba(255,255,255,0.05)" }}
                 >
-                  <Text style={styles.justWatchText}>Data provided by</Text>
-                  <Text style={styles.justWatchBrand}>JustWatch</Text>
+                  <Text style={styles.jwLabel}>Data provided by </Text>
+                  <Text style={styles.jwBrand}>JustWatch</Text>
                 </Pressable>
               )}
-            </View>
+            </>
           )}
         </View>
       </ScrollView>
@@ -213,21 +176,33 @@ export default function DetailsModal() {
 }
 
 const styles = StyleSheet.create({
-  mainContainer: {
+  container: {
     flex: 1,
-    backgroundColor: "#0F172A", // Azul oscuro profundo
+    backgroundColor: "#0F172A",
   },
-  modalHandle: {
-    width: 40,
-    height: 5,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    borderRadius: 3,
-    alignSelf: "center",
-    marginTop: 10,
+  topBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255,255,255,0.05)",
+    gap: 12,
   },
-  scrollContent: {
+  closeButton: {
+    borderRadius: 20,
+    padding: 4,
+    overflow: "hidden",
+  },
+  topBarTitle: {
+    color: "#FFF",
+    fontSize: 17,
+    fontWeight: "600",
+    flex: 1,
+  },
+  scroll: {
     paddingHorizontal: 20,
-    paddingTop: 15,
+    paddingTop: 20,
     paddingBottom: 40,
   },
   header: {
@@ -235,12 +210,8 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     marginBottom: 15,
   },
-  posterContainer: {
+  posterWrap: {
     position: "relative",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
     elevation: 8,
   },
   poster: {
@@ -249,40 +220,27 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: "#1E293B",
   },
-  typeBadge: {
+  posterPlaceholder: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  badge: {
     position: "absolute",
     top: 6,
     left: 6,
-    backgroundColor: "rgba(15, 23, 42, 0.8)",
+    backgroundColor: "rgba(15,23,42,0.8)",
     padding: 6,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.15)",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 20,
+    borderColor: "rgba(255,255,255,0.15)",
   },
-  placeholderInside: {
-    backgroundColor: "#1E293B",
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 12,
-  },
-  placeholderInsideText: {
-    color: "#475569",
-    fontSize: 12,
-    marginTop: 10,
-    fontWeight: "bold",
-    textAlign: "center",
-    paddingHorizontal: 5,
-  },
-  infoTextContainer: {
+  info: {
     flex: 1,
     marginLeft: 20,
     paddingTop: 5,
   },
   title: {
-    color: "#FFFFFF",
+    color: "#FFF",
     fontSize: 15,
     fontWeight: "800",
     lineHeight: 20,
@@ -291,79 +249,42 @@ const styles = StyleSheet.create({
   yearBadge: {
     backgroundColor: "#1E293B",
     alignSelf: "flex-start",
-    padding: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: 6,
+    marginBottom: 8,
   },
   yearText: {
     color: "#94A3B8",
     fontSize: 9,
     fontWeight: "600",
   },
-  overviewSection: {
-    paddingTop: 3,
-    flex: 1,
+  overview: {
+    color: "#94A3B8",
+    fontSize: 12,
+    lineHeight: 18,
   },
   readMore: {
     color: "#60A5FA",
     fontWeight: "500",
-    marginTop: 3,
-    paddingVertical: 2,
-  },
-  overviewText: {
-    color: "#94A3B8",
-    fontSize: 12,
-    fontWeight: "400",
-    lineHeight: 12,
-    textAlign: "left",
+    marginTop: 4,
   },
   separator: {
     height: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    backgroundColor: "rgba(255,255,255,0.05)",
     marginVertical: 10,
   },
-  providersSection: {
+  providers: {
     marginTop: 10,
   },
-  providersSectionTitle: {
+  providersTitle: {
     color: "#F8FAFC",
     fontSize: 18,
     fontWeight: "700",
     marginBottom: 20,
     textAlign: "center",
   },
-  categoryRow: {
-    marginBottom: 20,
-  },
-  categoryTitle: {
-    color: "#64748B",
-    fontSize: 12,
-    fontWeight: "bold",
-    textTransform: "uppercase",
-    letterSpacing: 1,
-    marginBottom: 10,
-  },
-  providerIconsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 15,
-  },
-  providerItem: {
-    alignItems: "center",
-    width: 60,
-  },
-  providerLogo: {
-    width: 50,
-    height: 50,
-    borderRadius: 12,
-    backgroundColor: "#1E293B",
-  },
-  providerName: {
-    color: "#94A3B8",
-    fontSize: 10,
-    marginTop: 5,
-    textAlign: "center",
-  },
-  noProvidersText: {
+  noProviders: {
     color: "#64748B",
     textAlign: "center",
     marginTop: 10,
@@ -373,23 +294,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
   },
-  justWatchButton: {
+  justWatch: {
     marginTop: 20,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.03)",
+    backgroundColor: "rgba(255,255,255,0.03)",
     paddingVertical: 8,
     borderRadius: 8,
+    overflow: "hidden",
   },
-  justWatchText: {
+  jwLabel: {
     color: "#475569",
     fontSize: 11,
   },
-  justWatchBrand: {
+  jwBrand: {
     color: "#F8FAFC",
     fontSize: 11,
     fontWeight: "bold",
-    marginLeft: 4,
   },
 });

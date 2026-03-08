@@ -1,7 +1,7 @@
 import { Country, WatchProvidersData } from "@/types/providers";
 import { SearchedItem } from "@/types/searchedItem";
 
-const BASE_URL = process.env.EXPO_PUBLIC_TMDB_API_URL;
+const BASE_URL = "https://api.themoviedb.org/";
 const BEARER_TOKEN = process.env.EXPO_PUBLIC_TMDB_BEARER_TOKEN;
 
 const fetchOptions = {
