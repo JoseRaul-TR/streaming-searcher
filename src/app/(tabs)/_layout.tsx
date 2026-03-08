@@ -1,7 +1,10 @@
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function TabsLayout() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tabs
       screenOptions={{
@@ -10,8 +13,9 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: "#0F172A",
           borderTopWidth: 0,
-          height: 60,
-          paddingBottom: 10,
+          height: 60 + insets.bottom,
+          paddingBottom: insets.bottom,
+          paddingTop: 8,
         },
         tabBarActiveTintColor: "#60A5FA",
         tabBarInactiveTintColor: "#94A3B8",
@@ -20,7 +24,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Search",
+          title: "Explore",
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons
               name={focused ? "search" : "search-outline"}

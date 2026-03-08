@@ -10,14 +10,15 @@ import { CountryPickerModal } from "@/components/CountryPickerModal";
 export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+
   const [showCountryModal, setShowCountryModal] = useState(false);
 
-  const { country, setCountry, resetOnboarding } = useUserStore();
+  const { country, countryName, setCountry, resetOnboarding } = useUserStore();
 
   const handleResetOnboarding = () => {
     Alert.alert(
       "Restart Setup",
-      "This will reset your onboarding preferences and take you back to the setup screen.",
+      "This will reset your preferences and take you back to the setup screen.",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -33,12 +34,16 @@ export default function SettingsScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <Text style={styles.heading}>Settings</Text>
-
+    <View
+      style={[
+        styles.container,
+        // Top inset for status bar, bottom inset for Android nav buttons
+        { paddingTop: insets.top + 20, paddingBottom: insets.bottom },
+      ]}
+    >
       {/* Region */}
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Region</Text>
+        <Text style={styles.sectionLabel}>Country</Text>
 
         <Pressable
           style={styles.row}
@@ -47,33 +52,40 @@ export default function SettingsScreen() {
         >
           <View style={styles.rowLeft}>
             <Ionicons name="globe-outline" size={22} color="#60A5FA" />
-            <Text style={styles.rowTitle}>Country</Text>
+            <Text style={styles.rowValue} numberOfLines={1}>
+              {countryName}
+            </Text>
           </View>
-          <View style={styles.rowRight}>
-            <Text style={styles.rowValue}>{country}</Text>
-            <Ionicons name="chevron-forward" size={18} color="#475569" />
-          </View>
+          <Ionicons name="chevron-forward" size={18} color="#475569" />
         </Pressable>
       </View>
 
       {/* App */}
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>App</Text>
+        <Text style={styles.sectionLabel}>App settings</Text>
 
         <Pressable
           style={styles.row}
           onPress={handleResetOnboarding}
           android_ripple={{ color: "rgba(255,255,255,0.05)" }}
         >
+          {/* Left side: icon + label */}
           <View style={styles.rowLeft}>
             <Ionicons name="refresh-outline" size={22} color="#F87171" />
-            <Text style={[styles.rowTitle, { color: "#F87171" }]}>
+            <Text style={[styles.rowTitle, styles.rowTitleDanger]}>
               Restart Setup
             </Text>
           </View>
+
+          {/* Right side: chevron only */}
           <Ionicons name="chevron-forward" size={18} color="#475569" />
         </Pressable>
       </View>
+
+      {/* TODO - Theme selector*/}
+      {/*       <View>
+
+      </View> */}
 
       <CountryPickerModal
         visible={showCountryModal}
@@ -86,22 +98,27 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0F172A", paddingHorizontal: 20 },
+  container: {
+    flex: 1,
+    backgroundColor: "#0F172A",
+    paddingHorizontal: 20,
+  },
   heading: {
     color: "#FFF",
     fontSize: 28,
     fontWeight: "bold",
-    marginTop: 20,
     marginBottom: 30,
   },
-  section: { marginBottom: 30 },
+  section: {
+    marginBottom: 30,
+  },
   sectionLabel: {
     color: "#60A5FA",
     fontSize: 12,
     fontWeight: "bold",
     letterSpacing: 1,
-    marginBottom: 10,
     textTransform: "uppercase",
+    marginBottom: 10,
   },
   row: {
     flexDirection: "row",
@@ -113,8 +130,28 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     overflow: "hidden",
   },
-  rowLeft: { flexDirection: "row", alignItems: "center", gap: 12 },
-  rowRight: { flexDirection: "row", alignItems: "center", gap: 8 },
-  rowTitle: { color: "#F8FAFC", fontSize: 16 },
-  rowValue: { color: "#94A3B8", fontSize: 15 },
+  rowLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  rowRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flexShrink: 0,
+  },
+  rowTitle: {
+    color: "#F8FAFC",
+    fontSize: 16,
+  },
+  rowTitleDanger: {
+    color: "#F87171",
+  },
+  rowValue: {
+    color: "#94A3B8",
+    fontSize: 15,
+    maxWidth: 160,
+  },
 });

@@ -20,7 +20,7 @@ export default function SearchBar({ value, onChangeText, isLoading }: Props) {
       <Ionicons name="search" size={20} color="#94A3B8" />
       <TextInput
         style={styles.input}
-        placeholder="Search movies, TV-shows or people"
+        placeholder="Search movies, shows or people"
         placeholderTextColor="#94A3B8"
         value={value}
         onChangeText={onChangeText}

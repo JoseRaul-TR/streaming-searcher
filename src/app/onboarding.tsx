@@ -18,14 +18,12 @@ export default function OnboardingScreen() {
 
   const {
     country,
+    countryName,
     setCountry,
     completeOnboarding,
     hasAcceptedTerms,
     acceptTerms,
   } = useUserStore();
-
-  // Show the country name if already selected
-  const selectedLabel = country || "Select Country";
 
   const handleComplete = () => {
     if (hasAcceptedTerms && country) {
@@ -66,7 +64,7 @@ export default function OnboardingScreen() {
                 onPress={() => setShowCountryModal(true)}
                 android_ripple={{ color: "rgba(96,165,250,0.15)" }}
               >
-                <Text style={styles.selectorText}>{selectedLabel}</Text>
+                <Text style={styles.selectorText}>{countryName || "Select Country"}</Text>
                 <Ionicons name="chevron-down" size={20} color="#94A3B8" />
               </Pressable>
             </View>
@@ -108,7 +106,7 @@ export default function OnboardingScreen() {
       <View style={styles.footer}>
         {step === 1 ? (
           <Pressable
-            style={styles.btnPrimary}
+            style={[styles.btnPrimary, styles.btnFull]}
             onPress={() => setStep(2)}
             android_ripple={{ color: "rgba(255,255,255,0.2)" }}
           >
@@ -127,6 +125,7 @@ export default function OnboardingScreen() {
             <Pressable
               style={[
                 styles.btnPrimary,
+                styles.btnRowItem,
                 (!hasAcceptedTerms || !country) && styles.disabled,
               ]}
               onPress={handleComplete}
@@ -222,20 +221,25 @@ const styles = StyleSheet.create({
   footer: { padding: 30 },
   row: { flexDirection: "row", gap: 15 },
   btnPrimary: {
-    flex: 2,
     backgroundColor: "#60A5FA",
     padding: 18,
-    borderRadius: 15,
+    borderRadius: 50,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     overflow: "hidden",
   },
+  btnFull: {
+    alignSelf: "stretch",
+  },
+  btnRowItem: {
+    flex: 2,
+  },
   btnSecondary: {
     flex: 1,
     backgroundColor: "#1E293B",
     padding: 18,
-    borderRadius: 15,
+    borderRadius: 50,
     alignItems: "center",
     overflow: "hidden",
   },

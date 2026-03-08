@@ -18,7 +18,7 @@ interface Props {
   visible: boolean;
   onClose: () => void;
   selectedCountry: string;
-  onSelect: (code: string) => void;
+  onSelect: (code: string, name: string) => void;
 }
 
 export function CountryPickerModal({
@@ -72,7 +72,7 @@ export function CountryPickerModal({
               <Pressable
                 style={styles.item}
                 onPress={() => {
-                  onSelect(item.iso_3166_1);
+                  onSelect(item.iso_3166_1, item.english_name);
                   onClose();
                 }}
                 android_ripple={{ color: "rgba(96,165,250,0.1)" }}
@@ -80,12 +80,12 @@ export function CountryPickerModal({
                 <Text
                   style={[
                     styles.itemText,
-                    selectedCountry === item.iso_3166_1 && styles.itemActive,
+                    selectedCountry ===item.english_name && styles.itemActive,
                   ]}
                 >
                   {item.english_name}
                 </Text>
-                {selectedCountry === item.iso_3166_1 && (
+                {selectedCountry === item.english_name && (
                   <Ionicons name="checkmark" size={20} color="#60A5FA" />
                 )}
               </Pressable>

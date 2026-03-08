@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
   },
   title: {
     color: "#FFF",
-    fontSize: 15,
+    fontSize: 20,
     fontWeight: "800",
     lineHeight: 20,
     marginBottom: 8,
@@ -256,12 +256,12 @@ const styles = StyleSheet.create({
   },
   yearText: {
     color: "#94A3B8",
-    fontSize: 9,
+    fontSize: 13,
     fontWeight: "600",
   },
   overview: {
     color: "#94A3B8",
-    fontSize: 12,
+    fontSize: 13,
     lineHeight: 18,
   },
   readMore: {

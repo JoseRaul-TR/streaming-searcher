@@ -6,7 +6,8 @@ interface UserState {
   hasCompletedOnboarding: boolean;
   hasAcceptedTerms: boolean;
   country: string; // US, ES, SE, ...
-  setCountry: (country: string) => void;
+  countryName: string; // Sweden, Spain, ...
+  setCountry: (code: string, name: string) => void;
   completeOnboarding: () => void;
   acceptTerms: () => void;
   resetOnboarding: () => void;
@@ -17,14 +18,17 @@ export const useUserStore = create<UserState>()(
     (set) => ({
       hasCompletedOnboarding: false,
       hasAcceptedTerms: false,
-      country: "SE", // Default country Sweden
-      setCountry: (country) => set({ country }),
+      country: "",
+      countryName: "",
+      setCountry: (code, name) => set({ country: code, countryName: name }),
       completeOnboarding: () => set({ hasCompletedOnboarding: true }),
       acceptTerms: () => set({ hasAcceptedTerms: true }),
       resetOnboarding: () =>
         set({
           hasCompletedOnboarding: false,
           hasAcceptedTerms: false,
+          country: "",
+          countryName: "",
         }),
     }),
     {

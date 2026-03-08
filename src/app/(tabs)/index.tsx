@@ -9,7 +9,7 @@ import { SearchedItem } from "@/types/searchedItem";
 import { MediaCard } from "@/components/MediaCard";
 import SearchBar from "@/components/SearchBar";
 
-export default function SearchScreen() {
+export default function ExploreScreen() {
   const router = useRouter();
   const [query, setQuery] = useState("");
 
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 100,
+    margin: 'auto',
     paddingHorizontal: 40,
   },
   emptyTitle: {
