@@ -6,14 +6,34 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useUserStore } from "@/store/useUserStore";
 import CountryPickerModal from "@/components/CountryPickerModal";
+import SubscriptionPickerModal from "@/components/SubscriptionPickerModal";
 
 export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
   const [showCountryModal, setShowCountryModal] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
-  const { country, countryName, setCountry, resetOnboarding } = useUserStore();
+  const {
+    countries,
+    addCountry,
+    removeCountry,
+    subscriptions,
+    resetOnboarding,
+  } = useUserStore();
+
+  const countriesLabel =
+    countries.length === 0
+      ? "Not set"
+      : countries.length === 1
+        ? countries[0].name
+        : `${countries[0].name} +${countries.length - 1} more`;
+
+  const subscriptionsLabel =
+    subscriptions.length === 0
+      ? "None selected"
+      : `${subscriptions.length} service${subscriptions.length > 1 ? "s" : ""}`;
 
   const handleResetOnboarding = () => {
     Alert.alert(
@@ -37,13 +57,12 @@ export default function SettingsScreen() {
     <View
       style={[
         styles.container,
-        // Top inset for status bar, bottom inset for Android nav buttons
         { paddingTop: insets.top + 20, paddingBottom: insets.bottom },
       ]}
     >
-      {/* Region */}
+      {/* Search preferences */}
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Country</Text>
+        <Text style={styles.sectionLabel}>Search preferences</Text>
 
         <Pressable
           style={styles.row}
@@ -52,46 +71,73 @@ export default function SettingsScreen() {
         >
           <View style={styles.rowLeft}>
             <Ionicons name="globe-outline" size={22} color="#60A5FA" />
-            <Text style={styles.rowValue} numberOfLines={1}>
-              {countryName}
-            </Text>
+            <Text style={styles.rowTitle}>Countries</Text>
           </View>
-          <Ionicons name="chevron-forward" size={18} color="#475569" />
+          <View style={styles.rowRight}>
+            <Text style={styles.rowValue} numberOfLines={1}>
+              {countriesLabel}
+            </Text>
+            <Ionicons name="chevron-forward" size={18} color="#475569" />
+          </View>
         </Pressable>
+
+        <View style={styles.rowSpacer} />
+
+        <Pressable
+          style={[styles.row, countries.length === 0 && styles.rowDisabled]}
+          onPress={() => countries.length > 0 && setShowSubscriptionModal(true)}
+          android_ripple={{ color: "rgba(255,255,255,0.05)" }}
+        >
+          <View style={styles.rowLeft}>
+            <Ionicons name="tv-outline" size={22} color="#60A5FA" />
+            <Text style={styles.rowTitle}>My Subscriptions</Text>
+          </View>
+          <View style={styles.rowRight}>
+            <Text style={styles.rowValue} numberOfLines={1}>
+              {subscriptionsLabel}
+            </Text>
+            <Ionicons name="chevron-forward" size={18} color="#475569" />
+          </View>
+        </Pressable>
+
+        {countries.length === 0 && (
+          <Text style={styles.hint}>
+            Select a country first to manage subscriptions.
+          </Text>
+        )}
       </View>
 
       {/* App */}
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>App settings</Text>
+        <Text style={styles.sectionLabel}>App</Text>
 
         <Pressable
           style={styles.row}
           onPress={handleResetOnboarding}
           android_ripple={{ color: "rgba(255,255,255,0.05)" }}
         >
-          {/* Left side: icon + label */}
           <View style={styles.rowLeft}>
             <Ionicons name="refresh-outline" size={22} color="#F87171" />
             <Text style={[styles.rowTitle, styles.rowTitleDanger]}>
               Restart Setup
             </Text>
           </View>
-
-          {/* Right side: chevron only */}
           <Ionicons name="chevron-forward" size={18} color="#475569" />
         </Pressable>
       </View>
 
-      {/* TODO - Theme selector*/}
-      {/*       <View>
-
-      </View> */}
-
       <CountryPickerModal
         visible={showCountryModal}
         onClose={() => setShowCountryModal(false)}
-        selectedCountry={country}
-        onSelect={setCountry}
+        selectedCountries={countries}
+        onAdd={addCountry}
+        onRemove={removeCountry}
+      />
+
+      <SubscriptionPickerModal
+        visible={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+        countries={countries}
       />
     </View>
   );
@@ -103,9 +149,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#0F172A",
     paddingHorizontal: 20,
   },
-  section: {
-    marginBottom: 30,
-  },
+  section: { marginBottom: 30 },
   sectionLabel: {
     color: "#60A5FA",
     fontSize: 12,
@@ -121,9 +165,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#1E293B",
     paddingVertical: 16,
     paddingHorizontal: 18,
-    borderRadius: 52,
+    borderRadius: 14,
     overflow: "hidden",
   },
+  rowDisabled: { opacity: 0.4 },
+  rowSpacer: { height: 8 },
   rowLeft: {
     flexDirection: "row",
     alignItems: "center",
@@ -136,16 +182,13 @@ const styles = StyleSheet.create({
     gap: 8,
     flexShrink: 0,
   },
-  rowTitle: {
-    color: "#F8FAFC",
-    fontSize: 16,
-  },
-  rowTitleDanger: {
-    color: "#F87171",
-  },
-  rowValue: {
-    color: "#94A3B8",
-    fontSize: 15,
-    maxWidth: 160,
+  rowTitle: { color: "#F8FAFC", fontSize: 16 },
+  rowTitleDanger: { color: "#F87171" },
+  rowValue: { color: "#94A3B8", fontSize: 14, maxWidth: 140 },
+  hint: {
+    color: "#475569",
+    fontSize: 12,
+    marginTop: 8,
+    marginLeft: 4,
   },
 });

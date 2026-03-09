@@ -6,8 +6,8 @@ import { useQuery } from "@tanstack/react-query";
 
 import { tmdbApi } from "@/services/api";
 import { SearchedItem } from "@/types/searchedItem";
-import SearchBar from "@/components/SearchBar";
 import MediaCard from "@/components/MediaCard";
+import SearchBar from "@/components/SearchBar";
 
 export default function ExploreScreen() {
   const router = useRouter();
@@ -80,6 +80,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    marginTop: 100,
     paddingHorizontal: 40,
   },
   emptyTitle: {

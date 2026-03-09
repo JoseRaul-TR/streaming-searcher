@@ -11,9 +11,16 @@ export type Provider = {
 };
 
 export type WatchProvidersData = {
+  countryCode: string;
+  countryName: string;
   link?: string; // Official JustWatch link
   free?: Provider[];
   flatrate?: Provider[];
   rent?: Provider[];
   buy?: Provider[];
+};
+
+export type SelectedCountry = {
+  code: string;
+  name: string;
 };

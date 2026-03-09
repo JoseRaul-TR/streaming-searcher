@@ -7,6 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useUserStore } from "@/store/useUserStore";
 import CountryPickerModal from "@/components/CountryPickerModal";
 import TermsModal from "@/components/TermsModal";
+import SubscriptionPickerModal from "@/components/SubscriptionPickerModal";
 
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
@@ -14,23 +15,37 @@ export default function OnboardingScreen() {
 
   const [step, setStep] = useState(1);
   const [showCountryModal, setShowCountryModal] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
 
   const {
-    country,
-    countryName,
-    setCountry,
+    countries,
+    addCountry,
+    removeCountry,
+    subscriptions,
     completeOnboarding,
     hasAcceptedTerms,
     acceptTerms,
   } = useUserStore();
 
   const handleComplete = () => {
-    if (hasAcceptedTerms && country) {
+    if (hasAcceptedTerms && countries.length > 0) {
       completeOnboarding();
       router.replace("/(tabs)");
     }
   };
+
+  const countriesLabel =
+    countries.length === 0
+      ? "Select Country"
+      : countries.length === 1
+        ? countries[0].name
+        : `${countries[0].name} +${countries.length - 1} more`;
+
+  const subscriptionsLabel =
+    subscriptions.length === 0
+      ? "Select your services (optional)"
+      : `${subscriptions.length} service${subscriptions.length > 1 ? "s" : ""} selected`;
 
   return (
     <View
@@ -40,7 +55,7 @@ export default function OnboardingScreen() {
       ]}
     >
       <View style={styles.main}>
-        {step === 1 ? (
+        {step === 1 && (
           /* Step 1 – Welcome */
           <View style={styles.centerContent}>
             <View style={styles.iconCircle}>
@@ -51,25 +66,35 @@ export default function OnboardingScreen() {
               Find where to watch movies and TV-series in seconds.
             </Text>
           </View>
-        ) : (
-          /* Step 2 – Setup */
+        )}
+
+        {step === 2 && (
+          /* Step 2 – Countries + Terms */
           <View style={styles.stepContainer}>
             <Text style={styles.title}>Quick Setup</Text>
 
-            {/* Country */}
             <View style={styles.formGroup}>
-              <Text style={styles.label}>1. Select your country</Text>
+              <Text style={styles.label}>
+                1. Select your country or countries
+              </Text>
               <Pressable
                 style={styles.selector}
                 onPress={() => setShowCountryModal(true)}
                 android_ripple={{ color: "rgba(96,165,250,0.15)" }}
               >
-                <Text style={styles.selectorText}>{countryName || "Select Country"}</Text>
+                <Text
+                  style={[
+                    styles.selectorText,
+                    countries.length === 0 && styles.selectorPlaceholder,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {countriesLabel}
+                </Text>
                 <Ionicons name="chevron-down" size={20} color="#94A3B8" />
               </Pressable>
             </View>
 
-            {/* Terms */}
             <View style={styles.formGroup}>
               <Text style={styles.label}>2. Terms of use</Text>
               <Pressable
@@ -100,11 +125,45 @@ export default function OnboardingScreen() {
             </View>
           </View>
         )}
+
+        {step === 3 && (
+          /* Step 3 – Subscriptions */
+          <View style={styles.stepContainer}>
+            <Text style={styles.title}>Your Services</Text>
+            <Text style={styles.subtitle}>
+              Select the streaming services you are subscribed to. They will be
+              highlighted when browsing results.
+            </Text>
+
+            <View style={styles.formGroup}>
+              <Pressable
+                style={styles.selector}
+                onPress={() => setShowSubscriptionModal(true)}
+                android_ripple={{ color: "rgba(96,165,250,0.15)" }}
+              >
+                <Text
+                  style={[
+                    styles.selectorText,
+                    subscriptions.length === 0 && styles.selectorPlaceholder,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {subscriptionsLabel}
+                </Text>
+                <Ionicons name="chevron-down" size={20} color="#94A3B8" />
+              </Pressable>
+            </View>
+
+            <Text style={styles.hint}>
+              You can skip this step and add your services later in Settings.
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* Footer */}
       <View style={styles.footer}>
-        {step === 1 ? (
+        {step === 1 && (
           <Pressable
             style={[styles.btnPrimary, styles.btnFull]}
             onPress={() => setStep(2)}
@@ -113,7 +172,9 @@ export default function OnboardingScreen() {
             <Text style={styles.btnText}>Next</Text>
             <Ionicons name="arrow-forward" size={20} color="white" />
           </Pressable>
-        ) : (
+        )}
+
+        {step === 2 && (
           <View style={styles.row}>
             <Pressable
               style={styles.btnSecondary}
@@ -126,10 +187,31 @@ export default function OnboardingScreen() {
               style={[
                 styles.btnPrimary,
                 styles.btnRowItem,
-                (!hasAcceptedTerms || !country) && styles.disabled,
+                (!hasAcceptedTerms || countries.length === 0) &&
+                  styles.disabled,
               ]}
+              onPress={() => setStep(3)}
+              disabled={!hasAcceptedTerms || countries.length === 0}
+              android_ripple={{ color: "rgba(255,255,255,0.2)" }}
+            >
+              <Text style={styles.btnText}>Next</Text>
+              <Ionicons name="arrow-forward" size={20} color="white" />
+            </Pressable>
+          </View>
+        )}
+
+        {step === 3 && (
+          <View style={styles.row}>
+            <Pressable
+              style={styles.btnSecondary}
+              onPress={() => setStep(2)}
+              android_ripple={{ color: "rgba(255,255,255,0.1)" }}
+            >
+              <Text style={styles.btnText}>Back</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.btnPrimary, styles.btnRowItem]}
               onPress={handleComplete}
-              disabled={!hasAcceptedTerms || !country}
               android_ripple={{ color: "rgba(255,255,255,0.2)" }}
             >
               <Text style={styles.btnText}>Get Started</Text>
@@ -141,8 +223,15 @@ export default function OnboardingScreen() {
       <CountryPickerModal
         visible={showCountryModal}
         onClose={() => setShowCountryModal(false)}
-        selectedCountry={country}
-        onSelect={setCountry}
+        selectedCountries={countries}
+        onAdd={addCountry}
+        onRemove={removeCountry}
+      />
+
+      <SubscriptionPickerModal
+        visible={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+        countries={countries}
       />
 
       <TermsModal
@@ -172,9 +261,17 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     color: "#94A3B8",
-    fontSize: 18,
+    fontSize: 16,
     textAlign: "center",
-    lineHeight: 26,
+    lineHeight: 24,
+    marginBottom: 30,
+  },
+  hint: {
+    color: "#475569",
+    fontSize: 13,
+    textAlign: "center",
+    lineHeight: 20,
+    marginTop: 10,
   },
   stepContainer: { width: "100%" },
   formGroup: { marginBottom: 30 },
@@ -194,7 +291,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     overflow: "hidden",
   },
-  selectorText: { color: "#FFF", fontSize: 16 },
+  selectorText: { color: "#FFF", fontSize: 16, flex: 1, marginRight: 8 },
+  selectorPlaceholder: { color: "#64748B" },
   checkboxRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -229,12 +327,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     overflow: "hidden",
   },
-  btnFull: {
-    alignSelf: "stretch",
-  },
-  btnRowItem: {
-    flex: 2,
-  },
+  btnFull: { alignSelf: "stretch" },
+  btnRowItem: { flex: 2 },
   btnSecondary: {
     flex: 1,
     backgroundColor: "#1E293B",

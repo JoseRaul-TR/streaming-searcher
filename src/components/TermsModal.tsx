@@ -12,7 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 type Props = {
   visible: boolean;
   onClose: () => void;
-}
+};
 
 export default function TermsModal({ visible, onClose }: Props) {
   return (
@@ -31,9 +31,9 @@ export default function TermsModal({ visible, onClose }: Props) {
             provider information is sourced via JustWatch.{"\n\n"}
             1. No personal data is collected or shared with third parties.
             {"\n\n"}
-            2. Your country selection is stored locally on your device only. It
-            is used exclusively to filter available streaming providers in your
-            region.
+            2. Your country selection and subscription preferences are stored
+            locally on your device only. They are used exclusively to filter
+            available streaming providers.{"\n\n"}
           </Text>
         </ScrollView>
       </View>
@@ -54,17 +54,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 20,
   },
-  title: {
-    color: "#FFF",
-    fontSize: 24,
-    fontWeight: "bold",
-  },
-  scroll: {
-    flex: 1,
-  },
-  body: {
-    color: "#CBD5E1",
-    fontSize: 15,
-    lineHeight: 24,
-  },
+  title: { color: "#FFF", fontSize: 24, fontWeight: "bold" },
+  scroll: { flex: 1 },
+  body: { color: "#CBD5E1", fontSize: 15, lineHeight: 24 },
 });

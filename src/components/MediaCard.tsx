@@ -15,7 +15,7 @@ const COLUMN_WIDTH = (Dimensions.get("window").width - 40) / 2;
 type Props = {
   item: SearchedItem;
   onPress: () => void;
-}
+};
 
 export default function MediaCard({ item, onPress }: Props) {
   return (
@@ -43,7 +43,6 @@ export default function MediaCard({ item, onPress }: Props) {
           </View>
         )}
 
-        {/* Media type badge */}
         <View style={styles.badge}>
           {item.media_type === "movie" && (
             <Ionicons name="film" size={14} color="#FFF" />
@@ -104,9 +103,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     textAlign: "center",
   },
-  year: {
-    color: "#94A3B8",
-    fontSize: 10,
-    marginTop: 4,
-  },
+  year: { color: "#94A3B8", fontSize: 10, marginTop: 4 },
 });
