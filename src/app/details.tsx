@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { tmdbApi } from "@/services/api";
 import { useUserStore } from "@/store/useUserStore";
-import { ProviderSection } from "@/components/ProvidersSection";
+import ProviderSection from "@/components/ProvidersSection";
 
 export default function DetailsScreen() {
   const router = useRouter();
@@ -33,7 +33,7 @@ export default function DetailsScreen() {
     }>();
 
   const [expanded, setExpanded] = useState(false);
-  const { country } = useUserStore();
+  const { country, countryName } = useUserStore();
 
   const { data: providers, isLoading } = useQuery({
     queryKey: ["providers", id, media_type, country],
@@ -144,7 +144,7 @@ export default function DetailsScreen() {
             <View style={styles.emptyProviders}>
               <Ionicons name="alert-circle-outline" size={24} color="#475569" />
               <Text style={styles.noProviders}>
-                Not available in {country} currently.
+                Not available in {countryName} currently.
               </Text>
             </View>
           ) : (

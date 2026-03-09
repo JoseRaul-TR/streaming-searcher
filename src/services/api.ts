@@ -73,7 +73,7 @@ export const tmdbApi = {
   getWatchProviders: async (
     id: number | string,
     mediaType: "movie" | "tv" | "person",
-    countryCode: string = "SE", // Default Sweden in case global state error
+    countryCode: string,
   ): Promise<WatchProvidersData | null> => {
     // Limit providers search to movies and tv only. Not persons
     if (mediaType === "person") return null;

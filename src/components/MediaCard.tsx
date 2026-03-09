@@ -12,12 +12,12 @@ import { SearchedItem } from "@/types/searchedItem";
 
 const COLUMN_WIDTH = (Dimensions.get("window").width - 40) / 2;
 
-interface Props {
+type Props = {
   item: SearchedItem;
   onPress: () => void;
 }
 
-export function MediaCard({ item, onPress }: Props) {
+export default function MediaCard({ item, onPress }: Props) {
   return (
     <Pressable style={styles.card} onPress={onPress}>
       <View style={styles.posterContainer}>

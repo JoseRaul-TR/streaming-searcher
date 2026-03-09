@@ -14,14 +14,14 @@ import { useQuery } from "@tanstack/react-query";
 import { tmdbApi } from "@/services/api";
 import { Country } from "@/types/providers";
 
-interface Props {
+type Props = {
   visible: boolean;
   onClose: () => void;
   selectedCountry: string;
   onSelect: (code: string, name: string) => void;
 }
 
-export function CountryPickerModal({
+export default function CountryPickerModal({
   visible,
   onClose,
   selectedCountry,
@@ -80,12 +80,12 @@ export function CountryPickerModal({
                 <Text
                   style={[
                     styles.itemText,
-                    selectedCountry ===item.english_name && styles.itemActive,
+                    selectedCountry === item.iso_3166_1 && styles.itemActive,
                   ]}
                 >
                   {item.english_name}
                 </Text>
-                {selectedCountry === item.english_name && (
+                {selectedCountry === item.iso_3166_1 && (
                   <Ionicons name="checkmark" size={20} color="#60A5FA" />
                 )}
               </Pressable>

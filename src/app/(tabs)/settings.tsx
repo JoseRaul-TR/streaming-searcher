@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useUserStore } from "@/store/useUserStore";
-import { CountryPickerModal } from "@/components/CountryPickerModal";
+import CountryPickerModal from "@/components/CountryPickerModal";
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -102,12 +102,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#0F172A",
     paddingHorizontal: 20,
-  },
-  heading: {
-    color: "#FFF",
-    fontSize: 28,
-    fontWeight: "bold",
-    marginBottom: 30,
   },
   section: {
     marginBottom: 30,

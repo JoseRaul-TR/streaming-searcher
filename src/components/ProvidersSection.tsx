@@ -2,12 +2,12 @@ import React from "react";
 import { View, Text, Image, StyleSheet } from "react-native";
 import { Provider } from "@/types/providers";
 
-interface Props {
+type Props = {
   title: string;
   providers: Provider[];
 }
 
-export function ProviderSection({ title, providers }: Props) {
+export default function ProviderSection({ title, providers }: Props) {
   if (!providers?.length) return null;
 
   return (

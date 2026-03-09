@@ -5,8 +5,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
 import { useUserStore } from "@/store/useUserStore";
-import { CountryPickerModal } from "@/components/CountryPickerModal";
-import { TermsModal } from "@/components/TermsModal";
+import CountryPickerModal from "@/components/CountryPickerModal";
+import TermsModal from "@/components/TermsModal";
 
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();

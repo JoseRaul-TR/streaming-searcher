@@ -9,12 +9,12 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-interface Props {
+type Props = {
   visible: boolean;
   onClose: () => void;
 }
 
-export function TermsModal({ visible, onClose }: Props) {
+export default function TermsModal({ visible, onClose }: Props) {
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={styles.container}>

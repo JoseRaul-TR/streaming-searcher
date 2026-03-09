@@ -5,6 +5,7 @@
     "version": "1.0.0",
     "scheme": "streaming-searcher",
     "orientation": "portrait",
+    "platforms": ["ios", "android"],
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "splash": {
@@ -14,10 +15,8 @@
     },
     "ios": {
       "supportsTablet": true
-      // "bundleIdentifier": "com.tuusuario.streamingsearcher" // Recommended
     },
     "android": {
-      // "package": "com.tuusuario.streamingsearcher", // Recommended
       "adaptiveIcon": {
         "backgroundColor": "#0F172A",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -25,10 +24,6 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false
-    },
-    "web": {
-      "favicon": "./assets/favicon.png",
-      "bundler": "metro"
     },
     "plugins": ["expo-router"],
     "experiments": {
