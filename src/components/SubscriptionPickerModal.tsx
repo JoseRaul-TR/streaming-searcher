@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   Modal,
   View,
@@ -36,19 +36,29 @@ export default function SubscriptionPickerModal({
 
   const activeCode = activeCountry || countries[0]?.code;
 
-  const { data: providers = [], isLoading } = useQuery({
+  const {
+    data: providers = [],
+    isLoading,
+    isError,
+  } = useQuery<Provider[]>({
     queryKey: ["providers-by-country", activeCode],
     queryFn: () => tmdbApi.getProvidersByCountry(activeCode),
     enabled: !!activeCode,
   });
 
-  const handleToggle = (providerId: number) => {
-    if (subscriptions.includes(providerId)) {
-      removeSubscription(providerId);
-    } else {
-      addSubscription(providerId);
-    }
-  };
+  // useCallback: handleToggle is recreated only when subscriptions,
+  // addSubscription or removeSubscription change — not on every render.
+  // This is relevant because it is passed into each FlatList renderItem.
+  const handleToggle = useCallback(
+    (providerId: number) => {
+      if (subscriptions.includes(providerId)) {
+        removeSubscription(providerId);
+      } else {
+        addSubscription(providerId);
+      }
+    },
+    [subscriptions, addSubscription, removeSubscription],
+  );
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
@@ -95,6 +105,13 @@ export default function SubscriptionPickerModal({
         {/* Providers list */}
         {isLoading ? (
           <ActivityIndicator color="#60A5FA" style={{ marginTop: 30 }} />
+        ) : isError ? (
+          <View style={styles.errorBox}>
+            <Ionicons name="alert-circle-outline" size={28} color="#F87171" />
+            <Text style={styles.errorText}>
+              Could not load providers. Check your connection.
+            </Text>
+          </View>
         ) : (
           <FlatList
             data={providers}
@@ -224,5 +241,20 @@ const styles = StyleSheet.create({
   checkboxActive: {
     backgroundColor: "#22C55E",
     borderColor: "#22C55E",
+  },
+  errorBox: {
+    alignItems: "center",
+    gap: 12,
+    padding: 24,
+    marginHorizontal: 25,
+    backgroundColor: "rgba(248,113,113,0.08)",
+    borderRadius: 12,
+    marginTop: 20,
+  },
+  errorText: {
+    color: "#F87171",
+    textAlign: "center",
+    fontSize: 14,
+    lineHeight: 20,
   },
 });

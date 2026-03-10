@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -11,10 +11,9 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons, Feather } from "@expo/vector-icons";
-import { useQuery } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { tmdbApi } from "@/services/api";
+import { useWatchProviders } from "@/hooks/useWatchProviders";
 import { useUserStore } from "@/store/useUserStore";
 import CountryProviderSection from "@/components/CountryProviderSection";
 import ProviderSection from "@/components/ProvidersSection";
@@ -39,11 +38,26 @@ export default function DetailsScreen() {
   const subscribedIds = new Set(subscriptions);
   const isMultiCountry = countries.length > 1;
 
-  const { data: providers = [], isLoading } = useQuery({
-    queryKey: ["providers", id, media_type, countries.map((c) => c.code)],
-    queryFn: () => tmdbApi.getWatchProviders(id, media_type, countries),
-    enabled: media_type !== "person" && countries.length > 0,
-  });
+  const { providers, isLoading, isError } = useWatchProviders(
+    id,
+    media_type,
+    countries,
+  );
+
+  // useCallback: this handler is passed down to a Pressable inside the render.
+  // Wrapping it prevents a new function reference on every re-render, which
+  // would otherwise cause the Pressable to re-render unnecessarily.
+  const handleBack = useCallback(() => {
+    router.back();
+  }, [router]);
+
+  const handleToggleExpanded = useCallback(() => {
+    setExpanded((prev) => !prev);
+  }, []);
+
+  const handleOpenJustWatch = useCallback((link: string) => {
+    void Linking.openURL(link);
+  }, []);
 
   const hasProviders = providers.length > 0;
 
@@ -110,7 +124,7 @@ export default function DetailsScreen() {
             <View style={styles.yearBadge}>
               <Text style={styles.yearText}>{year}</Text>
             </View>
-            <Pressable onPress={() => setExpanded(!expanded)}>
+            <Pressable onPress={handleToggleExpanded}>
               <Text
                 style={styles.overview}
                 numberOfLines={expanded ? undefined : 3}
@@ -142,10 +156,18 @@ export default function DetailsScreen() {
             </Text>
           ) : isLoading ? (
             <ActivityIndicator color="#60A5FA" style={{ marginTop: 20 }} />
+          ) : isError ? (
+            <View style={styles.errorBox}>
+              <Ionicons name="alert-circle-outline" size={28} color="#F87171" />
+              <Text style={styles.errorText}>
+                Could not load streaming providers. Check your connection and
+                try again.
+              </Text>
+            </View>
           ) : !hasProviders ? (
             <View style={styles.emptyProviders}>
               <Ionicons name="alert-circle-outline" size={24} color="#475569" />
-              <Text style={styles.noProviders}>
+              <Text style={styles.infoText}>
                 Not available in{" "}
                 {countries.length === 1
                   ? countries[0].name
@@ -275,13 +297,27 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: "center",
   },
-  noProviders: {
+  infoText: {
     color: "#64748B",
     textAlign: "center",
     marginTop: 10,
     fontSize: 14,
   },
-  emptyProviders: { alignItems: "center", padding: 20 },
+  emptyProviders: { alignItems: "center", padding: 20, gap: 8 },
+  errorBox: {
+    alignItems: "center",
+    gap: 12,
+    padding: 24,
+    backgroundColor: "rgba(248,113,113,0.08)",
+    borderRadius: 12,
+    marginTop: 10,
+  },
+  errorText: {
+    color: "#F87171",
+    textAlign: "center",
+    fontSize: 14,
+    lineHeight: 20,
+  },
   justWatch: {
     marginTop: 20,
     flexDirection: "row",
