@@ -3,7 +3,7 @@
   "compilerOptions": {
     /* Strict Inheritance */
     "strict": true,
-    
+
     /* Path Aliases */
     "paths": {
       "@/*": ["./src/*"]
@@ -13,6 +13,10 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
+    "noImplicitAny": true,
+    "exactOptionalPropertyTypes": false,
+    "allowUnreachableCode": false,
+
     "noFallthroughCasesInSwitch": true,
 
     /* Type Rigor */
