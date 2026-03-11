@@ -15,6 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { tmdbApi } from "@/services/api";
 import { useUserStore } from "@/store/useUserStore";
 import { SelectedCountry, Provider } from "@/types/providers";
+import ProviderLogo from "./ProviderLogo";
 
 type Props = {
   visible: boolean;
@@ -29,12 +30,14 @@ export default function SubscriptionPickerModal({
 }: Props) {
   const { subscriptions, addSubscription, removeSubscription } = useUserStore();
 
-  // Active country tab — defaults to first selected country
+  // Single country → load directly. Multiple countries → wait for user to pick
+  // one from the tabs first, to avoid showing an unfiltered provider list.
   const [activeCountry, setActiveCountry] = useState<string>(
-    countries[0]?.code ?? "",
+    countries.length === 1 ? (countries[0]?.code ?? "") : "",
   );
 
-  const activeCode = activeCountry || countries[0]?.code;
+  const activeCode =
+    activeCountry || (countries.length === 1 ? (countries[0]?.code ?? "") : "");
 
   const {
     data: providers = [],
@@ -103,7 +106,14 @@ export default function SubscriptionPickerModal({
         )}
 
         {/* Providers list */}
-        {isLoading ? (
+        {!activeCode ? (
+          <View style={styles.promptBox}>
+            <Ionicons name="flag-outline" size={28} color="#475569" />
+            <Text style={styles.promptText}>
+              Select a country above to see its available streaming services.
+            </Text>
+          </View>
+        ) : isLoading ? (
           <ActivityIndicator color="#60A5FA" style={{ marginTop: 30 }} />
         ) : isError ? (
           <View style={styles.errorBox}>
@@ -123,13 +133,15 @@ export default function SubscriptionPickerModal({
                 <Pressable
                   style={styles.item}
                   onPress={() => handleToggle(item.provider_id)}
-                  android_ripple={{ color: "rgba(96,165,250,0.08)" }}
+                  android_ripple={{ color: "rgba(96,165,250,0.06)" }}
                 >
-                  <Image
-                    source={{
-                      uri: `https://image.tmdb.org/t/p/original${item.logo_path}`,
-                    }}
-                    style={[styles.logo, isSubscribed && styles.logoSubscribed]}
+                  {/* animated=false → scale up on subscribed, no halo */}
+                  <ProviderLogo
+                    provider={item}
+                    isSubscribed={isSubscribed}
+                    size={44}
+                    showName={false}
+                    animated={false}
                   />
                   <Text
                     style={[
@@ -161,11 +173,7 @@ export default function SubscriptionPickerModal({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#0F172A",
-    paddingTop: 50,
-  },
+  container: { flex: 1, backgroundColor: "#0F172A", paddingTop: 50 },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -205,30 +213,13 @@ const styles = StyleSheet.create({
   item: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 14,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#1E293B",
     gap: 14,
   },
-  logo: {
-    width: 44,
-    height: 44,
-    borderRadius: 10,
-    backgroundColor: "#1E293B",
-  },
-  logoSubscribed: {
-    borderWidth: 2,
-    borderColor: "#22C55E",
-  },
-  providerName: {
-    flex: 1,
-    color: "#94A3B8",
-    fontSize: 16,
-  },
-  providerNameActive: {
-    color: "#F8FAFC",
-    fontWeight: "600",
-  },
+  providerName: { flex: 1, color: "#94A3B8", fontSize: 15 },
+  providerNameActive: { color: "#94A3B8", fontSize: 17, fontWeight: "600" },
   checkbox: {
     width: 24,
     height: 24,
@@ -238,9 +229,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  checkboxActive: {
-    backgroundColor: "#22C55E",
-    borderColor: "#22C55E",
+  checkboxActive: { backgroundColor: "#60A5FA", borderColor: "#60A5FA" },
+  promptBox: {
+    alignItems: "center",
+    gap: 12,
+    padding: 32,
+    marginHorizontal: 25,
+    marginTop: 20,
+  },
+  promptText: {
+    color: "#475569",
+    textAlign: "center",
+    fontSize: 14,
+    lineHeight: 22,
   },
   errorBox: {
     alignItems: "center",

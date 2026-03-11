@@ -147,11 +147,11 @@ export default function DetailsScreen() {
           <Text style={styles.providersTitle}>Where can you watch it?</Text>
 
           {media_type === "person" ? (
-            <Text style={styles.noProviders}>
+            <Text style={styles.infoText}>
               Streaming info only available for movies and TV shows.
             </Text>
           ) : countries.length === 0 ? (
-            <Text style={styles.noProviders}>
+            <Text style={styles.infoText}>
               Select a country in Settings to see streaming providers.
             </Text>
           ) : isLoading ? (

@@ -7,10 +7,11 @@ type UserState = {
   hasCompletedOnboarding: boolean;
   hasAcceptedTerms: boolean;
 
-  // One or more countries the user wants to search in
+  // countries : [] means "all regions/global"
   countries: SelectedCountry[];
   addCountry: (country: SelectedCountry) => void;
   removeCountry: (code: string) => void;
+  removeAllCountries: () => void;
 
   // Provider/s IDs the user is subscribed to
   subscriptions: number[];
@@ -18,7 +19,7 @@ type UserState = {
   removeSubscription: (providerId: number) => void;
 
   completeOnboarding: () => void;
-  acceptTerms: () => void;
+  toggleTerms: () => void;
   resetOnboarding: () => void;
 };
 
@@ -43,6 +44,8 @@ export const useUserStore = create<UserState>()(
           countries: state.countries.filter((c) => c.code !== code),
         })),
 
+      removeAllCountries: () => set({ countries: [] }),
+
       addSubscription: (providerId) =>
         set((state) => {
           if (state.subscriptions.includes(providerId)) return state;
@@ -55,7 +58,9 @@ export const useUserStore = create<UserState>()(
         })),
 
       completeOnboarding: () => set({ hasCompletedOnboarding: true }),
-      acceptTerms: () => set({ hasAcceptedTerms: true }),
+      
+      toggleTerms: () =>
+        set((state) => ({ hasAcceptedTerms: !state.hasAcceptedTerms })),
 
       resetOnboarding: () =>
         set({

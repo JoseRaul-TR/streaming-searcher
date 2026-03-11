@@ -79,7 +79,7 @@ type TmdbWatchProviderEntry = {
 };
 
 type TmdbWatchProvidersResponse = {
-  results: Record<string, TmdbWatchProviderEntry>; // TODO - Check what 'Record' does
+  results: { [countryCode: string]: TmdbWatchProviderEntry };
 };
 
 // ————————— Transform helpers —————————
@@ -134,14 +134,29 @@ export const tmdbApi = {
   },
 
   /**
-   * Fetch all providers available in a country.
+   * Fetch all providers available in a country. (Two different fetches for TV and movie providers, then provider_id deduplicates).
    * Used in SubscriptionsPickerModal (displayed in Onboarding and Settings) to let the user pick their subscriptions.
    */
   getProvidersByCountry: async (countryCode: string): Promise<Provider[]> => {
-    const data = await fetchTMDB<TmdbProvidersResponse>(
-      `/3/watch/providers/movie?watch_region=${countryCode}`,
-    );
-    return data.results ?? [];
+    const [movieData, tvData] = await Promise.all([
+      fetchTMDB<TmdbProvidersResponse>(
+        `/3/watch/providers/movie?watch_region=${countryCode}`,
+      ),
+      fetchTMDB<TmdbProvidersResponse>(
+        `/3/watch/providers/tv?watch_region=${countryCode}`,
+      ),
+    ]);
+
+    const combined = [...(movieData.results ?? []), ...(tvData.results ?? [])];
+
+    // Deduplicate by provider_id — a provider present in both movie and tv
+    // would otherwise appear twice in the subscription picker
+    const seen = new Set<number>();
+    return combined.filter((p) => {
+      if (seen.has(p.provider_id)) return false;
+      seen.add(p.provider_id);
+      return true;
+    });
   },
 
   /**
@@ -156,13 +171,13 @@ export const tmdbApi = {
   ): Promise<WatchProvidersData[]> => {
     if (mediaType === "person" || countries.length === 0) return [];
 
-    const data = await fetchTMDB<TmdbProvidersResponse>(
+    const data = await fetchTMDB<TmdbWatchProvidersResponse>(
       `/3/${mediaType}/${id}/watch/providers`,
     );
 
     return countries
       .map((country): WatchProvidersData => {
-        const entry = data.results?.[country.code]; // TODO - Check TS any complaint
+        const entry = data.results?.[country.code];
         return {
           countryCode: country.code,
           countryName: country.name,

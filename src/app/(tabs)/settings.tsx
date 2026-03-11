@@ -5,30 +5,23 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useUserStore } from "@/store/useUserStore";
-import CountryPickerModal from "@/components/CountryPickerModal";
 import SubscriptionPickerModal from "@/components/SubscriptionPickerModal";
 
 export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const [showCountryModal, setShowCountryModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
-  const {
-    countries,
-    addCountry,
-    removeCountry,
-    subscriptions,
-    resetOnboarding,
-  } = useUserStore();
+  const { countries, subscriptions, resetOnboarding } = useUserStore();
 
-  const countriesLabel =
-    countries.length === 0
-      ? "Not set"
-      : countries.length === 1
-        ? countries[0].name
-        : `${countries[0].name} +${countries.length - 1} more`;
+  const isGlobal = countries.length === 0;
+
+  const countriesLabel = isGlobal
+    ? "All regions"
+    : countries.length === 1
+      ? countries[0].name
+      : `${countries[0].name} +${countries.length - 1} more`;
 
   const subscriptionsLabel =
     subscriptions.length === 0
@@ -38,7 +31,7 @@ export default function SettingsScreen() {
   const handleResetOnboarding = () => {
     Alert.alert(
       "Restart Setup",
-      "This will reset your preferences and take you back to the setup screen.",
+      "This will reset your preferences and take you back to the initial setup screen.",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -64,9 +57,10 @@ export default function SettingsScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>Search preferences</Text>
 
+        {/* Countries → dedicated screen */}
         <Pressable
           style={styles.row}
-          onPress={() => setShowCountryModal(true)}
+          onPress={() => router.push("/country-picker")}
           android_ripple={{ color: "rgba(255,255,255,0.05)" }}
         >
           <View style={styles.rowLeft}>
@@ -83,9 +77,10 @@ export default function SettingsScreen() {
 
         <View style={styles.rowSpacer} />
 
+        {/* Subscriptions – disabled when global */}
         <Pressable
-          style={[styles.row, countries.length === 0 && styles.rowDisabled]}
-          onPress={() => countries.length > 0 && setShowSubscriptionModal(true)}
+          style={[styles.row, isGlobal && styles.rowDisabled]}
+          onPress={() => !isGlobal && setShowSubscriptionModal(true)}
           android_ripple={{ color: "rgba(255,255,255,0.05)" }}
         >
           <View style={styles.rowLeft}>
@@ -100,9 +95,9 @@ export default function SettingsScreen() {
           </View>
         </Pressable>
 
-        {countries.length === 0 && (
+        {isGlobal && (
           <Text style={styles.hint}>
-            Select a country first to manage subscriptions.
+            Select one or more countries first to manage subscriptions.
           </Text>
         )}
       </View>
@@ -125,14 +120,6 @@ export default function SettingsScreen() {
           <Ionicons name="chevron-forward" size={18} color="#475569" />
         </Pressable>
       </View>
-
-      <CountryPickerModal
-        visible={showCountryModal}
-        onClose={() => setShowCountryModal(false)}
-        selectedCountries={countries}
-        onAdd={addCountry}
-        onRemove={removeCountry}
-      />
 
       <SubscriptionPickerModal
         visible={showSubscriptionModal}

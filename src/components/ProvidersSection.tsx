@@ -1,6 +1,7 @@
 import React from "react";
-import { View, Text, Image, StyleSheet } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { Provider } from "@/types/providers";
+import ProviderLogo from "./ProviderLogo";
 
 type Props = {
   title: string;
@@ -18,24 +19,18 @@ export default function ProviderSection({
   return (
     <View style={styles.category}>
       <Text style={styles.categoryTitle}>{title}</Text>
+
       <View style={styles.grid}>
-        {providers.map((p) => {
-          const isSubscribed = subscribedIds?.has(p.provider_id) ?? false;
-          return (
-            <View key={p.provider_id} style={styles.item}>
-              <Image
-                source={{
-                  uri: `https://image.tmdb.org/t/p/original${p.logo_path}`,
-                }}
-                style={[styles.logo, isSubscribed && styles.logoSubscribed]}
-              />
-              {isSubscribed && <View style={styles.subscribedDot} />}
-              <Text style={styles.name} numberOfLines={1}>
-                {p.provider_name}
-              </Text>
-            </View>
-          );
-        })}
+        {providers.map((p) => (
+          <ProviderLogo
+            key={p.provider_id}
+            provider={p}
+            isSubscribed={subscribedIds?.has(p.provider_id) ?? false}
+            size={50}
+            nameLines={2}
+            animated
+          />
+        ))}
       </View>
     </View>
   );
@@ -55,34 +50,5 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 15,
-  },
-  item: {
-    alignItems: "center",
-    width: 60,
-  },
-  logo: {
-    width: 50,
-    height: 50,
-    borderRadius: 50,
-    backgroundColor: "#1E293B",
-  },
-  logoSubscribed: {
-    borderWidth: 2,
-    borderColor: "#22C55E",
-  },
-  subscribedDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#22C55E",
-    position: "absolute",
-    top: -2,
-    right: -2,
-  },
-  name: {
-    color: "#94A3B8",
-    fontSize: 10,
-    marginTop: 5,
-    textAlign: "center",
   },
 });
