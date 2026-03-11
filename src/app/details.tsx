@@ -36,7 +36,10 @@ export default function DetailsScreen() {
   const { countries, subscriptions } = useUserStore();
 
   const subscribedIds = new Set(subscriptions);
-  const isMultiCountry = countries.length > 1;
+
+  // Single country → flat ProviderSection layout
+  // Multiple countries or global (countries=[]) → CountryProviderSection
+  const isSingleCountry = countries.length === 1;
 
   const { providers, isLoading, isError } = useWatchProviders(
     id,
@@ -55,11 +58,11 @@ export default function DetailsScreen() {
     setExpanded((prev) => !prev);
   }, []);
 
+  const hasProviders = providers.length > 0;
+
   const handleOpenJustWatch = useCallback((link: string) => {
     void Linking.openURL(link);
   }, []);
-
-  const hasProviders = providers.length > 0;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -67,7 +70,7 @@ export default function DetailsScreen() {
       <View style={styles.topBar}>
         <Pressable
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPress={handleBack}
           android_ripple={{ color: "rgba(255,255,255,0.1)", borderless: true }}
           hitSlop={10}
         >
@@ -150,10 +153,6 @@ export default function DetailsScreen() {
             <Text style={styles.infoText}>
               Streaming info only available for movies and TV shows.
             </Text>
-          ) : countries.length === 0 ? (
-            <Text style={styles.infoText}>
-              Select a country in Settings to see streaming providers.
-            </Text>
           ) : isLoading ? (
             <ActivityIndicator color="#60A5FA" style={{ marginTop: 20 }} />
           ) : isError ? (
@@ -168,26 +167,16 @@ export default function DetailsScreen() {
             <View style={styles.emptyProviders}>
               <Ionicons name="alert-circle-outline" size={24} color="#475569" />
               <Text style={styles.infoText}>
-                Not available in{" "}
-                {countries.length === 1
-                  ? countries[0].name
-                  : "your selected countries"}{" "}
-                currently.
+                {countries.length === 0
+                  ? "Not available on any streaming service."
+                  : `Not available in ${
+                      countries.length === 1
+                        ? countries[0].name
+                        : "your selected countries"
+                    } currently.`}
               </Text>
             </View>
-          ) : isMultiCountry ? (
-            /* Multi-country — hierarchical layout */
-            <>
-              <CountryProviderSection
-                data={providers}
-                subscribedIds={subscribedIds}
-              />
-              <View style={styles.justWatch}>
-                <Text style={styles.jwLabel}>Data provided by </Text>
-                <Text style={styles.jwBrand}>JustWatch</Text>
-              </View>
-            </>
-          ) : (
+          ) : isSingleCountry ? (
             /* Single country — flat layout */
             <>
               <ProviderSection
@@ -213,13 +202,25 @@ export default function DetailsScreen() {
               {providers[0]?.link && (
                 <Pressable
                   style={styles.justWatch}
-                  onPress={() => Linking.openURL(providers[0].link!)}
+                  onPress={() => void Linking.openURL(providers[0].link!)}
                   android_ripple={{ color: "rgba(255,255,255,0.05)" }}
                 >
                   <Text style={styles.jwLabel}>Data provided by </Text>
                   <Text style={styles.jwBrand}>JustWatch</Text>
                 </Pressable>
               )}
+            </>
+          ) : (
+            /* Multi-country or global — hierarchical collapsible layout */
+            <>
+              <CountryProviderSection
+                data={providers}
+                subscribedIds={subscribedIds}
+              />
+              <View style={styles.justWatch}>
+                <Text style={styles.jwLabel}>Data provided by </Text>
+                <Text style={styles.jwBrand}>JustWatch</Text>
+              </View>
             </>
           )}
         </View>
@@ -242,11 +243,7 @@ const styles = StyleSheet.create({
   backButton: { borderRadius: 20, padding: 4, overflow: "hidden" },
   topBarTitle: { color: "#FFF", fontSize: 17, fontWeight: "600", flex: 1 },
   scroll: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40 },
-  header: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 15,
-  },
+  header: { flexDirection: "row", alignItems: "flex-start", marginBottom: 15 },
   posterWrap: { position: "relative", elevation: 8 },
   poster: {
     width: 110,

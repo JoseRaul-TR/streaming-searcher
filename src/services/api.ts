@@ -134,8 +134,9 @@ export const tmdbApi = {
   },
 
   /**
-   * Fetch all providers available in a country. (Two different fetches for TV and movie providers, then provider_id deduplicates).
-   * Used in SubscriptionsPickerModal (displayed in Onboarding and Settings) to let the user pick their subscriptions.
+   * Fetch all providers available in a country.
+   * Makes two parallel requests (movie + tv) and deduplicates by provider_id
+   * so both types are represented in the subscription picker.
    */
   getProvidersByCountry: async (countryCode: string): Promise<Provider[]> => {
     const [movieData, tvData] = await Promise.all([
@@ -160,17 +161,66 @@ export const tmdbApi = {
   },
 
   /**
-   * Fetch streaming availability for a movie or TV show across all selected countries.
-   * TMDB returns all countries in a single response — then response is filtered client-side.
-   * Returns one WatchProvidersData entry per country that has at least one provider.
+   * Fetch streaming availability for a movie or TV show.
+   *
+   * Two modes:
+   *
+   * — Filtered (countries.length > 0):
+   *   TMDB returns all countries in a single response. We filter client-side
+   *   to only the countries the user has selected.
+   *
+   * — Global (countries.length === 0):
+   *   Return every country in the response that has at least one provider.
+   *   Country names are resolved by fetching the regions list in parallel
+   *   with the providers call so we can display full names instead of codes.
+   *   Results are sorted alphabetically.
    */
   getWatchProviders: async (
     id: number | string,
     mediaType: "movie" | "tv" | "person",
     countries: SelectedCountry[],
   ): Promise<WatchProvidersData[]> => {
-    if (mediaType === "person" || countries.length === 0) return [];
+    if (mediaType === "person") return []; // No fetch for people
 
+    const isGlobal = countries.length === 0;
+
+    if (isGlobal) {
+      // Fetch providers and countries names in parallel
+      const [providerRes, countriesRes] = await Promise.all([
+        fetchTMDB<TmdbWatchProvidersResponse>(
+          `/3/${mediaType}/${id}/watch/providers`,
+        ),
+        fetchTMDB<TmdbCountriesResponse>("/3/watch/providers/regions"),
+      ]);
+
+      // Build a code -> english_name lookup map
+      const nameByBode = new Map<string, string>(
+        (countriesRes.results ?? []).map((c) => [c.iso_3166_1, c.english_name]),
+      );
+
+      return Object.entries(providerRes.results ?? [])
+        .map(
+          ([code, entry]): WatchProvidersData => ({
+            countryCode: code,
+            countryName: nameByBode.get(code) ?? code,
+            link: entry.link,
+            free: entry.free ?? [],
+            flatrate: entry.flatrate ?? [],
+            rent: entry.rent ?? [],
+            buy: entry.buy ?? [],
+          }),
+        )
+        .filter(
+          (c) =>
+            (c.free?.length ?? 0) > 0 ||
+            (c.flatrate?.length ?? 0) > 0 ||
+            (c.rent?.length ?? 0) > 0 ||
+            (c.buy?.length ?? 0) > 0,
+        )
+        .sort((a, b) => a.countryName.localeCompare(b.countryName));
+    }
+
+    // Filtered mode - single API call, client side country filter
     const data = await fetchTMDB<TmdbWatchProvidersResponse>(
       `/3/${mediaType}/${id}/watch/providers`,
     );

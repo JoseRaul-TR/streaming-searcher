@@ -14,7 +14,7 @@ type UseSearchResult = {
   results: SearchedItem[];
   isLoading: boolean;
   isError: boolean;
-  haSearched: boolean;
+  hasSearched: boolean;
 };
 
 /**
@@ -52,6 +52,6 @@ export function useSearch(): UseSearchResult {
     results: data ?? [],
     isLoading: isLoading || isFetching,
     isError,
-    haSearched: debouncedQuery.length > MIN_QUERY_LENGTH,
+    hasSearched: debouncedQuery.length > MIN_QUERY_LENGTH,
   };
 }

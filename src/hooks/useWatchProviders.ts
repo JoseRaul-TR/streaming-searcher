@@ -12,11 +12,16 @@ type UseWatchProvidersResult = {
 };
 
 /**
- * Fetches streaming provider availability for a given title across all
- * selected countries. Wraps the TanStack Query so Details screen stays clean.
+ * Fetches streaming provider availability for a given title.
  *
- * The query is disabled for persons and when no country has been selected,
- * since neither case has a meaningful result from the providers endpoint.
+ * Wraps TanStack Query so the Details screen stays clean.
+ *
+ * — countries.length > 0: filtered mode — only the selected countries.
+ * — countries.length === 0: global mode — all available countries, sorted
+ *   alphabetically. Handled entirely in api.getWatchProviders.
+ *
+ * The query is only disabled for persons since the providers endpoint
+ * doesn't apply to them.
  */
 export function useWatchProviders(
   id: string,
@@ -26,7 +31,8 @@ export function useWatchProviders(
   const { data, isLoading, isError } = useQuery<WatchProvidersData[]>({
     queryKey: ["providers", id, mediaType, countries.map((c) => c.code)],
     queryFn: () => tmdbApi.getWatchProviders(id, mediaType, countries),
-    enabled: mediaType !== "person" && countries.length > 0,
+    // Skip the query if "person"
+    enabled: mediaType !== "person",
   });
 
   return {

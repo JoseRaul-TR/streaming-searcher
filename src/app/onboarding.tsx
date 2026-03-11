@@ -87,6 +87,24 @@ export default function OnboardingScreen() {
               onRemove={removeCountry}
               onClear={removeAllCountries}
             />
+
+            {countries.length === 0 && (
+              <View style={styles.perfHint}>
+                <Ionicons
+                  name="speedometer-outline"
+                  size={15}
+                  color="#475569"
+                />
+                <Text style={styles.perfHintText}>
+                  Selecting at least one country improves app performance.
+                  AGlobal search loads availability for every country at once
+                  and at the moment can creates performance issues.
+                </Text>
+              </View>
+            )}
+            <Text style={styles.hint}>
+              This can be edited later in Settings.
+            </Text>
           </View>
         )}
 
@@ -132,7 +150,7 @@ export default function OnboardingScreen() {
             )}
 
             <Text style={styles.hint}>
-              This can edit later in Settings.
+              This can be edited later in Settings.
             </Text>
           </View>
         )}
@@ -143,21 +161,29 @@ export default function OnboardingScreen() {
             <Text style={styles.stepLabel}>Step 3 of 3</Text>
             <Text style={styles.title}>Terms of Use</Text>
 
-            <Pressable
-              style={styles.checkboxRow}
-              onPress={toggleTerms}
-              android_ripple={{ color: "rgba(96,165,250,0.1)" }}
-            >
-              <View
-                style={[
-                  styles.checkbox,
-                  hasAcceptedTerms && styles.checkboxActive,
-                ]}
+            <View style={styles.checkboxRow}>
+              {/* Pressable solo en el checkbox */}
+              <Pressable
+                onPress={toggleTerms}
+                android_ripple={{
+                  color: "rgba(96,165,250,0.1)",
+                  borderless: true,
+                }}
+                hitSlop={10}
               >
-                {hasAcceptedTerms && (
-                  <Ionicons name="checkmark" size={16} color="white" />
-                )}
-              </View>
+                <View
+                  style={[
+                    styles.checkbox,
+                    hasAcceptedTerms && styles.checkboxActive,
+                  ]}
+                >
+                  {hasAcceptedTerms && (
+                    <Ionicons name="checkmark" size={16} color="white" />
+                  )}
+                </View>
+              </Pressable>
+
+              {/* Label con link separado — Text anidado, sin Pressable dentro de Text */}
               <Text style={styles.checkboxLabel}>
                 I accept the following{" "}
                 <Text
@@ -167,7 +193,7 @@ export default function OnboardingScreen() {
                   Terms of Use
                 </Text>
               </Text>
-            </Pressable>
+            </View>
           </View>
         )}
       </ScrollView>
@@ -306,12 +332,12 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: "#60A5FA",
+    borderColor: "#334155",
     marginRight: 15,
     justifyContent: "center",
     alignItems: "center",
   },
-  checkboxActive: { backgroundColor: "#60A5FA" },
+  checkboxActive: { backgroundColor: "#60A5FA", borderColor: "#60A5FA" },
   checkboxLabel: { color: "#94A3B8", fontSize: 16, flex: 1 },
   link: {
     color: "#60A5FA",
@@ -342,4 +368,18 @@ const styles = StyleSheet.create({
   },
   btnText: { color: "#FFF", fontSize: 16, fontWeight: "bold" },
   disabled: { opacity: 0.4 },
+  perfHint: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    backgroundColor: "rgba(71,85,105,0.15)",
+    borderRadius: 10,
+    padding: 12,
+  },
+  perfHintText: {
+    flex: 1,
+    color: "#475569",
+    fontSize: 12,
+    lineHeight: 18,
+  },
 });

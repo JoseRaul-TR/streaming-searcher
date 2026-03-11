@@ -7,11 +7,12 @@ import ProviderSection from "./ProvidersSection";
 type Props = {
   data: WatchProvidersData[];
   subscribedIds: Set<number>;
+  defaultExpanded?: boolean;
 };
 
-export default function CountryProviderSection({ data, subscribedIds }: Props) {
+export default function CountryProviderSection({ data, subscribedIds, defaultExpanded = true, }: Props) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>(
-    Object.fromEntries(data.map((c) => [c.countryCode, true])),
+    Object.fromEntries(data.map((c) => [c.countryCode, defaultExpanded])),
   );
 
   const toggle = (code: string) =>

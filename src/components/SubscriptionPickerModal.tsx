@@ -5,7 +5,6 @@ import {
   Text,
   FlatList,
   Pressable,
-  Image,
   ActivityIndicator,
   StyleSheet,
 } from "react-native";
