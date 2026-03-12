@@ -62,17 +62,27 @@ export default function SubscriptionPickerModal({
     enabled: !!activeCode,
   });
 
+  // Subscription check and toggle are scoped to activeCode so the same
+  // provider in a different country is treated as a separate subscription.
+  const isProviderSubscribed = useCallback(
+    (providerId: number) =>
+      subscriptions.some(
+        (s) => s.providerId === providerId && s.countryCode === activeCode,
+      ),
+    [subscriptions, activeCode],
+  );
+
   // useCallback: handleToggle is passed into each FlatList renderItem.
   // Wrapping prevents a new reference on every render.
   const handleToggle = useCallback(
     (providerId: number) => {
-      if (subscriptions.includes(providerId)) {
-        removeSubscription(providerId);
+      if (isProviderSubscribed(providerId)) {
+        removeSubscription(providerId, activeCode);
       } else {
-        addSubscription(providerId);
+        addSubscription(providerId, activeCode);
       }
     },
-    [subscriptions, addSubscription, removeSubscription],
+    [isProviderSubscribed, addSubscription, removeSubscription, activeCode],
   );
 
   return (
@@ -143,7 +153,7 @@ export default function SubscriptionPickerModal({
             keyExtractor={(item) => String(item.provider_id)}
             contentContainerStyle={styles.list}
             renderItem={({ item }) => {
-              const isSubscribed = subscriptions.includes(item.provider_id);
+              const isSubscribed = isProviderSubscribed(item.provider_id);
               return (
                 <Pressable
                   style={styles.item}

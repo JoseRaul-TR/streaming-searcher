@@ -7,13 +7,18 @@ import { Colors } from "@/constants/colors";
 type Props = {
   title: string;
   providers: Provider[];
-  subscribedIds?: Set<number>;
+  // Composite key set: "${countryCode}:${providerId}"
+  // Using a string key instead of just provider_id prevents a provider
+  // available in multiple countries from matching subscriptions in all of them.
+  subscribedKeys?: Set<string>;
+  countryCode: string;
 };
 
 export default function ProviderSection({
   title,
   providers,
-  subscribedIds,
+  subscribedKeys,
+  countryCode,
 }: Props) {
   if (!providers?.length) return null;
 
@@ -26,7 +31,9 @@ export default function ProviderSection({
           <ProviderLogo
             key={p.provider_id}
             provider={p}
-            isSubscribed={subscribedIds?.has(p.provider_id) ?? false}
+            isSubscribed={
+              subscribedKeys?.has(`${countryCode}:${p.provider_id}`) ?? false
+            }
             size={50}
             nameLines={2}
             animated

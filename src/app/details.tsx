@@ -36,8 +36,12 @@ export default function DetailsScreen() {
   const [expanded, setExpanded] = useState(false);
   const { countries, subscriptions } = useUserStore();
 
-  const subscribedIds = new Set(subscriptions);
-
+  // Composite key: "${countryCode}:${providerId}"
+  // This ensures that the same provider available in multiple countries
+  // only gets highlighted in the country the user is actually subscribed to.
+  const subscribedKeys = new Set(
+    subscriptions.map((s) => `${s.countryCode}:${s.providerId}`),
+  );
   // Single country → flat category layout (no country header needed).
   // Multiple countries or global (countries=[]) → collapsible tabs per country.
   const isSingleCountry = countries.length === 1;
@@ -177,23 +181,24 @@ export default function DetailsScreen() {
               <ProviderSection
                 title="Free"
                 providers={providers[0]?.free ?? []}
-                subscribedIds={subscribedIds}
+                subscribedKeys={subscribedKeys}
+                countryCode={providers[0]?.countryCode ?? ""}
               />
               <ProviderSection
                 title="Stream"
                 providers={providers[0]?.flatrate ?? []}
-                subscribedIds={subscribedIds}
-              />
+subscribedKeys={subscribedKeys}
+                countryCode={providers[0]?.countryCode ?? ""}              />
               <ProviderSection
                 title="Rent"
                 providers={providers[0]?.rent ?? []}
-                subscribedIds={subscribedIds}
-              />
+subscribedKeys={subscribedKeys}
+                countryCode={providers[0]?.countryCode ?? ""}              />
               <ProviderSection
                 title="Buy"
                 providers={providers[0]?.buy ?? []}
-                subscribedIds={subscribedIds}
-              />
+subscribedKeys={subscribedKeys}
+                countryCode={providers[0]?.countryCode ?? ""}              />
               {providers[0]?.link && (
                 <Pressable
                   style={styles.justWatch}
@@ -210,7 +215,7 @@ export default function DetailsScreen() {
             <>
               <CountryProviderSection
                 data={providers}
-                subscribedIds={subscribedIds}
+                subscribedKeys={subscribedKeys}
                 defaultExpanded={false}
               />
               <View style={styles.justWatch}>

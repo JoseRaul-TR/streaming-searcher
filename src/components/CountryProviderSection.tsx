@@ -8,31 +8,40 @@ import { Colors } from "@/constants/colors";
 // ————— Internal Subcomponent —————
 type ProviderCategoriesProps = {
   data: Pick<WatchProvidersData, "free" | "flatrate" | "rent" | "buy">;
-  subscribedIds: Set<number>;
+  subscribedKeys: Set<string>;
+  countryCode: string;
 };
 
-function ProviderCategories({ data, subscribedIds }: ProviderCategoriesProps) {
+function ProviderCategories({
+  data,
+  subscribedKeys,
+  countryCode,
+}: ProviderCategoriesProps) {
   return (
     <>
       <ProviderSection
         title="Free"
         providers={data.free ?? []}
-        subscribedIds={subscribedIds}
+        subscribedKeys={subscribedKeys}
+        countryCode={countryCode}
       />
       <ProviderSection
         title="Stream"
         providers={data.flatrate ?? []}
-        subscribedIds={subscribedIds}
+        subscribedKeys={subscribedKeys}
+        countryCode={countryCode}
       />
       <ProviderSection
         title="Rent"
         providers={data.rent ?? []}
-        subscribedIds={subscribedIds}
+        subscribedKeys={subscribedKeys}
+        countryCode={countryCode}
       />
       <ProviderSection
         title="Buy"
         providers={data.buy ?? []}
-        subscribedIds={subscribedIds}
+        subscribedKeys={subscribedKeys}
+        countryCode={countryCode}
       />
     </>
   );
@@ -41,13 +50,13 @@ function ProviderCategories({ data, subscribedIds }: ProviderCategoriesProps) {
 // ————— Main Component ——————
 type Props = {
   data: WatchProvidersData[];
-  subscribedIds: Set<number>;
+  subscribedKeys: Set<string>;
   defaultExpanded?: boolean;
 };
 
 export default function CountryProviderSection({
   data,
-  subscribedIds,
+  subscribedKeys,
   defaultExpanded = false,
 }: Props) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>(
@@ -80,7 +89,8 @@ export default function CountryProviderSection({
             <View style={styles.categories}>
               <ProviderCategories
                 data={country}
-                subscribedIds={subscribedIds}
+                subscribedKeys={subscribedKeys}
+                countryCode={country.countryCode}
               />
             </View>
           )}
