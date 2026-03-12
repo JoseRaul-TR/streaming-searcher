@@ -116,16 +116,8 @@ function toSearchedItem(item: TmdbRawSearchItem): SearchedItem {
 // ————————— Public API —————————
 
 export const tmdbApi = {
-  // Search movies, TV shows and people
-  searchItem: async (query: string): Promise<SearchedItem[]> => {
-    if (!query.trim()) return [];
-    const data = await fetchTMDB<TmdbSearchResponse>(
-      `/3/search/multi?query=${encodeURIComponent(query)}`,
-    );
-    return (data.results ?? []).map(toSearchedItem);
-  },
 
-  // Fetch all available countries
+    // Fetch all available countries
   getCountries: async (): Promise<Country[]> => {
     const data = await fetchTMDB<TmdbCountriesResponse>(
       "/3/watch/providers/regions",
@@ -133,7 +125,7 @@ export const tmdbApi = {
     return data.results ?? [];
   },
 
-  /**
+    /**
    * Fetch all providers available in a country.
    * Makes two parallel requests (movie + tv) and deduplicates by provider_id
    * so both types are represented in the subscription picker.
@@ -158,6 +150,15 @@ export const tmdbApi = {
       seen.add(p.provider_id);
       return true;
     });
+  },
+
+  // Search movies, TV shows and people
+  searchItem: async (query: string): Promise<SearchedItem[]> => {
+    if (!query.trim()) return [];
+    const data = await fetchTMDB<TmdbSearchResponse>(
+      `/3/search/multi?query=${encodeURIComponent(query)}`,
+    );
+    return (data.results ?? []).map(toSearchedItem);
   },
 
   /**
@@ -194,7 +195,7 @@ export const tmdbApi = {
       ]);
 
       // Build a code -> english_name lookup map
-      const nameByBode = new Map<string, string>(
+      const nameByCode = new Map<string, string>(
         (countriesRes.results ?? []).map((c) => [c.iso_3166_1, c.english_name]),
       );
 
@@ -202,7 +203,7 @@ export const tmdbApi = {
         .map(
           ([code, entry]): WatchProvidersData => ({
             countryCode: code,
-            countryName: nameByBode.get(code) ?? code,
+            countryName: nameByCode.get(code) ?? code,
             link: entry.link,
             free: entry.free ?? [],
             flatrate: entry.flatrate ?? [],

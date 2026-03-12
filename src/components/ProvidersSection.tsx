@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Provider } from "@/types/providers";
 import ProviderLogo from "./ProviderLogo";
+import { Colors } from "@/constants/colors";
 
 type Props = {
   title: string;
@@ -39,7 +40,7 @@ export default function ProviderSection({
 const styles = StyleSheet.create({
   category: { marginBottom: 20 },
   categoryTitle: {
-    color: "#64748B",
+    color: Colors.textDisabled,
     fontSize: 12,
     fontWeight: "bold",
     textTransform: "uppercase",

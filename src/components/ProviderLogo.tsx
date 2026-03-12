@@ -9,6 +9,7 @@ import {
   Easing,
 } from "react-native";
 import { Provider } from "@/types/providers";
+import { Colors } from "@/constants/colors";
 
 type Props = {
   provider: Provider;
@@ -93,14 +94,12 @@ export default function ProviderLogo({
   // ————— Interpolations —————
 
   // Scale: peaks at the midpoint of the cycle (0.5) then contracts back.
-  // This mirrors the opacity curve so halo is largest when most visible.
   const haloScale = pulse.interpolate({
     inputRange: [0, 0.5, 1],
     outputRange: [1, 1.2, 1],
   });
 
-  // Opacity: peaks at the midpoint and returns to 0 — the sine easing makes
-  // both the rise and the fall smooth and continuous with no gap.
+  // Opacity: peaks at the midpoint and returns to 0.
   const haloOpacity = pulse.interpolate({
     inputRange: [0, 0.5, 1],
     outputRange: [0, 0.3, 0],
@@ -111,7 +110,7 @@ export default function ProviderLogo({
     width: size,
     height: size,
     borderRadius: size,
-    backgroundColor: "#1E293B" as const,
+    backgroundColor: Colors.surface,
   };
 
   // ————— JSX —————
@@ -186,16 +185,16 @@ const styles = StyleSheet.create({
   },
   halo: {
     position: "absolute",
-    backgroundColor: "#22C55E",
+    backgroundColor: Colors.success,
   },
   name: {
-    color: "#94A3B8",
+    color: Colors.textMuted,
     fontSize: 10,
     textAlign: "center",
     width: 60,
   },
   nameActive: {
-    color: "#CBD5E1",
+    color: Colors.textSecondary,
     fontWeight: "600",
   },
 });

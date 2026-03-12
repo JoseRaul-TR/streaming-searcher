@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useUserStore } from "@/store/useUserStore";
 import SubscriptionPickerModal from "@/components/SubscriptionPickerModal";
+import { Colors } from "@/constants/colors";
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -64,34 +65,42 @@ export default function SettingsScreen() {
           android_ripple={{ color: "rgba(255,255,255,0.05)" }}
         >
           <View style={styles.rowLeft}>
-            <Ionicons name="globe-outline" size={22} color="#60A5FA" />
+            <Ionicons name="globe-outline" size={22} color={Colors.primary} />
             <Text style={styles.rowTitle}>Countries</Text>
           </View>
           <View style={styles.rowRight}>
             <Text style={styles.rowValue} numberOfLines={1}>
               {countriesLabel}
             </Text>
-            <Ionicons name="chevron-forward" size={18} color="#475569" />
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color={Colors.surfaceAlt}
+            />
           </View>
         </Pressable>
 
         <View style={styles.rowSpacer} />
 
-        {/* Subscriptions – disabled when global */}
+        {/* Subscriptions — disabled when global */}
         <Pressable
           style={[styles.row, isGlobal && styles.rowDisabled]}
           onPress={() => !isGlobal && setShowSubscriptionModal(true)}
           android_ripple={{ color: "rgba(255,255,255,0.05)" }}
         >
           <View style={styles.rowLeft}>
-            <Ionicons name="tv-outline" size={22} color="#60A5FA" />
+            <Ionicons name="tv-outline" size={22} color={Colors.primary} />
             <Text style={styles.rowTitle}>My Subscriptions</Text>
           </View>
           <View style={styles.rowRight}>
             <Text style={styles.rowValue} numberOfLines={1}>
               {subscriptionsLabel}
             </Text>
-            <Ionicons name="chevron-forward" size={18} color="#475569" />
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color={Colors.surfaceAlt}
+            />
           </View>
         </Pressable>
 
@@ -112,12 +121,16 @@ export default function SettingsScreen() {
           android_ripple={{ color: "rgba(255,255,255,0.05)" }}
         >
           <View style={styles.rowLeft}>
-            <Ionicons name="refresh-outline" size={22} color="#F87171" />
+            <Ionicons name="refresh-outline" size={22} color={Colors.error} />
             <Text style={[styles.rowTitle, styles.rowTitleDanger]}>
               Restart Setup
             </Text>
           </View>
-          <Ionicons name="chevron-forward" size={18} color="#475569" />
+          <Ionicons
+            name="chevron-forward"
+            size={18}
+            color={Colors.surfaceAlt}
+          />
         </Pressable>
       </View>
 
@@ -133,12 +146,12 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0F172A",
+    backgroundColor: Colors.background,
     paddingHorizontal: 20,
   },
   section: { marginBottom: 30 },
   sectionLabel: {
-    color: "#60A5FA",
+    color: Colors.primary,
     fontSize: 12,
     fontWeight: "bold",
     letterSpacing: 1,
@@ -149,7 +162,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#1E293B",
+    backgroundColor: Colors.surface,
     paddingVertical: 16,
     paddingHorizontal: 18,
     borderRadius: 14,
@@ -169,11 +182,11 @@ const styles = StyleSheet.create({
     gap: 8,
     flexShrink: 0,
   },
-  rowTitle: { color: "#F8FAFC", fontSize: 16 },
-  rowTitleDanger: { color: "#F87171" },
-  rowValue: { color: "#94A3B8", fontSize: 14, maxWidth: 140 },
+  rowTitle: { color: Colors.text, fontSize: 16 },
+  rowTitleDanger: { color: Colors.error },
+  rowValue: { color: Colors.textMuted, fontSize: 14, maxWidth: 140 },
   hint: {
-    color: "#475569",
+    color: Colors.surfaceAlt,
     fontSize: 12,
     marginTop: 8,
     marginLeft: 4,

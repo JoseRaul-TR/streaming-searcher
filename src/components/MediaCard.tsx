@@ -5,12 +5,11 @@ import {
   Image,
   Pressable,
   StyleSheet,
-  Dimensions,
+  useWindowDimensions,
 } from "react-native";
 import { Ionicons, Feather } from "@expo/vector-icons";
 import { SearchedItem } from "@/types/searchedItem";
-
-const COLUMN_WIDTH = (Dimensions.get("window").width - 40) / 2;
+import { Colors } from "@/constants/colors";
 
 type Props = {
   item: SearchedItem;
@@ -18,8 +17,13 @@ type Props = {
 };
 
 export default function MediaCard({ item, onPress }: Props) {
+  // useWindowDimensions re-renders if dimensions change (rotation, iPad multitasking),
+  // unlike the module-level Dimensions.get() which is calculated once at import time.
+  const { width } = useWindowDimensions();
+  const columnWidth = (width - 40) / 2;
+
   return (
-    <Pressable style={styles.card} onPress={onPress}>
+    <Pressable style={[styles.card, { width: columnWidth }]} onPress={onPress}>
       <View style={styles.posterContainer}>
         {item.poster_path ? (
           <Image
@@ -32,13 +36,21 @@ export default function MediaCard({ item, onPress }: Props) {
         ) : (
           <View style={styles.placeholder}>
             {item.media_type === "movie" && (
-              <Ionicons name="film-outline" size={50} color="#475569" />
+              <Ionicons
+                name="film-outline"
+                size={50}
+                color={Colors.surfaceAlt}
+              />
             )}
             {item.media_type === "tv" && (
-              <Feather name="tv" size={50} color="#475569" />
+              <Feather name="tv" size={50} color={Colors.surfaceAlt} />
             )}
             {item.media_type === "person" && (
-              <Ionicons name="person-outline" size={50} color="#475569" />
+              <Ionicons
+                name="person-outline"
+                size={50}
+                color={Colors.surfaceAlt}
+              />
             )}
           </View>
         )}
@@ -66,9 +78,8 @@ export default function MediaCard({ item, onPress }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    width: COLUMN_WIDTH,
     marginBottom: 15,
-    backgroundColor: "#1E293B",
+    backgroundColor: Colors.surface,
     borderRadius: 12,
     padding: 10,
     alignItems: "center",
@@ -76,7 +87,7 @@ const styles = StyleSheet.create({
   posterContainer: {
     width: "100%",
     height: 180,
-    backgroundColor: "#334155",
+    backgroundColor: Colors.surfaceMid,
     borderRadius: 8,
     overflow: "hidden",
     marginBottom: 10,
@@ -85,7 +96,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#1E293B",
+    backgroundColor: Colors.surface,
   },
   badge: {
     position: "absolute",
@@ -103,5 +114,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     textAlign: "center",
   },
-  year: { color: "#94A3B8", fontSize: 10, marginTop: 4 },
+  year: { color: Colors.textMuted, fontSize: 10, marginTop: 4 },
 });

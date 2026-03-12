@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Modal, View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { Colors } from "@/constants/colors";
 
 type Props = {
   text: string;
@@ -20,7 +21,11 @@ export default function InfoTooltip({ text }: Props) {
         hitSlop={10}
         style={styles.iconButton}
       >
-        <Ionicons name="information-circle-outline" size={20} color="#475569" />
+        <Ionicons
+          name="information-circle-outline"
+          size={20}
+          color={Colors.surfaceAlt}
+        />
       </Pressable>
 
       <Modal
@@ -34,14 +39,18 @@ export default function InfoTooltip({ text }: Props) {
           {/* Stop propagation so tapping the card doesn't close */}
           <Pressable style={styles.card} onPress={() => {}}>
             <View style={styles.cardHeader}>
-              <Ionicons name="information-circle" size={18} color="#60A5FA" />
+              <Ionicons
+                name="information-circle"
+                size={18}
+                color={Colors.primary}
+              />
               <Text style={styles.cardTitle}>Info</Text>
               <Pressable
                 onPress={() => setVisible(false)}
                 hitSlop={10}
                 style={styles.closeBtn}
               >
-                <Ionicons name="close" size={20} color="#64748B" />
+                <Ionicons name="close" size={20} color={Colors.textDisabled} />
               </Pressable>
             </View>
             <Text style={styles.cardText}>{text}</Text>
@@ -64,7 +73,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
   card: {
-    backgroundColor: "#1E293B",
+    backgroundColor: Colors.surface,
     borderRadius: 16,
     padding: 20,
     width: "100%",
@@ -76,7 +85,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   cardTitle: {
-    color: "#60A5FA",
+    color: Colors.primary,
     fontSize: 14,
     fontWeight: "700",
     flex: 1,
@@ -85,7 +94,7 @@ const styles = StyleSheet.create({
     padding: 2,
   },
   cardText: {
-    color: "#94A3B8",
+    color: Colors.textMuted,
     fontSize: 14,
     lineHeight: 22,
   },

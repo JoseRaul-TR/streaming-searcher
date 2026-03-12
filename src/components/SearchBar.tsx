@@ -7,6 +7,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { Colors } from "@/constants/colors";
 
 type Props = {
   value: string;
@@ -17,11 +18,11 @@ type Props = {
 export default function SearchBar({ value, onChangeText, isLoading }: Props) {
   return (
     <View style={styles.container}>
-      <Ionicons name="search" size={20} color="#94A3B8" />
+      <Ionicons name="search" size={20} color={Colors.textMuted} />
       <TextInput
         style={styles.input}
         placeholder="Search movies, shows or people"
-        placeholderTextColor="#94A3B8"
+        placeholderTextColor={Colors.textMuted}
         value={value}
         onChangeText={onChangeText}
         autoCorrect={false}
@@ -30,10 +31,14 @@ export default function SearchBar({ value, onChangeText, isLoading }: Props) {
       />
       <View style={styles.rightArea}>
         {isLoading ? (
-          <ActivityIndicator size="small" color="#60A5FA" />
+          <ActivityIndicator size="small" color={Colors.primary} />
         ) : value.length > 0 ? (
           <Pressable onPress={() => onChangeText("")} hitSlop={10}>
-            <Ionicons name="close-circle-outline" size={20} color="#94A3B8" />
+            <Ionicons
+              name="close-circle-outline"
+              size={20}
+              color={Colors.textMuted}
+            />
           </Pressable>
         ) : null}
       </View>
@@ -45,7 +50,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#1E293B",
+    backgroundColor: Colors.surface,
     margin: 15,
     paddingHorizontal: 15,
     borderRadius: 52,

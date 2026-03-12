@@ -6,7 +6,6 @@ import {
   Image,
   ScrollView,
   Pressable,
-  ActivityIndicator,
   Linking,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -17,6 +16,8 @@ import { useWatchProviders } from "@/hooks/useWatchProviders";
 import { useUserStore } from "@/store/useUserStore";
 import CountryProviderSection from "@/components/CountryProviderSection";
 import ProviderSection from "@/components/ProvidersSection";
+import ApiStateDisplay from "@/components/ApiStateDisplay";
+import { Colors, withOpacity } from "@/constants/colors";
 
 export default function DetailsScreen() {
   const router = useRouter();
@@ -48,8 +49,7 @@ export default function DetailsScreen() {
   );
 
   // useCallback: this handler is passed down to a Pressable inside the render.
-  // Wrapping it prevents a new function reference on every re-render, which
-  // would otherwise cause the Pressable to re-render unnecessarily.
+  // Wrapping it prevents a new function reference on every re-render.
   const handleBack = useCallback(() => {
     router.back();
   }, [router]);
@@ -74,7 +74,7 @@ export default function DetailsScreen() {
           android_ripple={{ color: "rgba(255,255,255,0.1)", borderless: true }}
           hitSlop={10}
         >
-          <Ionicons name="arrow-back" size={24} color="#94A3B8" />
+          <Ionicons name="arrow-back" size={24} color={Colors.textMuted} />
         </Pressable>
         <Text style={styles.topBarTitle} numberOfLines={1}>
           {title}
@@ -154,30 +154,26 @@ export default function DetailsScreen() {
               Streaming info only available for movies and TV shows.
             </Text>
           ) : isLoading ? (
-            <ActivityIndicator color="#60A5FA" style={{ marginTop: 20 }} />
+            <ApiStateDisplay state="loading" />
           ) : isError ? (
-            <View style={styles.errorBox}>
-              <Ionicons name="alert-circle-outline" size={28} color="#F87171" />
-              <Text style={styles.errorText}>
-                Could not load streaming providers. Check your connection and
-                try again.
-              </Text>
-            </View>
+            <ApiStateDisplay
+              state="error"
+              message="Could not load streaming providers. Check your connection and try again."
+            />
           ) : !hasProviders ? (
-            <View style={styles.emptyProviders}>
-              <Ionicons name="alert-circle-outline" size={24} color="#475569" />
-              <Text style={styles.infoText}>
-                {countries.length === 0
+            <ApiStateDisplay
+              state="empty"
+              message={
+                countries.length === 0
                   ? "Not available on any streaming service."
                   : `Not available in ${
                       countries.length === 1
                         ? countries[0].name
                         : "your selected countries"
-                    } currently.`}
-              </Text>
-            </View>
+                    } currently.`
+              }
+            />
           ) : isSingleCountry ? (
-            /* Single country — flat layout */
             <>
               <ProviderSection
                 title="Free"
@@ -202,8 +198,7 @@ export default function DetailsScreen() {
               {providers[0]?.link && (
                 <Pressable
                   style={styles.justWatch}
-                  onPress={() => void Linking.openURL(providers[0].link!)}
-                  android_ripple={{ color: "rgba(255,255,255,0.05)" }}
+                  onPress={() => handleOpenJustWatch(providers[0].link!)}
                 >
                   <Text style={styles.jwLabel}>Data provided by </Text>
                   <Text style={styles.jwBrand}>JustWatch</Text>
@@ -230,7 +225,7 @@ export default function DetailsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0F172A" },
+  container: { flex: 1, backgroundColor: Colors.background },
   topBar: {
     flexDirection: "row",
     alignItems: "center",
@@ -249,14 +244,14 @@ const styles = StyleSheet.create({
     width: 110,
     height: 165,
     borderRadius: 12,
-    backgroundColor: "#1E293B",
+    backgroundColor: Colors.surface,
   },
   posterPlaceholder: { justifyContent: "center", alignItems: "center" },
   badge: {
     position: "absolute",
     top: 6,
     left: 6,
-    backgroundColor: "rgba(15,23,42,0.8)",
+    backgroundColor: withOpacity(Colors.background, 0.8),
     padding: 6,
     borderRadius: 8,
     borderWidth: 1,
@@ -271,16 +266,16 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   yearBadge: {
-    backgroundColor: "#1E293B",
+    backgroundColor: Colors.surface,
     alignSelf: "flex-start",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
     marginBottom: 8,
   },
-  yearText: { color: "#94A3B8", fontSize: 13, fontWeight: "600" },
-  overview: { color: "#94A3B8", fontSize: 13, lineHeight: 18 },
-  readMore: { color: "#60A5FA", fontWeight: "500", marginTop: 4 },
+  yearText: { color: Colors.textMuted, fontSize: 13, fontWeight: "600" },
+  overview: { color: Colors.textMuted, fontSize: 13, lineHeight: 18 },
+  readMore: { color: Colors.primary, fontWeight: "500", marginTop: 4 },
   separator: {
     height: 1,
     backgroundColor: "rgba(255,255,255,0.05)",
@@ -288,32 +283,17 @@ const styles = StyleSheet.create({
   },
   providers: { marginTop: 10 },
   providersTitle: {
-    color: "#F8FAFC",
+    color: Colors.text,
     fontSize: 18,
     fontWeight: "700",
     marginBottom: 20,
     textAlign: "center",
   },
   infoText: {
-    color: "#64748B",
+    color: Colors.textDisabled,
     textAlign: "center",
     marginTop: 10,
     fontSize: 14,
-  },
-  emptyProviders: { alignItems: "center", padding: 20, gap: 8 },
-  errorBox: {
-    alignItems: "center",
-    gap: 12,
-    padding: 24,
-    backgroundColor: "rgba(248,113,113,0.08)",
-    borderRadius: 12,
-    marginTop: 10,
-  },
-  errorText: {
-    color: "#F87171",
-    textAlign: "center",
-    fontSize: 14,
-    lineHeight: 20,
   },
   justWatch: {
     marginTop: 20,
@@ -325,6 +305,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: "hidden",
   },
-  jwLabel: { color: "#475569", fontSize: 11 },
-  jwBrand: { color: "#F8FAFC", fontSize: 11, fontWeight: "bold" },
+  jwLabel: { color: Colors.surfaceAlt, fontSize: 11 },
+  jwBrand: { color: Colors.text, fontSize: 11, fontWeight: "bold" },
 });

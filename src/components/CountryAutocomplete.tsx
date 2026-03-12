@@ -12,12 +12,13 @@ import { useQuery } from "@tanstack/react-query";
 
 import { tmdbApi } from "@/services/api";
 import { Country, SelectedCountry } from "@/types/providers";
+import { Colors, withOpacity } from "@/constants/colors";
 
 const MAX_SUGGESTIONS = 4;
 
 type Props = {
   selectedCountries: SelectedCountry[];
-  onAdd: (Country: SelectedCountry) => void;
+  onAdd: (country: SelectedCountry) => void;
   onRemove: (code: string) => void;
   onClear: () => void;
 };
@@ -26,7 +27,6 @@ type Props = {
  * Inline country selector. Global is the default state (selectedCountries = []).
  * When the user types, up to MAX_SUGGESTIONS suggestions appear below the input.
  * Already-selected countries are excluded from suggestions.
- * KeyboardAvoidingView + ScrollView in the parent handle keyboard overlap.
  */
 export default function CountryAutocomplete({
   selectedCountries,
@@ -73,12 +73,12 @@ export default function CountryAutocomplete({
     <View style={styles.container}>
       {/* Search input */}
       <View style={styles.inputRow}>
-        <Ionicons name="search" size={18} color="#64748B" />
-        
+        <Ionicons name="search" size={18} color={Colors.textDisabled} />
+
         <TextInput
           style={styles.input}
           placeholder="Search country..."
-          placeholderTextColor="#64748B"
+          placeholderTextColor={Colors.textDisabled}
           value={search}
           onChangeText={setSearch}
           autoCorrect={false}
@@ -86,14 +86,14 @@ export default function CountryAutocomplete({
         />
         {search.length > 0 && (
           <Pressable onPress={() => setSearch("")} hitSlop={10}>
-            <Ionicons name="close-circle" size={18} color="#475569" />
+            <Ionicons name="close-circle" size={18} color={Colors.surfaceAlt} />
           </Pressable>
         )}
       </View>
 
       {/* Loading while countries list fetches */}
       {isLoading && search.length > 0 && (
-        <ActivityIndicator color="#60A5FA" style={styles.loading} />
+        <ActivityIndicator color={Colors.primary} style={styles.loading} />
       )}
 
       {/* Inline suggestions — max 4 */}
@@ -104,10 +104,10 @@ export default function CountryAutocomplete({
               key={item.iso_3166_1}
               style={styles.suggestion}
               onPress={() => handleAdd(item)}
-              android_ripple={{ color: "rgba(96,165,250,0.08)" }}
+              android_ripple={{ color: withOpacity(Colors.primary, 0.08) }}
             >
               <Text style={styles.suggestionText}>{item.english_name}</Text>
-              <Ionicons name="add" size={18} color="#60A5FA" />
+              <Ionicons name="add" size={18} color={Colors.primary} />
             </Pressable>
           ))}
         </View>
@@ -124,12 +124,16 @@ export default function CountryAutocomplete({
                 onPress={() => onRemove(c.code)}
               >
                 <Text style={styles.chipText}>{c.name}</Text>
-                <Ionicons name="close" size={13} color="#60A5FA" />
+                <Ionicons name="close" size={13} color={Colors.primary} />
               </Pressable>
             ))}
           </View>
           <Pressable style={styles.clearBtn} onPress={handleClear}>
-            <Ionicons name="close-circle-outline" size={15} color="#F87171" />
+            <Ionicons
+              name="close-circle-outline"
+              size={15}
+              color={Colors.error}
+            />
             <Text style={styles.clearText}>Clear all</Text>
           </Pressable>
         </View>
@@ -138,7 +142,7 @@ export default function CountryAutocomplete({
       {/* Global info — shown only when nothing is selected and not typing */}
       {isGlobal && search.length === 0 && (
         <View style={styles.globalInfo}>
-          <Ionicons name="earth" size={18} color="#60A5FA" />
+          <Ionicons name="earth" size={18} color={Colors.primary} />
           <Text style={styles.globalText}>
             <Text style={styles.globalBold}>Global search active. </Text>
             Select a country to enable subscription highlights.
@@ -151,12 +155,11 @@ export default function CountryAutocomplete({
 
 const styles = StyleSheet.create({
   container: { width: "100%", gap: 12 },
-
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    backgroundColor: "#1E293B",
+    backgroundColor: Colors.surface,
     borderRadius: 12,
     paddingHorizontal: 14,
     height: 50,
@@ -170,9 +173,8 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     marginTop: 4,
   },
-
   suggestions: {
-    backgroundColor: "#1E293B",
+    backgroundColor: Colors.surface,
     borderRadius: 12,
     overflow: "hidden",
   },
@@ -185,8 +187,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "rgba(255,255,255,0.04)",
   },
-  suggestionText: { color: "#CBD5E1", fontSize: 15 },
-
+  suggestionText: { color: Colors.textSecondary, fontSize: 15 },
   chipsContainer: { gap: 10 },
   chips: {
     flexDirection: "row",
@@ -197,39 +198,37 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    backgroundColor: "rgba(96,165,250,0.15)",
+    backgroundColor: withOpacity(Colors.primary, 0.15),
     borderWidth: 1,
-    borderColor: "#60A5FA",
+    borderColor: Colors.primary,
     borderRadius: 20,
     paddingHorizontal: 10,
     paddingVertical: 5,
   },
-  chipText: { color: "#60A5FA", fontSize: 13, fontWeight: "600" },
-
+  chipText: { color: Colors.primary, fontSize: 13, fontWeight: "600" },
   clearBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
     alignSelf: "flex-end",
   },
-  clearText: { color: "#F87171", fontSize: 13 },
-
+  clearText: { color: Colors.error, fontSize: 13 },
   globalInfo: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 10,
-    backgroundColor: "rgba(96,165,250,0.08)",
+    backgroundColor: withOpacity(Colors.primary, 0.08),
     borderRadius: 12,
     padding: 14,
   },
   globalText: {
     flex: 1,
-    color: "#94A3B8",
+    color: Colors.textMuted,
     fontSize: 14,
     lineHeight: 20,
   },
   globalBold: {
-    color: "#CBD5E1",
+    color: Colors.textSecondary,
     fontWeight: "600",
   },
 });

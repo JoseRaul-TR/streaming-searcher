@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   Modal,
   View,
@@ -15,6 +15,8 @@ import { tmdbApi } from "@/services/api";
 import { useUserStore } from "@/store/useUserStore";
 import { SelectedCountry, Provider } from "@/types/providers";
 import ProviderLogo from "./ProviderLogo";
+import ApiStateDisplay from "./ApiStateDisplay";
+import { Colors, withOpacity } from "@/constants/colors";
 
 type Props = {
   visible: boolean;
@@ -35,6 +37,18 @@ export default function SubscriptionPickerModal({
     countries.length === 1 ? (countries[0]?.code ?? "") : "",
   );
 
+  // Sync activeCountry if the countries array changes while the modal is mounted.
+  // If the active country was removed from the list, reset to empty.
+  // activeCountry is intentionally excluded from deps — this only reacts to external changes.
+  useEffect(() => {
+    if (countries.length === 1) {
+      setActiveCountry(countries[0]?.code ?? "");
+      return;
+    }
+    const stillValid = countries.some((c) => c.code === activeCountry);
+    if (!stillValid) setActiveCountry("");
+  }, [countries]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const activeCode =
     activeCountry || (countries.length === 1 ? (countries[0]?.code ?? "") : "");
 
@@ -48,9 +62,8 @@ export default function SubscriptionPickerModal({
     enabled: !!activeCode,
   });
 
-  // useCallback: handleToggle is recreated only when subscriptions,
-  // addSubscription or removeSubscription change — not on every render.
-  // This is relevant because it is passed into each FlatList renderItem.
+  // useCallback: handleToggle is passed into each FlatList renderItem.
+  // Wrapping prevents a new reference on every render.
   const handleToggle = useCallback(
     (providerId: number) => {
       if (subscriptions.includes(providerId)) {
@@ -69,7 +82,7 @@ export default function SubscriptionPickerModal({
         <View style={styles.header}>
           <Text style={styles.title}>My Subscriptions</Text>
           <Pressable onPress={onClose} hitSlop={10}>
-            <Ionicons name="close" size={28} color="#94A3B8" />
+            <Ionicons name="close" size={28} color={Colors.textMuted} />
           </Pressable>
         </View>
 
@@ -89,7 +102,7 @@ export default function SubscriptionPickerModal({
                   activeCountry === c.code && styles.tabActive,
                 ]}
                 onPress={() => setActiveCountry(c.code)}
-                android_ripple={{ color: "rgba(96,165,250,0.1)" }}
+                android_ripple={{ color: withOpacity(Colors.primary, 0.1) }}
               >
                 <Text
                   style={[
@@ -106,27 +119,30 @@ export default function SubscriptionPickerModal({
 
         {/* Providers list */}
         {!activeCode ? (
-          <View style={styles.promptBox}>
-            <Ionicons name="flag-outline" size={28} color="#475569" />
-            <Text style={styles.promptText}>
-              Select a country above to see its available streaming services.
-            </Text>
-          </View>
+          <ApiStateDisplay
+            state="empty"
+            icon={
+              <Ionicons
+                name="flag-outline"
+                size={28}
+                color={Colors.surfaceAlt}
+              />
+            }
+            message="Select a country above to see its available streaming services."
+          />
         ) : isLoading ? (
-          <ActivityIndicator color="#60A5FA" style={{ marginTop: 30 }} />
+          <ApiStateDisplay state="loading" />
         ) : isError ? (
-          <View style={styles.errorBox}>
-            <Ionicons name="alert-circle-outline" size={28} color="#F87171" />
-            <Text style={styles.errorText}>
-              Could not load providers. Check your connection.
-            </Text>
-          </View>
+          <ApiStateDisplay
+            state="error"
+            message="Could not load providers. Check your connection."
+          />
         ) : (
           <FlatList
             data={providers}
-            keyExtractor={(item: Provider) => String(item.provider_id)}
+            keyExtractor={(item) => String(item.provider_id)}
             contentContainerStyle={styles.list}
-            renderItem={({ item }: { item: Provider }) => {
+            renderItem={({ item }) => {
               const isSubscribed = subscriptions.includes(item.provider_id);
               return (
                 <Pressable
@@ -134,7 +150,6 @@ export default function SubscriptionPickerModal({
                   onPress={() => handleToggle(item.provider_id)}
                   android_ripple={{ color: "rgba(96,165,250,0.06)" }}
                 >
-                  {/* animated=false → scale up on subscribed, no halo */}
                   <ProviderLogo
                     provider={item}
                     isSubscribed={isSubscribed}
@@ -172,7 +187,7 @@ export default function SubscriptionPickerModal({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0F172A", paddingTop: 50 },
+  container: { flex: 1, backgroundColor: Colors.background, paddingTop: 50 },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -182,7 +197,7 @@ const styles = StyleSheet.create({
   },
   title: { color: "#FFF", fontSize: 24, fontWeight: "bold" },
   subtitle: {
-    color: "#64748B",
+    color: Colors.textDisabled,
     fontSize: 13,
     lineHeight: 18,
     paddingHorizontal: 25,
@@ -199,62 +214,41 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: "#1E293B",
+    backgroundColor: Colors.surface,
   },
   tabActive: {
-    backgroundColor: "rgba(96,165,250,0.15)",
+    backgroundColor: withOpacity(Colors.primary, 0.15),
     borderWidth: 1,
-    borderColor: "#60A5FA",
+    borderColor: Colors.primary,
   },
-  tabText: { color: "#64748B", fontSize: 13, fontWeight: "600" },
-  tabTextActive: { color: "#60A5FA" },
+  tabText: { color: Colors.textDisabled, fontSize: 13, fontWeight: "600" },
+  tabTextActive: { color: Colors.primary },
   list: { paddingHorizontal: 25, paddingBottom: 40 },
   item: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#1E293B",
+    borderBottomColor: Colors.surface,
     gap: 14,
   },
-  providerName: { flex: 1, color: "#94A3B8", fontSize: 15 },
-  providerNameActive: { color: "#94A3B8", fontSize: 17, fontWeight: "600" },
+  providerName: { flex: 1, color: Colors.textMuted, fontSize: 15 },
+  providerNameActive: {
+    color: Colors.textMuted,
+    fontSize: 17,
+    fontWeight: "600",
+  },
   checkbox: {
     width: 24,
     height: 24,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: "#334155",
+    borderColor: Colors.surfaceMid,
     justifyContent: "center",
     alignItems: "center",
   },
-  checkboxActive: { backgroundColor: "#60A5FA", borderColor: "#60A5FA" },
-  promptBox: {
-    alignItems: "center",
-    gap: 12,
-    padding: 32,
-    marginHorizontal: 25,
-    marginTop: 20,
-  },
-  promptText: {
-    color: "#475569",
-    textAlign: "center",
-    fontSize: 14,
-    lineHeight: 22,
-  },
-  errorBox: {
-    alignItems: "center",
-    gap: 12,
-    padding: 24,
-    marginHorizontal: 25,
-    backgroundColor: "rgba(248,113,113,0.08)",
-    borderRadius: 12,
-    marginTop: 20,
-  },
-  errorText: {
-    color: "#F87171",
-    textAlign: "center",
-    fontSize: 14,
-    lineHeight: 20,
+  checkboxActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
 });

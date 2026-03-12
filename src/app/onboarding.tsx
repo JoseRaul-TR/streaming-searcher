@@ -9,6 +9,7 @@ import CountryAutocomplete from "@/components/CountryAutocomplete";
 import SubscriptionPickerModal from "@/components/SubscriptionPickerModal";
 import TermsModal from "@/components/TermsModal";
 import InfoTooltip from "@/components/InfoTooltip";
+import { Colors, withOpacity } from "@/constants/colors";
 
 const TOTAL_STEPS = 3;
 
@@ -97,8 +98,8 @@ export default function OnboardingScreen() {
                 />
                 <Text style={styles.perfHintText}>
                   Selecting at least one country improves app performance.
-                  AGlobal search loads availability for every country at once
-                  and at the moment can creates performance issues.
+                  Global search loads availability for every country at once and
+                  at the moment can creates performance issues.
                 </Text>
               </View>
             )}
@@ -108,7 +109,7 @@ export default function OnboardingScreen() {
           </View>
         )}
 
-        {/* ————— Step 2 — Services ————— */}
+        {/* ————— Step 2 — Streaming Providers ————— */}
         {step === 2 && (
           <View style={styles.stepContainer}>
             <Text style={styles.stepLabel}>Step 2 of 3</Text>
@@ -166,7 +167,7 @@ export default function OnboardingScreen() {
               <Pressable
                 onPress={toggleTerms}
                 android_ripple={{
-                  color: "rgba(96,165,250,0.1)",
+                  color: withOpacity(Colors.primary, 0.1),
                   borderless: true,
                 }}
                 hitSlop={10}
@@ -255,7 +256,7 @@ export default function OnboardingScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0F172A" },
+  container: { flex: 1, backgroundColor: Colors.background },
   progressBar: {
     flexDirection: "row",
     justifyContent: "center",
@@ -267,9 +268,9 @@ const styles = StyleSheet.create({
     width: 28,
     height: 4,
     borderRadius: 2,
-    backgroundColor: "#1E293B",
+    backgroundColor: Colors.surface,
   },
-  progressDotActive: { backgroundColor: "#60A5FA" },
+  progressDotActive: { backgroundColor: Colors.primary },
   scroll: { flex: 1 },
   scrollContent: {
     paddingHorizontal: 28,
@@ -278,7 +279,7 @@ const styles = StyleSheet.create({
   },
   stepContainer: { gap: 20 },
   stepLabel: {
-    color: "#60A5FA",
+    color: Colors.primary,
     fontSize: 12,
     fontWeight: "bold",
     letterSpacing: 1,
@@ -299,18 +300,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 10,
-    backgroundColor: "rgba(96,165,250,0.08)",
+    backgroundColor: withOpacity(Colors.primary, 0.08),
     borderRadius: 12,
     padding: 14,
   },
   infoText: {
     flex: 1,
-    color: "#94A3B8",
+    color: Colors.textMuted,
     fontSize: 14,
     lineHeight: 20,
   },
   selector: {
-    backgroundColor: "#1E293B",
+    backgroundColor: Colors.surface,
     padding: 18,
     borderRadius: 14,
     flexDirection: "row",
@@ -319,8 +320,8 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   selectorText: { color: "#FFF", fontSize: 15, flex: 1, marginRight: 8 },
-  selectorPlaceholder: { color: "#64748B" },
-  hint: { color: "#475569", fontSize: 13, textAlign: "center" },
+  selectorPlaceholder: { color: Colors.textDisabled },
+  hint: { color: Colors.surfaceAlt, fontSize: 13, textAlign: "center" },
   checkboxRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -332,22 +333,25 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: "#334155",
+    borderColor: Colors.surfaceMid,
     marginRight: 15,
     justifyContent: "center",
     alignItems: "center",
   },
-  checkboxActive: { backgroundColor: "#60A5FA", borderColor: "#60A5FA" },
-  checkboxLabel: { color: "#94A3B8", fontSize: 16, flex: 1 },
+  checkboxActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  checkboxLabel: { color: Colors.textMuted, fontSize: 16, flex: 1 },
   link: {
-    color: "#60A5FA",
+    color: Colors.primary,
     fontWeight: "bold",
     textDecorationLine: "underline",
   },
   footer: { paddingHorizontal: 28, paddingBottom: 16, paddingTop: 8 },
   row: { flexDirection: "row", gap: 12 },
   btnPrimary: {
-    backgroundColor: "#60A5FA",
+    backgroundColor: Colors.primary,
     padding: 18,
     borderRadius: 50,
     flexDirection: "row",
@@ -360,7 +364,7 @@ const styles = StyleSheet.create({
   btnRowItem: { flex: 2 },
   btnSecondary: {
     flex: 1,
-    backgroundColor: "#1E293B",
+    backgroundColor: Colors.surface,
     padding: 18,
     borderRadius: 50,
     alignItems: "center",
@@ -372,13 +376,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 8,
-    backgroundColor: "rgba(71,85,105,0.15)",
+    backgroundColor: withOpacity(Colors.surfaceAlt, 0.15),
     borderRadius: 10,
     padding: 12,
   },
   perfHintText: {
     flex: 1,
-    color: "#475569",
+    color: Colors.surfaceAlt,
     fontSize: 12,
     lineHeight: 18,
   },

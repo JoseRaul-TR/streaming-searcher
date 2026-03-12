@@ -8,6 +8,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { Colors } from "@/constants/colors";
 
 type Props = {
   visible: boolean;
@@ -21,7 +22,7 @@ export default function TermsModal({ visible, onClose }: Props) {
         <View style={styles.header}>
           <Text style={styles.title}>Terms of Use</Text>
           <Pressable onPress={onClose} hitSlop={10}>
-            <Ionicons name="close" size={28} color="#94A3B8" />
+            <Ionicons name="close" size={28} color={Colors.textMuted} />
           </Pressable>
         </View>
 
@@ -44,7 +45,7 @@ export default function TermsModal({ visible, onClose }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0F172A",
+    backgroundColor: Colors.background,
     paddingHorizontal: 25,
     paddingTop: 50,
   },
@@ -56,5 +57,5 @@ const styles = StyleSheet.create({
   },
   title: { color: "#FFF", fontSize: 24, fontWeight: "bold" },
   scroll: { flex: 1 },
-  body: { color: "#CBD5E1", fontSize: 15, lineHeight: 24 },
+  body: { color: Colors.textSecondary, fontSize: 15, lineHeight: 24 },
 });

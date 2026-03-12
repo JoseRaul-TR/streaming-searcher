@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useUserStore } from "@/store/useUserStore";
 import CountryAutocomplete from "@/components/CountryAutocomplete";
+import { Colors } from "@/constants/colors";
 
 /**
  * Full-screen country picker navigated to from Settings.
@@ -36,7 +37,7 @@ export default function CountryPickerScreen() {
           android_ripple={{ color: "rgba(255,255,255,0.1)", borderless: true }}
           hitSlop={10}
         >
-          <Ionicons name="arrow-back" size={24} color="#94A3B8" />
+          <Ionicons name="arrow-back" size={24} color={Colors.textMuted} />
         </Pressable>
         <View style={styles.topBarText}>
           <Text style={styles.topBarTitle}>Countries</Text>
@@ -60,7 +61,7 @@ export default function CountryPickerScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0F172A" },
+  container: { flex: 1, backgroundColor: Colors.background },
   topBar: {
     flexDirection: "row",
     alignItems: "center",
@@ -73,6 +74,6 @@ const styles = StyleSheet.create({
   backButton: { borderRadius: 20, padding: 4, overflow: "hidden" },
   topBarText: { flex: 1 },
   topBarTitle: { color: "#FFF", fontSize: 17, fontWeight: "600" },
-  topBarSub: { color: "#64748B", fontSize: 13, marginTop: 1 },
+  topBarSub: { color: Colors.textDisabled, fontSize: 13, marginTop: 1 },
   content: { flex: 1, padding: 20 },
 });

@@ -5,7 +5,7 @@ import { tmdbApi } from "@/services/api";
 import { SearchedItem } from "@/types/searchedItem";
 
 const DEBOUNCE_MS = 350;
-const MIN_QUERY_LENGTH = 2;
+const MIN_QUERY_LENGTH = 3;
 const STALE_TIME_MS = 1000 * 60 * 5; // 5 minutes
 
 type UseSearchResult = {
@@ -26,14 +26,14 @@ type UseSearchResult = {
  */
 export function useSearch(): UseSearchResult {
   const [query, setQuery] = useState("");
-  const [debouncedQuery, setDebounceQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
 
   // Debounce: wait DEBOUNCE_MS after the user stops typing before updating
   // debouncedQuery. The cleanup function clears the timer if the user keeps
   // typing, so only the final value triggers a fetch.
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebounceQuery(query);
+      setDebouncedQuery(query);
     }, DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
@@ -42,7 +42,7 @@ export function useSearch(): UseSearchResult {
   const { data, isLoading, isFetching, isError } = useQuery<SearchedItem[]>({
     queryKey: ["search", debouncedQuery],
     queryFn: () => tmdbApi.searchItem(debouncedQuery),
-    enabled: debouncedQuery.length > MIN_QUERY_LENGTH,
+    enabled: debouncedQuery.length >= MIN_QUERY_LENGTH,
     staleTime: STALE_TIME_MS,
   });
 
@@ -52,6 +52,6 @@ export function useSearch(): UseSearchResult {
     results: data ?? [],
     isLoading: isLoading || isFetching,
     isError,
-    hasSearched: debouncedQuery.length > MIN_QUERY_LENGTH,
+    hasSearched: debouncedQuery.length >= MIN_QUERY_LENGTH,
   };
 }

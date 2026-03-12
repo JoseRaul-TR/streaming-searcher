@@ -3,14 +3,53 @@ import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { WatchProvidersData } from "@/types/providers";
 import ProviderSection from "./ProvidersSection";
+import { Colors } from "@/constants/colors";
 
+// ————— Internal Subcomponent —————
+type ProviderCategoriesProps = {
+  data: Pick<WatchProvidersData, "free" | "flatrate" | "rent" | "buy">;
+  subscribedIds: Set<number>;
+};
+
+function ProviderCategories({ data, subscribedIds }: ProviderCategoriesProps) {
+  return (
+    <>
+      <ProviderSection
+        title="Free"
+        providers={data.free ?? []}
+        subscribedIds={subscribedIds}
+      />
+      <ProviderSection
+        title="Stream"
+        providers={data.flatrate ?? []}
+        subscribedIds={subscribedIds}
+      />
+      <ProviderSection
+        title="Rent"
+        providers={data.rent ?? []}
+        subscribedIds={subscribedIds}
+      />
+      <ProviderSection
+        title="Buy"
+        providers={data.buy ?? []}
+        subscribedIds={subscribedIds}
+      />
+    </>
+  );
+}
+
+// ————— Main Component ——————
 type Props = {
   data: WatchProvidersData[];
   subscribedIds: Set<number>;
   defaultExpanded?: boolean;
 };
 
-export default function CountryProviderSection({ data, subscribedIds, defaultExpanded = true, }: Props) {
+export default function CountryProviderSection({
+  data,
+  subscribedIds,
+  defaultExpanded = true,
+}: Props) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>(
     Object.fromEntries(data.map((c) => [c.countryCode, defaultExpanded])),
   );
@@ -33,30 +72,14 @@ export default function CountryProviderSection({ data, subscribedIds, defaultExp
                 expanded[country.countryCode] ? "chevron-up" : "chevron-down"
               }
               size={18}
-              color="#475569"
+              color={Colors.surfaceAlt}
             />
           </Pressable>
 
           {expanded[country.countryCode] && (
             <View style={styles.categories}>
-              <ProviderSection
-                title="Free"
-                providers={country.free ?? []}
-                subscribedIds={subscribedIds}
-              />
-              <ProviderSection
-                title="Stream"
-                providers={country.flatrate ?? []}
-                subscribedIds={subscribedIds}
-              />
-              <ProviderSection
-                title="Rent"
-                providers={country.rent ?? []}
-                subscribedIds={subscribedIds}
-              />
-              <ProviderSection
-                title="Buy"
-                providers={country.buy ?? []}
+              <ProviderCategories
+                data={country}
                 subscribedIds={subscribedIds}
               />
             </View>
@@ -70,7 +93,7 @@ export default function CountryProviderSection({ data, subscribedIds, defaultExp
 const styles = StyleSheet.create({
   countryBlock: {
     marginBottom: 10,
-    backgroundColor: "#1E293B",
+    backgroundColor: Colors.surface,
     borderRadius: 14,
     overflow: "hidden",
   },
@@ -82,7 +105,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   countryName: {
-    color: "#F8FAFC",
+    color: Colors.text,
     fontSize: 16,
     fontWeight: "700",
   },

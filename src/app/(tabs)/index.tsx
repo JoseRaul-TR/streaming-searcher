@@ -6,10 +6,11 @@ import { useRouter } from "expo-router";
 import { useSearch } from "@/hooks/useSearch";
 import MediaCard from "@/components/MediaCard";
 import SearchBar from "@/components/SearchBar";
+import { Colors } from "@/constants/colors";
 
 export default function ExploreScreen() {
   const router = useRouter();
-  const { query, setQuery, results, isLoading, isError, hasSearched } = // TODO - Check
+  const { query, setQuery, results, isLoading, isError, hasSearched } =
     useSearch();
 
   return (
@@ -18,7 +19,7 @@ export default function ExploreScreen() {
 
       {isError ? (
         <View style={styles.feedback}>
-          <Ionicons name="alert-circle-outline" size={48} color="#F87171" />
+          <Ionicons name="alert-circle-outline" size={48} color={Colors.error} />
           <Text style={styles.feedbackTitle}>Something went wrong</Text>
           <Text style={styles.feedbackSub}>
             Could not reach TMDB. Check your connection and try again.
@@ -34,7 +35,7 @@ export default function ExploreScreen() {
           ListEmptyComponent={() =>
             !isLoading && hasSearched ? (
               <View style={styles.feedback}>
-                <Ionicons name="search-outline" size={80} color="#1E293B" />
+                <Ionicons name="search-outline" size={80} color={Colors.surface} />
                 <Text style={styles.feedbackTitle}>
                   No results for "{query}"
                 </Text>
@@ -69,7 +70,7 @@ export default function ExploreScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0F172A" },
+  container: { flex: 1, backgroundColor: Colors.background },
   listContent: { paddingHorizontal: 10, paddingBottom: 20, flexGrow: 1 },
   columnWrapper: { justifyContent: "space-between", paddingHorizontal: 5 },
   feedback: {
@@ -81,13 +82,13 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   feedbackTitle: {
-    color: "#F8FAFC",
+    color: Colors.text,
     fontSize: 18,
     fontWeight: "600",
     textAlign: "center",
   },
   feedbackSub: {
-    color: "#64748B",
+    color: Colors.textDisabled,
     fontSize: 14,
     textAlign: "center",
   },
