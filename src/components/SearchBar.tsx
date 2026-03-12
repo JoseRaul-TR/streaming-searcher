@@ -26,6 +26,8 @@ export default function SearchBar({ value, onChangeText, isLoading }: Props) {
         value={value}
         onChangeText={onChangeText}
         autoCorrect={false}
+        autoComplete="off"
+        spellCheck={false}
         autoCapitalize="none"
         returnKeyType="search"
       />

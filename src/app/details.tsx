@@ -38,8 +38,8 @@ export default function DetailsScreen() {
 
   const subscribedIds = new Set(subscriptions);
 
-  // Single country → flat ProviderSection layout
-  // Multiple countries or global (countries=[]) → CountryProviderSection
+  // Single country → flat category layout (no country header needed).
+  // Multiple countries or global (countries=[]) → collapsible tabs per country.
   const isSingleCountry = countries.length === 1;
 
   const { providers, isLoading, isError } = useWatchProviders(
@@ -48,8 +48,6 @@ export default function DetailsScreen() {
     countries,
   );
 
-  // useCallback: this handler is passed down to a Pressable inside the render.
-  // Wrapping it prevents a new function reference on every re-render.
   const handleBack = useCallback(() => {
     router.back();
   }, [router]);
@@ -58,11 +56,11 @@ export default function DetailsScreen() {
     setExpanded((prev) => !prev);
   }, []);
 
-  const hasProviders = providers.length > 0;
-
   const handleOpenJustWatch = useCallback((link: string) => {
     void Linking.openURL(link);
   }, []);
+
+  const hasProviders = providers.length > 0;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -103,7 +101,7 @@ export default function DetailsScreen() {
                     media_type === "person" ? "person-outline" : "film-outline"
                   }
                   size={40}
-                  color="#475569"
+                  color={Colors.surfaceAlt}
                 />
               </View>
             )}
@@ -145,7 +143,7 @@ export default function DetailsScreen() {
 
         <View style={styles.separator} />
 
-        {/* Streaming Providers */}
+        {/* Streaming providers */}
         <View style={styles.providers}>
           <Text style={styles.providersTitle}>Where can you watch it?</Text>
 
@@ -167,13 +165,14 @@ export default function DetailsScreen() {
                 countries.length === 0
                   ? "Not available on any streaming service."
                   : `Not available in ${
-                      countries.length === 1
+                      isSingleCountry
                         ? countries[0].name
                         : "your selected countries"
                     } currently.`
               }
             />
           ) : isSingleCountry ? (
+            /* ── Single country: flat category layout ── */
             <>
               <ProviderSection
                 title="Free"
@@ -199,6 +198,7 @@ export default function DetailsScreen() {
                 <Pressable
                   style={styles.justWatch}
                   onPress={() => handleOpenJustWatch(providers[0].link!)}
+                  android_ripple={{ color: "rgba(255,255,255,0.05)" }}
                 >
                   <Text style={styles.jwLabel}>Data provided by </Text>
                   <Text style={styles.jwBrand}>JustWatch</Text>
@@ -206,11 +206,12 @@ export default function DetailsScreen() {
               )}
             </>
           ) : (
-            /* Multi-country or global — hierarchical collapsible layout */
+            /* ── Multiple countries / global: collapsible tabs per country ── */
             <>
               <CountryProviderSection
                 data={providers}
                 subscribedIds={subscribedIds}
+                defaultExpanded={false}
               />
               <View style={styles.justWatch}>
                 <Text style={styles.jwLabel}>Data provided by </Text>

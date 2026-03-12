@@ -22,7 +22,7 @@ export default function CountryPickerScreen() {
 
   const selectionLabel =
     countries.length === 0
-      ? "All regions"
+      ? "All countries"
       : countries.length === 1
         ? countries[0].name
         : `${countries.length} countries selected`;

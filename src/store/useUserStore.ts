@@ -7,7 +7,7 @@ type UserState = {
   hasCompletedOnboarding: boolean;
   hasAcceptedTerms: boolean;
 
-  // countries : [] means "all regions/global"
+  // countries : [] means "all countries/global"
   countries: SelectedCountry[];
   addCountry: (country: SelectedCountry) => void;
   removeCountry: (code: string) => void;

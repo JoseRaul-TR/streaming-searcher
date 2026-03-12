@@ -19,7 +19,11 @@ export default function ExploreScreen() {
 
       {isError ? (
         <View style={styles.feedback}>
-          <Ionicons name="alert-circle-outline" size={48} color={Colors.error} />
+          <Ionicons
+            name="alert-circle-outline"
+            size={48}
+            color={Colors.error}
+          />
           <Text style={styles.feedbackTitle}>Something went wrong</Text>
           <Text style={styles.feedbackSub}>
             Could not reach TMDB. Check your connection and try again.
@@ -35,7 +39,11 @@ export default function ExploreScreen() {
           ListEmptyComponent={() =>
             !isLoading && hasSearched ? (
               <View style={styles.feedback}>
-                <Ionicons name="search-outline" size={80} color={Colors.surface} />
+                <Ionicons
+                  name="search-outline"
+                  size={80}
+                  color={Colors.surface}
+                />
                 <Text style={styles.feedbackTitle}>
                   No results for "{query}"
                 </Text>

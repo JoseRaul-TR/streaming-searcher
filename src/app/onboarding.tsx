@@ -14,7 +14,7 @@ import { Colors, withOpacity } from "@/constants/colors";
 const TOTAL_STEPS = 3;
 
 const STEP_INFO = {
-  1: "Select one or more countries to filter streaming availability. Leave empty to check global availability across all regions.",
+  1: "Select one or more countries to filter streaming availability. Leave empty to check global availability across all countries.",
   2: "Mark which streaming services you subscribe to. They will be highlighted when you find a match in search results.",
 };
 

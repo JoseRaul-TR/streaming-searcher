@@ -19,14 +19,14 @@ export default function SettingsScreen() {
   const isGlobal = countries.length === 0;
 
   const countriesLabel = isGlobal
-    ? "All regions"
+    ? "All countries"
     : countries.length === 1
       ? countries[0].name
       : `${countries[0].name} +${countries.length - 1} more`;
 
   const subscriptionsLabel =
     subscriptions.length === 0
-      ? "None selected"
+      ? "None"
       : `${subscriptions.length} service${subscriptions.length > 1 ? "s" : ""}`;
 
   const handleResetOnboarding = () => {

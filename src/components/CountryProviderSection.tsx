@@ -48,7 +48,7 @@ type Props = {
 export default function CountryProviderSection({
   data,
   subscribedIds,
-  defaultExpanded = true,
+  defaultExpanded = false,
 }: Props) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>(
     Object.fromEntries(data.map((c) => [c.countryCode, defaultExpanded])),
