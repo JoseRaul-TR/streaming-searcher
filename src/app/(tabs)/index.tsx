@@ -66,6 +66,13 @@ export default function ExploreScreen() {
                     overview: item.overview ?? "",
                     poster_path: item.poster_path ?? "",
                     media_type: item.media_type,
+                    // Serialise known_for_items as JSON — Expo Router params
+                    // are strings, so complex objects must be encoded.
+                    // Non-persons get an empty array to keep the param shape consistent.
+                    known_for_items:
+                      item.media_type === "person"
+                        ? JSON.stringify(item.known_for_items)
+                        : "[]",
                   },
                 })
               }

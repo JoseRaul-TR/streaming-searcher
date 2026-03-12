@@ -1,11 +1,10 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, memo } from "react";
 import {
   Modal,
   View,
   Text,
   FlatList,
   Pressable,
-  ActivityIndicator,
   StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -17,6 +16,50 @@ import { SelectedCountry, Provider } from "@/types/providers";
 import ProviderLogo from "./ProviderLogo";
 import ApiStateDisplay from "./ApiStateDisplay";
 import { Colors, withOpacity } from "@/constants/colors";
+
+// ————— Extracted item component —————
+// memo() prevents re-rendering when the parent re-renders but this item's
+// props haven't changed. Without this, every keystroke or state change in
+// the modal re-renders all visible rows, which triggers the VirtualizedList
+// slow-update warning on low-end devices.
+type ProviderItemProps = {
+  item: Provider;
+  isSubscribed: boolean;
+  onToggle: (id: number) => void;
+};
+
+const ProviderItem = memo(function ProviderItem({
+  item,
+  isSubscribed,
+  onToggle,
+}: ProviderItemProps) {
+  return (
+    <Pressable
+      style={styles.item}
+      onPress={() => onToggle(item.provider_id)}
+      android_ripple={{ color: "rgba(96,165,250,0.06)" }}
+    >
+      <ProviderLogo
+        provider={item}
+        isSubscribed={isSubscribed}
+        size={44}
+        showName={false}
+        animated={false}
+      />
+      <Text
+        style={[styles.providerName, isSubscribed && styles.providerNameActive]}
+        numberOfLines={1}
+      >
+        {item.provider_name}
+      </Text>
+      <View style={[styles.checkbox, isSubscribed && styles.checkboxActive]}>
+        {isSubscribed && <Ionicons name="checkmark" size={14} color="white" />}
+      </View>
+    </Pressable>
+  );
+});
+
+// ————— Main Component ——————
 
 type Props = {
   visible: boolean;
@@ -85,6 +128,27 @@ export default function SubscriptionPickerModal({
     [isProviderSubscribed, addSubscription, removeSubscription, activeCode],
   );
 
+  // Stable renderItem: useCallback ensures the function reference doesn't
+  // change on re-renders unless handleToggle or isProviderSubscribed change.
+  // Combined with memo() on ProviderItem, this prevents unnecessary row
+  // re-renders when only one subscription toggles.
+  const renderItem = useCallback(
+    ({ item }: { item: Provider }) => (
+      <ProviderItem
+        item={item}
+        isSubscribed={isProviderSubscribed(item.provider_id)}
+        onToggle={handleToggle}
+      />
+    ),
+    [isProviderSubscribed, handleToggle],
+  );
+
+  // Stable key extractor — defined outside render to avoid recreation.
+  const keyExtractor = useCallback(
+    (item: Provider) => String(item.provider_id),
+    [],
+  );
+
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={styles.container}>
@@ -150,51 +214,26 @@ export default function SubscriptionPickerModal({
         ) : (
           <FlatList
             data={providers}
-            keyExtractor={(item) => String(item.provider_id)}
+            keyExtractor={keyExtractor}
             contentContainerStyle={styles.list}
-            renderItem={({ item }) => {
-              const isSubscribed = isProviderSubscribed(item.provider_id);
-              return (
-                <Pressable
-                  style={styles.item}
-                  onPress={() => handleToggle(item.provider_id)}
-                  android_ripple={{ color: "rgba(96,165,250,0.06)" }}
-                >
-                  <ProviderLogo
-                    provider={item}
-                    isSubscribed={isSubscribed}
-                    size={44}
-                    showName={false}
-                    animated={false}
-                  />
-                  <Text
-                    style={[
-                      styles.providerName,
-                      isSubscribed && styles.providerNameActive,
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {item.provider_name}
-                  </Text>
-                  <View
-                    style={[
-                      styles.checkbox,
-                      isSubscribed && styles.checkboxActive,
-                    ]}
-                  >
-                    {isSubscribed && (
-                      <Ionicons name="checkmark" size={14} color="white" />
-                    )}
-                  </View>
-                </Pressable>
-              );
-            }}
+            renderItem={renderItem}
+            // Tells the VirtualizedList the item height is fixed so it can
+            // skip measuring and calculate layout in O(1) instead of O(n).
+            getItemLayout={(_data, index) => ({
+              length: ITEM_HEIGHT,
+              offset: ITEM_HEIGHT * index,
+              index,
+            })}
           />
         )}
       </View>
     </Modal>
   );
 }
+
+// Fixed row height used by getItemLayout.
+// Must match paddingVertical (10 * 2) + content height (44px logo).
+const ITEM_HEIGHT = 64;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background, paddingTop: 50 },
@@ -235,18 +274,18 @@ const styles = StyleSheet.create({
   tabTextActive: { color: Colors.primary },
   list: { paddingHorizontal: 25, paddingBottom: 40 },
   item: {
+    height: ITEM_HEIGHT,
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: Colors.surface,
     gap: 14,
   },
   providerName: { flex: 1, color: Colors.textMuted, fontSize: 15 },
   providerNameActive: {
-    color: Colors.textMuted,
-    fontSize: 17,
-    fontWeight: "600",
+    color: Colors.primary,
+    fontSize: 16,
+    fontWeight: "bold",
   },
   checkbox: {
     width: 24,

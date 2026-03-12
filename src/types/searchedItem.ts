@@ -3,7 +3,9 @@ type BaseItem = {
   poster_path: string | null;
 };
 
-type MediaItem = BaseItem & {
+// Exported separately so KnownForSection can reference it directly
+// without importing the full SearchedItem union.
+export type MediaItem = BaseItem & {
   media_type: "movie" | "tv";
   title: string;
   year: string;
@@ -16,6 +18,7 @@ type PersonItem = BaseItem & {
   year: string;
   overview: string;
   known_for_department: string;
+  known_for_items: MediaItem[];
 };
 
 export type SearchedItem = MediaItem | PersonItem;

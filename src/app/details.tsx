@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -17,21 +17,42 @@ import { useUserStore } from "@/store/useUserStore";
 import CountryProviderSection from "@/components/CountryProviderSection";
 import ProviderSection from "@/components/ProvidersSection";
 import ApiStateDisplay from "@/components/ApiStateDisplay";
+import KnownForSection from "@/components/KnownForSection";
 import { Colors, withOpacity } from "@/constants/colors";
+import { MediaItem } from "@/types/searchedItem";
 
 export default function DetailsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const { id, title, year, overview, poster_path, media_type } =
-    useLocalSearchParams<{
-      id: string;
-      title: string;
-      year: string;
-      overview: string;
-      poster_path?: string;
-      media_type: "movie" | "tv" | "person";
-    }>();
+  const {
+    id,
+    title,
+    year,
+    overview,
+    poster_path,
+    media_type,
+    known_for_items: knownForRaw,
+  } = useLocalSearchParams<{
+    id: string;
+    title: string;
+    year: string;
+    overview: string;
+    poster_path?: string;
+    media_type: "movie" | "tv" | "person";
+    known_for_items?: string;
+  }>();
+
+  // Parse the JSON-serialised known_for_items passed from ExploreScreen.
+  // Wrapped in try/catch so a malformed param never crashes the screen.
+  const knownForItems = useMemo((): MediaItem[] => {
+    if (!knownForRaw) return [];
+    try {
+      return JSON.parse(knownForRaw) as MediaItem[];
+    } catch {
+      return [];
+    }
+  }, [knownForRaw]);
 
   const [expanded, setExpanded] = useState(false);
   const { countries, subscriptions } = useUserStore();
@@ -42,6 +63,7 @@ export default function DetailsScreen() {
   const subscribedKeys = new Set(
     subscriptions.map((s) => `${s.countryCode}:${s.providerId}`),
   );
+
   // Single country → flat category layout (no country header needed).
   // Multiple countries or global (countries=[]) → collapsible tabs per country.
   const isSingleCountry = countries.length === 1;
@@ -147,14 +169,14 @@ export default function DetailsScreen() {
 
         <View style={styles.separator} />
 
-        {/* Streaming providers */}
-        <View style={styles.providers}>
-          <Text style={styles.providersTitle}>Where can you watch it?</Text>
+        {/* Bottom section — Known For (persons) or Streaming Providers (media) */}
+        <View style={styles.bottomSection}>
+          <Text style={styles.sectionTitle}>
+            {media_type === "person" ? "Known For" : "Where can you watch it?"}
+          </Text>
 
           {media_type === "person" ? (
-            <Text style={styles.infoText}>
-              Streaming info only available for movies and TV shows.
-            </Text>
+            <KnownForSection items={knownForItems} />
           ) : isLoading ? (
             <ApiStateDisplay state="loading" />
           ) : isError ? (
@@ -176,7 +198,7 @@ export default function DetailsScreen() {
               }
             />
           ) : isSingleCountry ? (
-            /* ── Single country: flat category layout ── */
+            /* ── Single country: flat category layout, no grouping by country ── */
             <>
               <ProviderSection
                 title="Free"
@@ -187,18 +209,21 @@ export default function DetailsScreen() {
               <ProviderSection
                 title="Stream"
                 providers={providers[0]?.flatrate ?? []}
-subscribedKeys={subscribedKeys}
-                countryCode={providers[0]?.countryCode ?? ""}              />
+                subscribedKeys={subscribedKeys}
+                countryCode={providers[0]?.countryCode ?? ""}
+              />
               <ProviderSection
                 title="Rent"
                 providers={providers[0]?.rent ?? []}
-subscribedKeys={subscribedKeys}
-                countryCode={providers[0]?.countryCode ?? ""}              />
+                subscribedKeys={subscribedKeys}
+                countryCode={providers[0]?.countryCode ?? ""}
+              />
               <ProviderSection
                 title="Buy"
                 providers={providers[0]?.buy ?? []}
-subscribedKeys={subscribedKeys}
-                countryCode={providers[0]?.countryCode ?? ""}              />
+                subscribedKeys={subscribedKeys}
+                countryCode={providers[0]?.countryCode ?? ""}
+              />
               {providers[0]?.link && (
                 <Pressable
                   style={styles.justWatch}
@@ -287,19 +312,13 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.05)",
     marginVertical: 10,
   },
-  providers: { marginTop: 10 },
-  providersTitle: {
+  bottomSection: { marginTop: 10 },
+  sectionTitle: {
     color: Colors.text,
     fontSize: 18,
     fontWeight: "700",
     marginBottom: 20,
     textAlign: "center",
-  },
-  infoText: {
-    color: Colors.textDisabled,
-    textAlign: "center",
-    marginTop: 10,
-    fontSize: 14,
   },
   justWatch: {
     marginTop: 20,

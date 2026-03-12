@@ -4,7 +4,7 @@ import {
   SelectedCountry,
   WatchProvidersData,
 } from "@/types/providers";
-import { SearchedItem } from "@/types/searchedItem";
+import { MediaItem, SearchedItem } from "@/types/searchedItem";
 
 const BASE_URL = "https://api.themoviedb.org/";
 const BEARER_TOKEN = process.env.EXPO_PUBLIC_TMDB_BEARER_TOKEN;
@@ -40,8 +40,14 @@ async function fetchTMDB<T>(path: string): Promise<T> {
  */
 
 type TmdbKnownForItem = {
+  id: number;
+  media_type?: string;
   title?: string;
   name?: string;
+  release_date?: string;
+  first_air_date?: string;
+  poster_path?: string | null;
+  overview?: string;
 };
 
 type TmdbRawSearchItem = {
@@ -86,10 +92,22 @@ type TmdbWatchProvidersResponse = {
 
 function toSearchedItem(item: TmdbRawSearchItem): SearchedItem {
   if (item.media_type === "person") {
-    const knownFor = item.known_for
-      ?.map((m) => m.title ?? m.name ?? "")
-      .filter(Boolean)
-      .join(", ");
+    // Transform each known_for entry into a typed MediaItem.
+    // Entries without a recognised media_type are filtered out to keep
+    // the union type honest — we never render unknown content.
+    const known_for_items: MediaItem[] = (item.known_for ?? [])
+      .filter(
+        (m): m is TmdbKnownForItem & { media_type: "movie" | "tv" } =>
+          m.media_type === "movie" || m.media_type === "tv",
+      )
+      .map((m) => ({
+        id: m.id,
+        media_type: m.media_type,
+        title: m.title ?? m.name ?? "Unknown",
+        year: (m.release_date ?? m.first_air_date ?? "").split("-")[0] || "N/A",
+        overview: m.overview ?? "",
+        poster_path: m.poster_path ?? null,
+      }));
 
     return {
       id: item.id,
@@ -98,7 +116,11 @@ function toSearchedItem(item: TmdbRawSearchItem): SearchedItem {
       year: item.known_for_department ?? "N/A",
       poster_path: item.profile_path ?? null,
       known_for_department: item.known_for_department ?? "N/A",
-      overview: knownFor ? `Famous for: ${knownFor}` : "No info available.",
+      overview:
+        known_for_items.length > 0
+          ? `Famous for: ${known_for_items.map((m) => m.title).join(", ")}`
+          : "No info available.",
+      known_for_items,
     };
   }
 
@@ -116,8 +138,7 @@ function toSearchedItem(item: TmdbRawSearchItem): SearchedItem {
 // ————————— Public API —————————
 
 export const tmdbApi = {
-
-    // Fetch all available countries
+  // Fetch all available countries
   getCountries: async (): Promise<Country[]> => {
     const data = await fetchTMDB<TmdbCountriesResponse>(
       "/3/watch/providers/regions",
@@ -125,7 +146,7 @@ export const tmdbApi = {
     return data.results ?? [];
   },
 
-    /**
+  /**
    * Fetch all providers available in a country.
    * Makes two parallel requests (movie + tv) and deduplicates by provider_id
    * so both types are represented in the subscription picker.

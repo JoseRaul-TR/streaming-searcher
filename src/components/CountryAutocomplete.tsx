@@ -82,7 +82,10 @@ export default function CountryAutocomplete({
           value={search}
           onChangeText={setSearch}
           autoCorrect={false}
+          autoComplete="off"
+          spellCheck={false}
           autoCapitalize="none"
+          returnKeyType="search"
         />
         {search.length > 0 && (
           <Pressable onPress={() => setSearch("")} hitSlop={10}>

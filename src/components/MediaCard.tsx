@@ -14,16 +14,20 @@ import { Colors } from "@/constants/colors";
 type Props = {
   item: SearchedItem;
   onPress: () => void;
+  // Optional fixed width — used when the card renders inside a horizontal list
+  // (e.g. KnownForSection). When omitted, the card fills half the screen width
+  // as in the two-column grid on ExploreScreen.
+  width?: number;
 };
 
-export default function MediaCard({ item, onPress }: Props) {
+export default function MediaCard({ item, onPress, width: widthProp }: Props) {
   // useWindowDimensions re-renders if dimensions change (rotation, iPad multitasking),
   // unlike the module-level Dimensions.get() which is calculated once at import time.
-  const { width } = useWindowDimensions();
-  const columnWidth = (width - 40) / 2;
+  const { width: windowWidth } = useWindowDimensions();
+  const cardWith = widthProp ?? (windowWidth - 40) / 2;
 
   return (
-    <Pressable style={[styles.card, { width: columnWidth }]} onPress={onPress}>
+    <Pressable style={[styles.card, { width: cardWith }]} onPress={onPress}>
       <View style={styles.posterContainer}>
         {item.poster_path ? (
           <Image

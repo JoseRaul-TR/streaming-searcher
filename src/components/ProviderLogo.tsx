@@ -8,6 +8,7 @@ import {
   Animated,
   Easing,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { Provider } from "@/types/providers";
 import { Colors } from "@/constants/colors";
 
@@ -27,7 +28,8 @@ type Props = {
   nameLines?: number;
   /**
    * Controls the subscription visual style:
-   *   animated=true  → pulsing halo loop (ProviderSection in details screen)
+   *   animated=true  → one-shot halo on subscribe + persistent badge
+   *                    (ProviderSection in details screen)
    *   animated=false → spring scale up (SubscriptionPickerModal)
    * Defaults to false.
    */
@@ -45,41 +47,55 @@ export default function ProviderLogo({
 }: Props) {
   // ————— Animation values —————
 
-  // `pulse` is a single 0→1 value driven by a sine-eased timing.
-  // Because Easing.inOut(Easing.sin) produces a symmetric S-curve,
-  // the halo expands and fades at the same rate — no visible seam in the loop.
+  // `pulse` drives the one-shot halo that plays once when the user subscribes.
+  // It expands outward and fades simultaneously, acting as a confirmation flash.
   const pulse = useRef(new Animated.Value(0)).current;
 
-  // `scale` drives the spring scale-up on selection in modal mode.
+  // `badgeScale` drives the spring pop-in of the checkmark badge.
+  // Separate from pulse so both can run concurrently without interfering.
+  const badgeScale = useRef(new Animated.Value(isSubscribed ? 1 : 0)).current;
+
+  // `scale` drives the spring scale-up in SubscriptionPickerModal (animated=false).
   const scale = useRef(new Animated.Value(1)).current;
 
-  // ————— Seamless halo pulse (ProviderSection) —————
+  // ————— One-shot halo (ProviderSection) —————
   useEffect(() => {
     if (!useAnimation) return;
 
-    let animation: Animated.CompositeAnimation;
-
     if (isSubscribed) {
+      // Reset to 0 so the halo replays each time the user re-subscribes.
       pulse.setValue(0);
 
-      // Single timing 0→1 looped. Easing.inOut(Easing.sin) produces a smooth
-      // S-curve so the start and end of each cycle connect seamlessly — the halo
-      // fades out at exactly the same speed it fades in, with no hard reset.
-      animation = Animated.loop(
-        Animated.timing(pulse, {
-          toValue: 1,
-          duration: 2500,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-      );
-      animation.start();
+      // Single forward pass: halo expands and fades in 800ms.
+      // Easing.out(Easing.quad) decelerates toward the end so the
+      // expansion feels like a ripple rather than a hard stop.
+      Animated.timing(pulse, {
+        toValue: 1,
+        duration: 800,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }).start();
     } else {
+      // Reset immediately when unsubscribed so a future re-subscribe
+      // always starts from the beginning.
       pulse.setValue(0);
     }
-
-    return () => animation?.stop();
   }, [isSubscribed, pulse, useAnimation]);
+
+  // ————— Badge spring pop-in (ProviderSection) —————
+  useEffect(() => {
+    if (!useAnimation) return;
+
+    // Spring in when subscribed, spring out when unsubscribed.
+    // tension: 180 + friction: 8 produces a snappy overshoot that feels
+    // responsive without being bouncy.
+    Animated.spring(badgeScale, {
+      toValue: isSubscribed ? 1 : 0,
+      useNativeDriver: true,
+      tension: 180,
+      friction: 8,
+    }).start();
+  }, [isSubscribed, badgeScale, useAnimation]);
 
   // ————— Spring scale (SubscriptionPickerModal) —————
   useEffect(() => {
@@ -87,23 +103,33 @@ export default function ProviderLogo({
     Animated.spring(scale, {
       toValue: isSubscribed ? 1.15 : 1,
       useNativeDriver: true,
-      friction: 6,
+      friction: 10,
     }).start();
   }, [isSubscribed, scale, useAnimation]);
 
   // ————— Interpolations —————
 
-  // Scale: peaks at the midpoint of the cycle (0.5) then contracts back.
+  // Halo expands outward from the logo edge (1x) to 1.7x its size.
+  // A larger outputRange makes the ripple more visible on small logos.
   const haloScale = pulse.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [1, 1.2, 1],
+    inputRange: [0, 1],
+    outputRange: [1, 1.7],
   });
 
-  // Opacity: peaks at the midpoint and returns to 0.
+  // Opacity peaks early (at 30% of the animation) then fades to 0,
+  // so the halo is brightest at the start of the expansion — like a real ripple.
   const haloOpacity = pulse.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [0, 0.3, 0],
+    inputRange: [0, 0.3, 1],
+    outputRange: [0.6, 0.4, 0],
   });
+
+  // ————— Derived sizes —————
+  // Badge sits in the bottom-right corner. Its size scales with the logo
+  // so the proportion stays consistent regardless of the `size` prop.
+  const badgeSize = size * 0.38;
+  const badgeIconSize = size * 0.22;
+  // Negative offset overlaps the badge onto the logo edge.
+  const badgeOffset = -(badgeSize * 0.2);
 
   // ————— Styles —————
   const logoStyle = {
@@ -116,21 +142,19 @@ export default function ProviderLogo({
   // ————— JSX —————
   const content = (
     <View style={styles.wrapper}>
-      {/*
-       * Animated.View applies the spring scale in modal mode (useAnimation=false).
-       * In animated mode the transform is locked at 1 — the halo has its own scale.
-       */}
       <Animated.View
         style={{
           width: size,
           height: size,
           justifyContent: "center",
           alignItems: "center",
+          // Scale up in modal mode; locked at 1 in animated mode so the
+          // halo and badge handle all visual feedback instead.
           transform: [{ scale: useAnimation ? 1 : scale }],
         }}
       >
-        {/* Halo — position absolute so it renders behind the logo image */}
-        {useAnimation && isSubscribed && (
+        {/* One-shot ripple halo — renders only in animated mode */}
+        {useAnimation && (
           <Animated.View
             style={[
               styles.halo,
@@ -151,6 +175,33 @@ export default function ProviderLogo({
           }}
           style={logoStyle}
         />
+
+        {/* Checkmark badge — renders only in animated mode.
+            Always in the tree so the spring animates in/out smoothly
+            without unmounting. Scale 0 makes it invisible when unsubscribed. */}
+        {useAnimation && (
+          <Animated.View
+            style={[
+              styles.badge,
+              {
+                width: badgeSize,
+                height: badgeSize,
+                borderRadius: badgeSize,
+                bottom: badgeOffset,
+                right: badgeOffset,
+                // borderWidth separates the badge from the logo visually.
+                borderWidth: size * 0.05,
+                transform: [{ scale: badgeScale }],
+              },
+            ]}
+          >
+            <Ionicons
+              name="checkmark"
+              size={badgeIconSize}
+              color="#FFF"
+            />
+          </Animated.View>
+        )}
       </Animated.View>
 
       {showName && (
@@ -187,6 +238,15 @@ const styles = StyleSheet.create({
     position: "absolute",
     backgroundColor: Colors.success,
   },
+  badge: {
+    position: "absolute",
+    backgroundColor: Colors.success,
+    justifyContent: "center",
+    alignItems: "center",
+    // borderColor matches the screen background so the badge appears
+    // to float above the logo with a clean separation ring.
+    borderColor: Colors.background,
+  },
   name: {
     color: Colors.textMuted,
     fontSize: 10,
@@ -194,7 +254,7 @@ const styles = StyleSheet.create({
     width: 60,
   },
   nameActive: {
-    color: Colors.textSecondary,
+    color: Colors.success,
     fontWeight: "600",
   },
 });
