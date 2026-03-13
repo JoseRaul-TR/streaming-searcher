@@ -1,5 +1,12 @@
-import React, { useState, useMemo } from "react";
-import { View, Text, Pressable, StyleSheet, Alert } from "react-native";
+import React, { useState, useMemo, useRef, useEffect } from "react";
+import {
+  View,
+  Text,
+  Pressable,
+  StyleSheet,
+  Alert,
+  Animated,
+} from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
@@ -10,12 +17,119 @@ import SubscriptionPickerModal from "@/components/SubscriptionPickerModal";
 import { ColorScheme, ModePreference, withOpacity } from "@/constants/colors";
 import { useMode } from "@/hooks/useMode";
 
+// ————— Mode/Theme Options —————
 const MODE_OPTIONS: { label: string; value: ModePreference }[] = [
   { label: "System", value: "system" },
   { label: "Light", value: "light" },
   { label: "Dark", value: "dark" },
 ];
 
+// ————— Sliding Pill Selector —————
+function ModeSelector({
+  value,
+  onChange,
+  colors,
+}: {
+  value: ModePreference;
+  onChange: (v: ModePreference) => void;
+  colors: ColorScheme;
+}) {
+  const translateX = useRef(new Animated.Value(0)).current;
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  const currentIndex = MODE_OPTIONS.findIndex((o) => o.value === value);
+  const segmentWidth = containerWidth / MODE_OPTIONS.length;
+
+  // Slide the pill to the active segment whenever the selection changes
+  useEffect(() => {
+    if (containerWidth === 0) return;
+    Animated.spring(translateX, {
+      toValue: currentIndex * segmentWidth,
+      useNativeDriver: true,
+      tension: 180,
+      friction: 20,
+    }).start();
+  }, [currentIndex, segmentWidth, containerWidth, translateX]);
+
+  return (
+    <View
+      style={[
+        selectorStyles.track,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.surfaceMid,
+        },
+      ]}
+      onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}
+    >
+      {/* Sliding Pill — only rendered once the container width is known */}
+      {containerWidth > 0 && (
+        <Animated.View
+          style={[
+            selectorStyles.pill,
+            {
+              width: segmentWidth - 8,
+              backgroundColor: colors.primary,
+              transform: [{ translateX }],
+            },
+          ]}
+        />
+      )}
+
+      {/* Segment Labels */}
+      {MODE_OPTIONS.map((option) => (
+        <Pressable
+          key={option.value}
+          style={selectorStyles.segment}
+          onPress={() => onChange(option.value)}
+          android_ripple={{ color: withOpacity(colors.primary, 0.08) }}
+        >
+          <Text
+            style={[
+              selectorStyles.label,
+              {
+                color:
+                  value === option.value ? "#FFF" : colors.textMuted,
+                fontWeight: value === option.value ? "700" : "400",
+              },
+            ]}
+          >
+            {option.label}
+          </Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
+// Static styles for ModeSelector — no theme dependency, colors come via props
+const selectorStyles = StyleSheet.create({
+  track: {
+    flexDirection: "row",
+    borderRadius: 50,
+    padding: 4,
+    borderWidth: 1,
+    position: "relative",
+  },
+  pill: {
+    position: "absolute",
+    top: 4,
+    left: 4,
+    bottom: 4,
+    borderRadius: 50,
+  },
+  segment: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  label: {
+    fontSize: 13,
+  },
+});
+
+// ————— Main Component —————
 export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -81,33 +195,19 @@ export default function SettingsScreen() {
           <Text style={styles.sectionLabel}>Appearance</Text>
         </View>
 
-        <View style={styles.segmentedRow}>
-          {MODE_OPTIONS.map((option) => (
-            <Pressable
-              key={option.value}
-              style={[
-                styles.segment,
-                modePreference === option.value && styles.segmentActive,
-              ]}
-              onPress={() => setModePreference(option.value)}
-              android_ripple={{ color: withOpacity(colors.primary, 0.1) }}
-            >
-              <Text
-                style={[
-                  styles.segmentText,
-                  modePreference === option.value && styles.segmentTextActive,
-                ]}
-              >
-                {option.label}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+        <ModeSelector
+          value={modePreference}
+          onChange={setModePreference}
+          colors={colors}
+        />
       </View>
 
       {/* Search preferences */}
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Search Settings</Text>
+        <View style={styles.sectionHeader}>
+          <Ionicons name="search-outline" size={22} color={colors.primary} />
+          <Text style={styles.sectionLabel}>Search Settings</Text>
+        </View>
 
         {/* Countries → dedicated screen */}
         <Pressable
@@ -138,7 +238,11 @@ export default function SettingsScreen() {
           android_ripple={{ color: withOpacity(colors.primary, 0.08) }}
         >
           <View style={styles.rowLeft}>
-            <MaterialIcons name="subscriptions" size={22} color={colors.primary} />
+            <MaterialIcons
+              name="subscriptions"
+              size={22}
+              color={colors.primary}
+            />
             <Text style={styles.rowTitle}>Subscriptions</Text>
           </View>
           <View style={styles.rowRight}>
@@ -162,7 +266,10 @@ export default function SettingsScreen() {
 
       {/* App */}
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>App</Text>
+        <View style={styles.sectionHeader}>
+          <Ionicons name="apps" size={22} color={colors.primary} />
+          <Text style={styles.sectionLabel}>App</Text>
+        </View>
 
         <Pressable
           style={styles.row}
@@ -212,34 +319,7 @@ function makeStyles(colors: ColorScheme) {
       letterSpacing: 1,
       textTransform: "uppercase",
     },
-    // — Segmented control —
-    segmentedRow: {
-      flexDirection: "row",
-      backgroundColor: colors.surface,
-      borderRadius: 50,
-      padding: 4,
-      gap: 4,
-      borderWidth: 1,
-      borderColor: colors.surfaceMid,
-    },
-    segment: {
-      flex: 1,
-      paddingVertical: 10,
-      borderRadius: 50,
-      alignItems: "center",
-      overflow: "hidden",
-    },
-    segmentActive: {
-      backgroundColor: colors.primary,
-    },
-    segmentText: {
-      color: colors.textMuted,
-      fontSize: 14,
-      fontWeight: "600",
-    },
-    segmentTextActive: {
-      color: "#FFF",
-    },
+
     // — Rows —
     row: {
       flexDirection: "row",
