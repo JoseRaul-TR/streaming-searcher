@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   Modal,
   View,
@@ -8,7 +8,8 @@ import {
   StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "@/constants/colors";
+import { ColorScheme } from "@/constants/colors";
+import { useMode } from "@/hooks/useMode";
 
 type Props = {
   visible: boolean;
@@ -16,13 +17,16 @@ type Props = {
 };
 
 export default function TermsModal({ visible, onClose }: Props) {
+  const { colors } = useMode();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Terms of Use</Text>
           <Pressable onPress={onClose} hitSlop={10}>
-            <Ionicons name="close" size={28} color={Colors.textMuted} />
+            <Ionicons name="close" size={28} color={colors.textMuted} />
           </Pressable>
         </View>
 
@@ -42,20 +46,28 @@ export default function TermsModal({ visible, onClose }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-    paddingHorizontal: 25,
-    paddingTop: 50,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  title: { color: "#FFF", fontSize: 24, fontWeight: "bold" },
-  scroll: { flex: 1 },
-  body: { color: Colors.textSecondary, fontSize: 15, lineHeight: 24 },
-});
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+      paddingHorizontal: 25,
+      paddingTop: 75,
+    },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 20,
+      paddingBottom: 16,
+    },
+    title: { color: colors.text, fontSize: 24, fontWeight: "bold" },
+    scroll: { flex: 1 },
+    body: {
+      color: colors.textSecondary,
+      fontSize: 15,
+      lineHeight: 24,
+      paddingTop: 4,
+    },
+  });
+}

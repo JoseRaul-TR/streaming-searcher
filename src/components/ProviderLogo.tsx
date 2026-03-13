@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useMemo } from "react";
 import {
   View,
   Text,
@@ -10,7 +10,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Provider } from "@/types/providers";
-import { Colors } from "@/constants/colors";
+import { ColorScheme } from "@/constants/colors";
+import { useMode } from "@/hooks/useMode";
 
 type Props = {
   provider: Provider;
@@ -45,6 +46,9 @@ export default function ProviderLogo({
   nameLines = 1,
   animated: useAnimation = false,
 }: Props) {
+  const { colors } = useMode();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   // ————— Animation values —————
 
   // `pulse` drives the one-shot halo that plays once when the user subscribes.
@@ -136,7 +140,7 @@ export default function ProviderLogo({
     width: size,
     height: size,
     borderRadius: size,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
   };
 
   // ————— JSX —————
@@ -195,11 +199,7 @@ export default function ProviderLogo({
               },
             ]}
           >
-            <Ionicons
-              name="checkmark"
-              size={badgeIconSize}
-              color="#FFF"
-            />
+            <Ionicons name="checkmark" size={badgeIconSize} color="#FFF" />
           </Animated.View>
         )}
       </Animated.View>
@@ -229,32 +229,34 @@ export default function ProviderLogo({
   return content;
 }
 
-const styles = StyleSheet.create({
-  wrapper: {
-    alignItems: "center",
-    gap: 5,
-  },
-  halo: {
-    position: "absolute",
-    backgroundColor: Colors.success,
-  },
-  badge: {
-    position: "absolute",
-    backgroundColor: Colors.success,
-    justifyContent: "center",
-    alignItems: "center",
-    // borderColor matches the screen background so the badge appears
-    // to float above the logo with a clean separation ring.
-    borderColor: Colors.background,
-  },
-  name: {
-    color: Colors.textMuted,
-    fontSize: 10,
-    textAlign: "center",
-    width: 60,
-  },
-  nameActive: {
-    color: Colors.success,
-    fontWeight: "600",
-  },
-});
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    wrapper: {
+      alignItems: "center",
+      gap: 5,
+    },
+    halo: {
+      position: "absolute",
+      backgroundColor: colors.success,
+    },
+    badge: {
+      position: "absolute",
+      backgroundColor: colors.success,
+      justifyContent: "center",
+      alignItems: "center",
+      // borderColor matches the screen background so the badge appears
+      // to float above the logo with a clean separation ring.
+      borderColor: colors.background,
+    },
+    name: {
+      color: colors.textMuted,
+      fontSize: 10,
+      textAlign: "center",
+      width: 60,
+    },
+    nameActive: {
+      color: colors.success,
+      fontWeight: "600",
+    },
+  });
+}

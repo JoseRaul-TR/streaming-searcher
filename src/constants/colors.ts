@@ -1,4 +1,22 @@
-export const Colors = {
+export type ColorScheme = Record<keyof typeof darkColors, string>;
+
+export type ModePreference = "system" | "light" | "dark";
+
+export const lightColors = {
+  background: "#F8FAFC",
+  surface: "#FFFFFF",
+  surfaceMid: "#E2E8F0",
+  surfaceAlt: "#94A3B8",
+  primary: "#3B82F6",
+  text: "#0F172A",
+  textSecondary: "#1E293B",
+  textMuted: "#475569",
+  textDisabled: "#94A3B8",
+  error: "#EF4444",
+  success: "#22C55E",
+} as const;
+
+export const darkColors = {
   background: "#0F172A",
   surface: "#1E293B",
   surfaceMid: "#334155",

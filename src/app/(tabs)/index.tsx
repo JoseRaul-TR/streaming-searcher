@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, FlatList, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -6,10 +6,14 @@ import { useRouter } from "expo-router";
 import { useSearch } from "@/hooks/useSearch";
 import MediaCard from "@/components/MediaCard";
 import SearchBar from "@/components/SearchBar";
-import { Colors } from "@/constants/colors";
+import { ColorScheme } from "@/constants/colors";
+import { useMode } from "@/hooks/useMode";
 
 export default function ExploreScreen() {
   const router = useRouter();
+  const { colors } = useMode();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const { query, setQuery, results, isLoading, isError, hasSearched } =
     useSearch();
 
@@ -22,7 +26,7 @@ export default function ExploreScreen() {
           <Ionicons
             name="alert-circle-outline"
             size={48}
-            color={Colors.error}
+            color={colors.error}
           />
           <Text style={styles.feedbackTitle}>Something went wrong</Text>
           <Text style={styles.feedbackSub}>
@@ -36,13 +40,14 @@ export default function ExploreScreen() {
           numColumns={2}
           contentContainerStyle={styles.listContent}
           columnWrapperStyle={styles.columnWrapper}
+          showsVerticalScrollIndicator={false}
           ListEmptyComponent={() =>
             !isLoading && hasSearched ? (
               <View style={styles.feedback}>
                 <Ionicons
                   name="search-outline"
                   size={80}
-                  color={Colors.surface}
+                  color={colors.surfaceMid}
                 />
                 <Text style={styles.feedbackTitle}>
                   No results for "{query}"
@@ -84,27 +89,29 @@ export default function ExploreScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  listContent: { paddingHorizontal: 10, paddingBottom: 20, flexGrow: 1 },
-  columnWrapper: { justifyContent: "space-between", paddingHorizontal: 5 },
-  feedback: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 100,
-    paddingHorizontal: 40,
-    gap: 12,
-  },
-  feedbackTitle: {
-    color: Colors.text,
-    fontSize: 18,
-    fontWeight: "600",
-    textAlign: "center",
-  },
-  feedbackSub: {
-    color: Colors.textDisabled,
-    fontSize: 14,
-    textAlign: "center",
-  },
-});
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    listContent: { paddingHorizontal: 10, paddingBottom: 20, flexGrow: 1 },
+    columnWrapper: { justifyContent: "space-between", paddingHorizontal: 5 },
+    feedback: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      marginTop: 100,
+      paddingHorizontal: 40,
+      gap: 12,
+    },
+    feedbackTitle: {
+      color: colors.text,
+      fontSize: 18,
+      fontWeight: "600",
+      textAlign: "center",
+    },
+    feedbackSub: {
+      color: colors.textMuted,
+      fontSize: 14,
+      textAlign: "center",
+    },
+  });
+}

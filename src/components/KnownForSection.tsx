@@ -1,10 +1,11 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import { View, Text, FlatList, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { MediaItem } from "@/types/searchedItem";
 import MediaCard from "./MediaCard";
 import ApiStateDisplay from "./ApiStateDisplay";
-import { Colors } from "@/constants/colors";
+import { ColorScheme } from "@/constants/colors";
+import { useMode } from "@/hooks/useMode";
 
 type Props = {
   items: MediaItem[];
@@ -15,6 +16,9 @@ type Props = {
 const CARD_WIDTH = 140;
 
 export default function KnownForSection({ items }: Props) {
+  const { colors } = useMode();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const router = useRouter();
 
   const handlePress = useCallback(
@@ -63,15 +67,8 @@ export default function KnownForSection({ items }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  list: {
-    gap: 10,
-    paddingBottom: 4,
-  },
-  empty: {
-    color: Colors.textDisabled,
-    textAlign: "center",
-    marginTop: 10,
-    fontSize: 14,
-  },
-});
+function makeStyles(_colors: ColorScheme) {
+  return StyleSheet.create({
+    list: { gap: 10, paddingBottom: 4 },
+  });
+}

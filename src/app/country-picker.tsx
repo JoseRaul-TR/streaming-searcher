@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -6,7 +6,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useUserStore } from "@/store/useUserStore";
 import CountryAutocomplete from "@/components/CountryAutocomplete";
-import { Colors } from "@/constants/colors";
+import { ColorScheme } from "@/constants/colors";
+import { useMode } from "@/hooks/useMode";
 
 /**
  * Full-screen country picker navigated to from Settings.
@@ -16,6 +17,8 @@ import { Colors } from "@/constants/colors";
 export default function CountryPickerScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { colors } = useMode();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const { countries, addCountry, removeCountry, removeAllCountries } =
     useUserStore();
@@ -37,7 +40,7 @@ export default function CountryPickerScreen() {
           android_ripple={{ color: "rgba(255,255,255,0.1)", borderless: true }}
           hitSlop={10}
         >
-          <Ionicons name="arrow-back" size={24} color={Colors.textMuted} />
+          <Ionicons name="arrow-back" size={24} color={colors.textMuted} />
         </Pressable>
         <View style={styles.topBarText}>
           <Text style={styles.topBarTitle}>Countries</Text>
@@ -60,20 +63,22 @@ export default function CountryPickerScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(255,255,255,0.05)",
-    gap: 12,
-  },
-  backButton: { borderRadius: 20, padding: 4, overflow: "hidden" },
-  topBarText: { flex: 1 },
-  topBarTitle: { color: "#FFF", fontSize: 17, fontWeight: "600" },
-  topBarSub: { color: Colors.textDisabled, fontSize: 13, marginTop: 1 },
-  content: { flex: 1, padding: 20 },
-});
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    topBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 15,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: "rgba(255,255,255,0.05)",
+      gap: 12,
+    },
+    backButton: { borderRadius: 20, padding: 4, overflow: "hidden" },
+    topBarText: { flex: 1 },
+    topBarTitle: { color: colors.text, fontSize: 17, fontWeight: "600" },
+    topBarSub: { color: colors.textDisabled, fontSize: 13, marginTop: 1 },
+    content: { flex: 1, padding: 20 },
+  });
+}

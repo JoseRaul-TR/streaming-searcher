@@ -10,6 +10,8 @@ type Subscription = {
   countryCode: string;
 };
 
+type ModePreference = "system" | "light" | "dark";
+
 type UserState = {
   hasCompletedOnboarding: boolean;
   hasAcceptedTerms: boolean;
@@ -27,6 +29,11 @@ type UserState = {
   completeOnboarding: () => void;
   toggleTerms: () => void;
   resetOnboarding: () => void;
+
+  modePreference: ModePreference;
+  setModePreference: (preference: ModePreference) => void;
+  systemScheme: "light" | "dark";
+  setSystemScheme: (scheme: "light" | "dark") => void;
 };
 
 export const useUserStore = create<UserState>()(
@@ -36,6 +43,8 @@ export const useUserStore = create<UserState>()(
       hasAcceptedTerms: false,
       countries: [],
       subscriptions: [],
+      modePreference: "system",
+      systemScheme: "dark",
 
       addCountry: (country) =>
         set((state) => {
@@ -84,6 +93,7 @@ export const useUserStore = create<UserState>()(
       toggleTerms: () =>
         set((state) => ({ hasAcceptedTerms: !state.hasAcceptedTerms })),
 
+      // resetOnboarding only resets search settings (country and streaming services choices). No reset to modePreference.
       resetOnboarding: () =>
         set({
           hasCompletedOnboarding: false,
@@ -91,10 +101,22 @@ export const useUserStore = create<UserState>()(
           countries: [],
           subscriptions: [],
         }),
+
+      setModePreference: (preference) => set({ modePreference: preference }),
+
+      setSystemScheme: (scheme) => set({ systemScheme: scheme }),
     }),
     {
       name: "user-storage",
       storage: createJSONStorage(() => AsyncStorage),
+      partialize: (state) => ({
+        // Explicit list of what DOES persists - systemScheme stays out
+        hasCompletedOnboarding: state.hasCompletedOnboarding,
+        hasAcceptedTerms: state.hasAcceptedTerms,
+        countries: state.countries,
+        subscriptions: state.subscriptions,
+        modePreference: state.modePreference,
+      }),
     },
   ),
 );

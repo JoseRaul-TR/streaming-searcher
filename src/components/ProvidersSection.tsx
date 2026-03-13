@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Provider } from "@/types/providers";
 import ProviderLogo from "./ProviderLogo";
-import { Colors } from "@/constants/colors";
+import { ColorScheme } from "@/constants/colors";
+import { useMode } from "@/hooks/useMode";
 
 type Props = {
   title: string;
@@ -20,6 +21,9 @@ export default function ProviderSection({
   subscribedKeys,
   countryCode,
 }: Props) {
+  const { colors } = useMode();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   if (!providers?.length) return null;
 
   return (
@@ -44,19 +48,21 @@ export default function ProviderSection({
   );
 }
 
-const styles = StyleSheet.create({
-  category: { marginBottom: 20 },
-  categoryTitle: {
-    color: Colors.textDisabled,
-    fontSize: 12,
-    fontWeight: "bold",
-    textTransform: "uppercase",
-    letterSpacing: 1,
-    marginBottom: 10,
-  },
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 15,
-  },
-});
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    category: { marginBottom: 20 },
+    categoryTitle: {
+      color: colors.textDisabled,
+      fontSize: 12,
+      fontWeight: "bold",
+      textTransform: "uppercase",
+      letterSpacing: 1,
+      marginBottom: 10,
+    },
+    grid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 15,
+    },
+  });
+}

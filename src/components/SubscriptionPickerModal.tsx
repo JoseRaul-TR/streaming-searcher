@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, memo } from "react";
+import React, { useState, useCallback, useEffect, memo, useMemo } from "react";
 import {
   Modal,
   View,
@@ -15,7 +15,12 @@ import { useUserStore } from "@/store/useUserStore";
 import { SelectedCountry, Provider } from "@/types/providers";
 import ProviderLogo from "./ProviderLogo";
 import ApiStateDisplay from "./ApiStateDisplay";
-import { Colors, withOpacity } from "@/constants/colors";
+import { ColorScheme, withOpacity } from "@/constants/colors";
+import { useMode } from "@/hooks/useMode";
+
+// Fixed row height used by getItemLayout.
+// Must match paddingVertical (10 * 2) + content height (44px logo).
+const ITEM_HEIGHT = 64;
 
 // ————— Extracted item component —————
 // memo() prevents re-rendering when the parent re-renders but this item's
@@ -33,11 +38,14 @@ const ProviderItem = memo(function ProviderItem({
   isSubscribed,
   onToggle,
 }: ProviderItemProps) {
+  const { colors } = useMode();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   return (
     <Pressable
       style={styles.item}
       onPress={() => onToggle(item.provider_id)}
-      android_ripple={{ color: "rgba(96,165,250,0.06)" }}
+      android_ripple={{ color: withOpacity(colors.primary, 0.06) }}
     >
       <ProviderLogo
         provider={item}
@@ -72,6 +80,9 @@ export default function SubscriptionPickerModal({
   onClose,
   countries,
 }: Props) {
+  const { colors } = useMode();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const { subscriptions, addSubscription, removeSubscription } = useUserStore();
 
   // Single country → load directly. Multiple countries → wait for user to pick
@@ -156,7 +167,7 @@ export default function SubscriptionPickerModal({
         <View style={styles.header}>
           <Text style={styles.title}>My Subscriptions</Text>
           <Pressable onPress={onClose} hitSlop={10}>
-            <Ionicons name="close" size={28} color={Colors.textMuted} />
+            <Ionicons name="close" size={28} color={colors.textMuted} />
           </Pressable>
         </View>
 
@@ -176,7 +187,7 @@ export default function SubscriptionPickerModal({
                   activeCountry === c.code && styles.tabActive,
                 ]}
                 onPress={() => setActiveCountry(c.code)}
-                android_ripple={{ color: withOpacity(Colors.primary, 0.1) }}
+                android_ripple={{ color: withOpacity(colors.primary, 0.1) }}
               >
                 <Text
                   style={[
@@ -199,7 +210,7 @@ export default function SubscriptionPickerModal({
               <Ionicons
                 name="flag-outline"
                 size={28}
-                color={Colors.surfaceAlt}
+                color={colors.surfaceAlt}
               />
             }
             message="Select a country above to see its available streaming services."
@@ -231,73 +242,74 @@ export default function SubscriptionPickerModal({
   );
 }
 
-// Fixed row height used by getItemLayout.
-// Must match paddingVertical (10 * 2) + content height (44px logo).
-const ITEM_HEIGHT = 64;
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background, paddingTop: 50 },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 25,
-    marginBottom: 8,
-  },
-  title: { color: "#FFF", fontSize: 24, fontWeight: "bold" },
-  subtitle: {
-    color: Colors.textDisabled,
-    fontSize: 13,
-    lineHeight: 18,
-    paddingHorizontal: 25,
-    marginBottom: 20,
-  },
-  tabs: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    paddingHorizontal: 25,
-    marginBottom: 16,
-  },
-  tab: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: Colors.surface,
-  },
-  tabActive: {
-    backgroundColor: withOpacity(Colors.primary, 0.15),
-    borderWidth: 1,
-    borderColor: Colors.primary,
-  },
-  tabText: { color: Colors.textDisabled, fontSize: 13, fontWeight: "600" },
-  tabTextActive: { color: Colors.primary },
-  list: { paddingHorizontal: 25, paddingBottom: 40 },
-  item: {
-    height: ITEM_HEIGHT,
-    flexDirection: "row",
-    alignItems: "center",
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.surface,
-    gap: 14,
-  },
-  providerName: { flex: 1, color: Colors.textMuted, fontSize: 15 },
-  providerNameActive: {
-    color: Colors.primary,
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: Colors.surfaceMid,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  checkboxActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-});
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: 25,
+      paddingTop: 75,
+      marginBottom: 8,
+    },
+    title: { color: colors.text, fontSize: 24, fontWeight: "bold" },
+    subtitle: {
+      color: colors.textMuted,
+      fontSize: 13,
+      lineHeight: 18,
+      paddingHorizontal: 25,
+      marginBottom: 20,
+    },
+    tabs: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 8,
+      paddingHorizontal: 25,
+      marginBottom: 16,
+    },
+    tab: {
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: 20,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.surfaceMid,
+    },
+    tabActive: {
+      backgroundColor: withOpacity(colors.primary, 0.12),
+      borderWidth: 1,
+      borderColor: colors.primary,
+    },
+    tabText: { color: colors.textMuted, fontSize: 13, fontWeight: "600" },
+    tabTextActive: { color: colors.primary },
+    list: { paddingHorizontal: 25, paddingBottom: 40 },
+    item: {
+      height: ITEM_HEIGHT,
+      flexDirection: "row",
+      alignItems: "center",
+      borderBottomWidth: 1,
+      borderBottomColor: colors.surfaceMid,
+      gap: 14,
+    },
+    providerName: { flex: 1, color: colors.textMuted, fontSize: 15 },
+    providerNameActive: {
+      color: colors.primary,
+      fontSize: 16,
+      fontWeight: "bold",
+    },
+    checkbox: {
+      width: 24,
+      height: 24,
+      borderRadius: 6,
+      borderWidth: 2,
+      borderColor: colors.surfaceAlt,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    checkboxActive: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+  });
+}

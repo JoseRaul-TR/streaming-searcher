@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Modal, View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors } from "@/constants/colors";
+import { ColorScheme } from "@/constants/colors";
+import { useMode } from "@/hooks/useMode";
 
 type Props = {
   text: string;
@@ -12,6 +13,9 @@ type Props = {
  * Tapping the backdrop or the close button dismisses it.
  */
 export default function InfoTooltip({ text }: Props) {
+  const { colors } = useMode();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const [visible, setVisible] = useState(false);
 
   return (
@@ -24,7 +28,7 @@ export default function InfoTooltip({ text }: Props) {
         <Ionicons
           name="information-circle-outline"
           size={20}
-          color={Colors.surfaceAlt}
+          color={colors.surfaceAlt}
         />
       </Pressable>
 
@@ -42,7 +46,7 @@ export default function InfoTooltip({ text }: Props) {
               <Ionicons
                 name="information-circle"
                 size={18}
-                color={Colors.primary}
+                color={colors.primary}
               />
               <Text style={styles.cardTitle}>Info</Text>
               <Pressable
@@ -50,7 +54,7 @@ export default function InfoTooltip({ text }: Props) {
                 hitSlop={10}
                 style={styles.closeBtn}
               >
-                <Ionicons name="close" size={20} color={Colors.textDisabled} />
+                <Ionicons name="close" size={20} color={colors.textDisabled} />
               </Pressable>
             </View>
             <Text style={styles.cardText}>{text}</Text>
@@ -61,41 +65,45 @@ export default function InfoTooltip({ text }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  iconButton: {
-    padding: 2,
-  },
-  backdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 40,
-  },
-  card: {
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    padding: 20,
-    width: "100%",
-    gap: 12,
-  },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  cardTitle: {
-    color: Colors.primary,
-    fontSize: 14,
-    fontWeight: "700",
-    flex: 1,
-  },
-  closeBtn: {
-    padding: 2,
-  },
-  cardText: {
-    color: Colors.textMuted,
-    fontSize: 14,
-    lineHeight: 22,
-  },
-});
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    iconButton: {
+      padding: 2,
+    },
+    backdrop: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.6)",
+      justifyContent: "center",
+      alignItems: "center",
+      paddingHorizontal: 40,
+    },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: 16,
+      padding: 20,
+      width: "100%",
+      gap: 12,
+      borderWidth: 1,
+      borderColor: colors.surfaceMid,
+    },
+    cardHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+    },
+    cardTitle: {
+      color: colors.primary,
+      fontSize: 14,
+      fontWeight: "700",
+      flex: 1,
+    },
+    closeBtn: {
+      padding: 2,
+    },
+    cardText: {
+      color: colors.textMuted,
+      fontSize: 14,
+      lineHeight: 22,
+    },
+  });
+}

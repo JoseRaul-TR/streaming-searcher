@@ -116,10 +116,7 @@ function toSearchedItem(item: TmdbRawSearchItem): SearchedItem {
       year: item.known_for_department ?? "N/A",
       poster_path: item.profile_path ?? null,
       known_for_department: item.known_for_department ?? "N/A",
-      overview:
-        known_for_items.length > 0
-          ? `Famous for: ${known_for_items.map((m) => m.title).join(", ")}`
-          : "No info available.",
+      overview: "",
       known_for_items,
     };
   }

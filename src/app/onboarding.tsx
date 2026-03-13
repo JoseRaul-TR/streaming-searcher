@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { View, Text, Pressable, StyleSheet, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -9,7 +9,8 @@ import CountryAutocomplete from "@/components/CountryAutocomplete";
 import SubscriptionPickerModal from "@/components/SubscriptionPickerModal";
 import TermsModal from "@/components/TermsModal";
 import InfoTooltip from "@/components/InfoTooltip";
-import { Colors, withOpacity } from "@/constants/colors";
+import { ColorScheme, withOpacity } from "@/constants/colors";
+import { useMode } from "@/hooks/useMode";
 
 const TOTAL_STEPS = 3;
 
@@ -21,6 +22,9 @@ const STEP_INFO = {
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+
+  const { colors } = useMode();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const [step, setStep] = useState(1);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
@@ -94,12 +98,13 @@ export default function OnboardingScreen() {
                 <Ionicons
                   name="speedometer-outline"
                   size={15}
-                  color="#475569"
+                  color={colors.surfaceAlt}
                 />
                 <Text style={styles.perfHintText}>
-                  Selecting at least one country improves app performance.
-                  Global search loads availability for every country at once and
-                  at the moment can creates performance issues.
+                  By not selecting at least one country you will be performing
+                  global searches. A global search loads availability for every
+                  country at once and at this stage of app development can
+                  creates performance issues.
                 </Text>
               </View>
             )}
@@ -124,18 +129,20 @@ export default function OnboardingScreen() {
                 <Ionicons
                   name="information-circle-outline"
                   size={20}
-                  color="#60A5FA"
+                  color={colors.primary}
                 />
                 <Text style={styles.infoText}>
-                  You selected global search. Go back and pick specific
-                  countries to enable subscription highlights.
+                  You selected global search. If you want to have highlighted
+                  the providers your are subscribed to in the search results go
+                  back and pick specific country or countries to enable
+                  subscription highlights.
                 </Text>
               </View>
             ) : (
               <Pressable
                 style={styles.selector}
                 onPress={() => setShowSubscriptionModal(true)}
-                android_ripple={{ color: "rgba(96,165,250,0.15)" }}
+                android_ripple={{ color: withOpacity(colors.primary, 0.15) }}
               >
                 <Text
                   style={[
@@ -146,7 +153,11 @@ export default function OnboardingScreen() {
                 >
                   {subscriptionsLabel}
                 </Text>
-                <Ionicons name="chevron-down" size={20} color="#94A3B8" />
+                <Ionicons
+                  name="chevron-down"
+                  size={20}
+                  color={colors.textMuted}
+                />
               </Pressable>
             )}
 
@@ -167,7 +178,7 @@ export default function OnboardingScreen() {
               <Pressable
                 onPress={toggleTerms}
                 android_ripple={{
-                  color: withOpacity(Colors.primary, 0.1),
+                  color: withOpacity(colors.primary, 0.1),
                   borderless: true,
                 }}
                 hitSlop={10}
@@ -208,7 +219,7 @@ export default function OnboardingScreen() {
               onPress={() => setStep((s) => s - 1)}
               android_ripple={{ color: "rgba(255,255,255,0.1)" }}
             >
-              <Text style={styles.btnText}>Back</Text>
+              <Text style={styles.btnSecondaryText}>Back</Text>
             </Pressable>
           )}
 
@@ -221,7 +232,7 @@ export default function OnboardingScreen() {
               onPress={() => setStep((s) => s + 1)}
               android_ripple={{ color: "rgba(255,255,255,0.2)" }}
             >
-              <Text style={styles.btnText}>Next</Text>
+              <Text style={styles.btnPrimaryText}>Next</Text>
               <Ionicons name="arrow-forward" size={20} color="white" />
             </Pressable>
           ) : (
@@ -235,7 +246,7 @@ export default function OnboardingScreen() {
               disabled={!hasAcceptedTerms}
               android_ripple={{ color: "rgba(255,255,255,0.2)" }}
             >
-              <Text style={styles.btnText}>Get Started</Text>
+              <Text style={styles.btnPrimaryText}>Get Started</Text>
             </Pressable>
           )}
         </View>
@@ -255,135 +266,141 @@ export default function OnboardingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  progressBar: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 8,
-    paddingTop: 16,
-    paddingBottom: 8,
-  },
-  progressDot: {
-    width: 28,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.surface,
-  },
-  progressDotActive: { backgroundColor: Colors.primary },
-  scroll: { flex: 1 },
-  scrollContent: {
-    paddingHorizontal: 28,
-    paddingTop: 20,
-    paddingBottom: 20,
-  },
-  stepContainer: { gap: 20 },
-  stepLabel: {
-    color: Colors.primary,
-    fontSize: 12,
-    fontWeight: "bold",
-    letterSpacing: 1,
-    textTransform: "uppercase",
-  },
-  titleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  title: {
-    color: "#FFF",
-    fontSize: 28,
-    fontWeight: "bold",
-    lineHeight: 34,
-  },
-  infoBox: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 10,
-    backgroundColor: withOpacity(Colors.primary, 0.08),
-    borderRadius: 12,
-    padding: 14,
-  },
-  infoText: {
-    flex: 1,
-    color: Colors.textMuted,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  selector: {
-    backgroundColor: Colors.surface,
-    padding: 18,
-    borderRadius: 14,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    overflow: "hidden",
-  },
-  selectorText: { color: "#FFF", fontSize: 15, flex: 1, marginRight: 8 },
-  selectorPlaceholder: { color: Colors.textDisabled },
-  hint: { color: Colors.surfaceAlt, fontSize: 13, textAlign: "center" },
-  checkboxRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 4,
-    overflow: "hidden",
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: Colors.surfaceMid,
-    marginRight: 15,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  checkboxActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  checkboxLabel: { color: Colors.textMuted, fontSize: 16, flex: 1 },
-  link: {
-    color: Colors.primary,
-    fontWeight: "bold",
-    textDecorationLine: "underline",
-  },
-  footer: { paddingHorizontal: 28, paddingBottom: 16, paddingTop: 8 },
-  row: { flexDirection: "row", gap: 12 },
-  btnPrimary: {
-    backgroundColor: Colors.primary,
-    padding: 18,
-    borderRadius: 50,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 8,
-    overflow: "hidden",
-  },
-  btnFull: { flex: 1 },
-  btnRowItem: { flex: 2 },
-  btnSecondary: {
-    flex: 1,
-    backgroundColor: Colors.surface,
-    padding: 18,
-    borderRadius: 50,
-    alignItems: "center",
-    overflow: "hidden",
-  },
-  btnText: { color: "#FFF", fontSize: 16, fontWeight: "bold" },
-  disabled: { opacity: 0.4 },
-  perfHint: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-    backgroundColor: withOpacity(Colors.surfaceAlt, 0.15),
-    borderRadius: 10,
-    padding: 12,
-  },
-  perfHintText: {
-    flex: 1,
-    color: Colors.surfaceAlt,
-    fontSize: 12,
-    lineHeight: 18,
-  },
-});
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    progressBar: {
+      flexDirection: "row",
+      justifyContent: "center",
+      gap: 8,
+      paddingTop: 16,
+      paddingBottom: 8,
+    },
+    progressDot: {
+      width: 28,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: colors.surfaceMid,
+    },
+    progressDotActive: { backgroundColor: colors.primary },
+    scroll: { flex: 1 },
+    scrollContent: { paddingHorizontal: 28, paddingTop: 20, paddingBottom: 20 },
+    stepContainer: { gap: 20 },
+    stepLabel: {
+      color: colors.primary,
+      fontSize: 12,
+      fontWeight: "bold",
+      letterSpacing: 1,
+      textTransform: "uppercase",
+    },
+    titleRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+    title: {
+      color: colors.text,
+      fontSize: 28,
+      fontWeight: "bold",
+      lineHeight: 34,
+    },
+    infoBox: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: 10,
+      backgroundColor: withOpacity(colors.primary, 0.12), // ← 0.08 → 0.12
+      borderRadius: 12,
+      padding: 14,
+    },
+    infoText: {
+      flex: 1,
+      color: colors.textMuted,
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    selector: {
+      backgroundColor: colors.surface,
+      padding: 18,
+      borderRadius: 14,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      overflow: "hidden",
+      borderWidth: 1, // ← añadir
+      borderColor: colors.surfaceMid, // ← añadir — visible en light, sutil en dark
+    },
+    selectorText: { color: colors.text, fontSize: 15, flex: 1, marginRight: 8 },
+    selectorPlaceholder: { color: colors.textDisabled },
+    hint: {
+      color: colors.textMuted, // ← surfaceAlt → textMuted (mejor contraste en light)
+      fontSize: 13,
+      textAlign: "center",
+    },
+    checkboxRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      padding: 4,
+      overflow: "hidden",
+    },
+    checkbox: {
+      width: 24,
+      height: 24,
+      borderRadius: 6,
+      borderWidth: 2,
+      borderColor: colors.surfaceAlt, // ← surfaceMid → surfaceAlt (visible en light)
+      marginRight: 15,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    checkboxActive: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    checkboxLabel: { color: colors.textMuted, fontSize: 16, flex: 1 },
+    link: {
+      color: colors.primary,
+      fontWeight: "bold",
+      textDecorationLine: "underline",
+    },
+    footer: { paddingHorizontal: 28, paddingBottom: 16, paddingTop: 8 },
+    row: { flexDirection: "row", gap: 12 },
+    btnPrimary: {
+      backgroundColor: colors.primary,
+      padding: 18,
+      borderRadius: 50,
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      gap: 8,
+      overflow: "hidden",
+    },
+    btnFull: { flex: 1 },
+    btnRowItem: { flex: 2 },
+    btnSecondary: {
+      flex: 1,
+      backgroundColor: withOpacity(colors.primary, 0.12), // ← opción C
+      padding: 18,
+      borderRadius: 50,
+      alignItems: "center",
+      overflow: "hidden",
+    },
+    // ← separar texto de botones — primary siempre blanco, secondary en primary color
+    btnPrimaryText: { color: "#FFF", fontSize: 16, fontWeight: "bold" },
+    btnSecondaryText: {
+      color: colors.primary,
+      fontSize: 16,
+      fontWeight: "bold",
+    },
+    disabled: { opacity: 0.4 },
+    perfHint: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: 8,
+      backgroundColor: colors.surfaceMid, // ← opacity 0.15 → surfaceMid sólido
+      borderRadius: 10,
+      padding: 12,
+    },
+    perfHintText: {
+      flex: 1,
+      color: colors.textMuted, // ← surfaceAlt → textMuted
+      fontSize: 12,
+      lineHeight: 18,
+    },
+  });
+}

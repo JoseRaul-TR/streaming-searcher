@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { WatchProvidersData } from "@/types/providers";
 import ProviderSection from "./ProvidersSection";
-import { Colors } from "@/constants/colors";
+import { ColorScheme, withOpacity } from "@/constants/colors";
+import { useMode } from "@/hooks/useMode";
 
 // ————— Internal Subcomponent —————
 type ProviderCategoriesProps = {
@@ -59,6 +60,9 @@ export default function CountryProviderSection({
   subscribedKeys,
   defaultExpanded = false,
 }: Props) {
+  const { colors } = useMode();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const [expanded, setExpanded] = useState<Record<string, boolean>>(
     Object.fromEntries(data.map((c) => [c.countryCode, defaultExpanded])),
   );
@@ -73,7 +77,7 @@ export default function CountryProviderSection({
           <Pressable
             style={styles.countryHeader}
             onPress={() => toggle(country.countryCode)}
-            android_ripple={{ color: "rgba(255,255,255,0.05)" }}
+            android_ripple={{ color: withOpacity(colors.primary, 0.08) }}
           >
             <Text style={styles.countryName}>{country.countryName}</Text>
             <Ionicons
@@ -81,7 +85,7 @@ export default function CountryProviderSection({
                 expanded[country.countryCode] ? "chevron-up" : "chevron-down"
               }
               size={18}
-              color={Colors.surfaceAlt}
+              color={colors.surfaceAlt}
             />
           </Pressable>
 
@@ -100,27 +104,31 @@ export default function CountryProviderSection({
   );
 }
 
-const styles = StyleSheet.create({
-  countryBlock: {
-    marginBottom: 10,
-    backgroundColor: Colors.surface,
-    borderRadius: 14,
-    overflow: "hidden",
-  },
-  countryHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  countryName: {
-    color: Colors.text,
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  categories: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-});
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    countryBlock: {
+      marginBottom: 10,
+      backgroundColor: colors.surface,
+      borderRadius: 14,
+      overflow: "hidden",
+      borderWidth: 1,
+      borderColor: colors.surfaceMid,
+    },
+    countryHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+    },
+    countryName: {
+      color: colors.text,
+      fontSize: 16,
+      fontWeight: "700",
+    },
+    categories: {
+      paddingHorizontal: 16,
+      paddingBottom: 16,
+    },
+  });
+}
