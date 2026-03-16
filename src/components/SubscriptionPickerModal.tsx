@@ -35,8 +35,8 @@ const ProviderItem = memo(function ProviderItem({
   isSubscribed,
   onToggle,
 }: ProviderItemProps) {
-  const { colors } = useMode();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { colors, isDark } = useMode();
+  const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
 
   return (
     <Pressable
@@ -78,8 +78,8 @@ export default function SubscriptionPickerModal({
   countries,
 }: Props) {
   const insets = useSafeAreaInsets();
-  const { colors } = useMode();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { colors, isDark } = useMode();
+  const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
 
   const { subscriptions, addSubscription, removeSubscription } = useUserStore();
 
@@ -165,7 +165,8 @@ export default function SubscriptionPickerModal({
           <View style={styles.headerText}>
             <Text style={styles.title}>Subscriptions</Text>
             <Text style={styles.headerSub} numberOfLines={1}>
-              {subsLabel}{countriesLabel}
+              {subsLabel}
+              {countriesLabel}
             </Text>
           </View>
         </View>
@@ -174,24 +175,26 @@ export default function SubscriptionPickerModal({
         {countries.length > 1 && (
           <View style={styles.tabs}>
             {countries.map((c) => (
-              <Pressable
-                key={c.code}
-                style={[
-                  styles.tab,
-                  activeCountry === c.code && styles.tabActive,
-                ]}
-                onPress={() => setActiveCountry(c.code)}
-                android_ripple={{ color: withOpacity(colors.primary, 0.1) }}
-              >
-                <Text
+              <View key={c.code} style={styles.tabShadow}>
+                <Pressable
+                  key={c.code}
                   style={[
-                    styles.tabText,
-                    activeCountry === c.code && styles.tabTextActive,
+                    styles.tab,
+                    activeCountry === c.code && styles.tabActive,
                   ]}
+                  onPress={() => setActiveCountry(c.code)}
+                  android_ripple={{ color: withOpacity(colors.primary, 0.1) }}
                 >
-                  {c.name}
-                </Text>
-              </Pressable>
+                  <Text
+                    style={[
+                      styles.tabText,
+                      activeCountry === c.code && styles.tabTextActive,
+                    ]}
+                  >
+                    {c.name}
+                  </Text>
+                </Pressable>
+              </View>
             ))}
           </View>
         )}
@@ -234,7 +237,7 @@ export default function SubscriptionPickerModal({
   );
 }
 
-function makeStyles(colors: ColorScheme) {
+function makeStyles(colors: ColorScheme, isDark: boolean) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
     header: {
@@ -256,11 +259,21 @@ function makeStyles(colors: ColorScheme) {
       paddingHorizontal: 25,
       marginBottom: 16,
     },
+    tabShadow: {
+      borderRadius: 20,
+      backgroundColor: colors.surface,
+      shadowColor: isDark ? "#000" : "#64748B",
+      shadowOffset: { width: 0, height: isDark ? 3 : 1 },
+      shadowOpacity: isDark ? 0.25 : 0.08,
+      shadowRadius: isDark ? 6 : 4,
+      elevation: isDark ? 4 : 2,
+    },
     tab: {
       paddingHorizontal: 14,
       paddingVertical: 8,
       borderRadius: 20,
       backgroundColor: colors.surface,
+      overflow: "hidden",
     },
     tabActive: { backgroundColor: withOpacity(colors.primary, 0.1) },
     tabText: { color: colors.textMuted, fontSize: 13, fontWeight: "600" },

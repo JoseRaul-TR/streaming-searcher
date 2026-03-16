@@ -6,11 +6,11 @@ import {
   Image,
   ScrollView,
   Pressable,
-  Linking,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons, Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as WebBrowser from "expo-web-browser";
 
 import { useWatchProviders } from "@/hooks/useWatchProviders";
 import { useUserStore } from "@/store/useUserStore";
@@ -79,13 +79,15 @@ export default function DetailsScreen() {
     countries,
   );
 
+  const isNested = from_nested === "true";
+
+  const hasProviders = providers.length > 0;
+
   const handleBack = useCallback(() => {
     router.back();
   }, [router]);
 
-  const isNested = from_nested === "true";
-
-  // Closes all modals and gets back to "Explore" screen
+  // Closes the full details stack and returns to the Explore tab
   const handleCloseAll = useCallback(() => {
     router.navigate("/(tabs)");
   }, [router]);
@@ -94,15 +96,9 @@ export default function DetailsScreen() {
     setExpanded((prev) => !prev);
   }, []);
 
-  const handleOpenJustWatch = useCallback((link: string) => {
-    void Linking.openURL(link);
-  }, []);
-
-  const hasProviders = providers.length > 0;
-
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Top bar */}
+      {/* ── Top bar ── */}
       <View style={styles.topBar}>
         <Pressable
           style={styles.backButton}
@@ -115,11 +111,12 @@ export default function DetailsScreen() {
         >
           <Ionicons name="arrow-back" size={24} color={colors.textMuted} />
         </Pressable>
+
         <Text style={styles.topBarTitle} numberOfLines={1}>
           {title}
         </Text>
 
-        {/* X just in nested details modals — closes all modals and gets back to "Explore" screen */}
+        {/* X only in nested details — closes the full stack back to Explore */}
         {isNested && (
           <Pressable
             style={styles.backButton}
@@ -135,75 +132,73 @@ export default function DetailsScreen() {
         )}
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Poster + Info */}
-        <View style={styles.header}>
-          <View style={styles.posterWrap}>
-            {poster_path ? (
-              <Image
-                source={{
-                  uri: `https://image.tmdb.org/t/p/w500${poster_path}`,
-                }}
-                style={styles.poster}
-                resizeMode="cover"
+      {/* ── Poster + Info — outside ScrollView ── */}
+      <View style={styles.header}>
+        <View style={styles.posterWrap}>
+          {poster_path ? (
+            <Image
+              source={{ uri: `https://image.tmdb.org/t/p/w500${poster_path}` }}
+              style={styles.poster}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={[styles.poster, styles.posterPlaceholder]}>
+              <Ionicons
+                name={
+                  media_type === "person" ? "person-outline" : "film-outline"
+                }
+                size={40}
+                color={colors.surfaceAlt}
               />
-            ) : (
-              <View style={[styles.poster, styles.posterPlaceholder]}>
-                <Ionicons
-                  name={
-                    media_type === "person" ? "person-outline" : "film-outline"
-                  }
-                  size={40}
-                  color={colors.surfaceAlt}
-                />
-              </View>
+            </View>
+          )}
+          <View style={styles.badge}>
+            {media_type === "movie" && (
+              <Ionicons name="film" size={16} color="#FFF" />
             )}
-            <View style={styles.badge}>
-              {media_type === "movie" && (
-                <Ionicons name="film" size={16} color="#FFF" />
-              )}
-              {media_type === "tv" && (
-                <Feather name="tv" size={16} color="#FFF" />
-              )}
-              {media_type === "person" && (
-                <Ionicons name="person-circle" size={16} color="#FFF" />
-              )}
-            </View>
-          </View>
-
-          <View style={styles.info}>
-            <Text style={styles.title} numberOfLines={3}>
-              {title}
-            </Text>
-            <View style={styles.yearBadge}>
-              <Text style={styles.yearText}>{year}</Text>
-            </View>
-            {/* Hide overview when displaying "person" – This info is displayed in KnownForSection */}
-            {media_type !== "person" && (
-              <Pressable onPress={handleToggleExpanded}>
-                <Text
-                  style={styles.overview}
-                  numberOfLines={expanded ? undefined : 3}
-                >
-                  {overview || "No description available."}
-                </Text>
-                {overview && overview.length > 70 && (
-                  <Text style={styles.readMore}>
-                    {expanded ? "Show less" : "Read more"}
-                  </Text>
-                )}
-              </Pressable>
+            {media_type === "tv" && (
+              <Feather name="tv" size={16} color="#FFF" />
+            )}
+            {media_type === "person" && (
+              <Ionicons name="person-circle" size={16} color="#FFF" />
             )}
           </View>
         </View>
 
-        {/* Bottom section — Known For (persons) or Streaming Providers (media) */}
+        <View style={styles.info}>
+          <Text style={styles.title} numberOfLines={3}>
+            {title}
+          </Text>
+          <View style={styles.yearBadge}>
+            <Text style={styles.yearText}>{year}</Text>
+          </View>
+          {/* Overview hidden for persons — info is shown in KnownForSection */}
+          {media_type !== "person" && (
+            <Pressable onPress={handleToggleExpanded}>
+              <Text
+                style={styles.overview}
+                numberOfLines={expanded ? undefined : 3}
+              >
+                {overview || "No description available."}
+              </Text>
+              {overview && overview.length > 70 && (
+                <Text style={styles.readMore}>
+                  {expanded ? "Show less" : "Read more"}
+                </Text>
+              )}
+            </Pressable>
+          )}
+        </View>
+      </View>
+
+      {/* ── Scrollable bottom section ── */}
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.bottomSection}>
           <Text style={styles.sectionTitle}>
-            {media_type === "person" ? "Known For" : "Where can you watch it?"}
+            {media_type === "person" ? "Notable Works" : "Where can you watch it?"}
           </Text>
 
           {media_type === "person" ? (
@@ -229,7 +224,6 @@ export default function DetailsScreen() {
               }
             />
           ) : isSingleCountry ? (
-            /* ── Single country: flat category layout, no grouping by country ── */
             <>
               <ProviderSection
                 title="Free"
@@ -255,30 +249,32 @@ export default function DetailsScreen() {
                 subscribedKeys={subscribedKeys}
                 countryCode={providers[0]?.countryCode ?? ""}
               />
+              {/* Footer — solo en single-country, multi-country lo muestra por país */}
               {providers[0]?.link && (
                 <Pressable
                   style={styles.justWatch}
-                  onPress={() => handleOpenJustWatch(providers[0].link!)}
-                  android_ripple={{ color: "rgba(255,255,255,0.05)" }}
+                  onPress={() =>
+                    void WebBrowser.openBrowserAsync(providers[0].link!)
+                  }
+                  android_ripple={{ color: withOpacity(colors.text, 0.05) }}
                 >
                   <Text style={styles.jwLabel}>Data provided by </Text>
                   <Text style={styles.jwBrand}>JustWatch</Text>
+                  <Ionicons
+                    name="open-outline"
+                    size={11}
+                    color={colors.surfaceAlt}
+                    style={{ marginLeft: 4 }}
+                  />
                 </Pressable>
               )}
             </>
           ) : (
-            /* ── Multiple countries / global: collapsible tabs per country ── */
-            <>
-              <CountryProviderSection
-                data={providers}
-                subscribedKeys={subscribedKeys}
-                defaultExpanded={false}
-              />
-              <View style={styles.justWatch}>
-                <Text style={styles.jwLabel}>Data provided by </Text>
-                <Text style={styles.jwBrand}>JustWatch</Text>
-              </View>
-            </>
+            <CountryProviderSection
+              data={providers}
+              subscribedKeys={subscribedKeys}
+              defaultExpanded={false}
+            />
           )}
         </View>
       </ScrollView>
@@ -289,6 +285,8 @@ export default function DetailsScreen() {
 function makeStyles(colors: ColorScheme, isDark: boolean) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
+
+    // — Top bar —
     topBar: {
       flexDirection: "row",
       alignItems: "center",
@@ -303,13 +301,23 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
       fontWeight: "600",
       flex: 1,
     },
-    scroll: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40 },
+
+    // — Poster + Info (static, outside scroll) —
     header: {
       flexDirection: "row",
       alignItems: "flex-start",
-      marginBottom: 15,
+      paddingHorizontal: 20,
+      paddingBottom: 16,
     },
-    posterWrap: { position: "relative", elevation: 8 },
+    posterWrap: {
+      position: "relative",
+      elevation: 8,
+      // — iOS shadow —
+      shadowColor: isDark ? "#000" : "#64748B",
+      shadowOffset: { width: 0, height: isDark ? 6 : 3 },
+      shadowOpacity: isDark ? 0.4 : 0.15,
+      shadowRadius: isDark ? 12 : 8,
+    },
     poster: {
       width: 110,
       height: 165,
@@ -344,25 +352,26 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
     yearText: { color: colors.textSecondary, fontSize: 13, fontWeight: "600" },
     overview: { color: colors.textMuted, fontSize: 13, lineHeight: 18 },
     readMore: { color: colors.primary, fontWeight: "500", marginTop: 4 },
-    bottomSection: { marginTop: 10 },
+
+    // — Scrollable providers/known-for section —
+    scroll: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 20 },
+    bottomSection: { gap: 4 },
     sectionTitle: {
       color: colors.text,
       fontSize: 18,
       fontWeight: "700",
-      marginBottom: 20,
+      marginBottom: 16,
       textAlign: "center",
     },
+
+    // — JustWatch link —
     justWatch: {
-      marginTop: 20,
       flexDirection: "row",
       justifyContent: "center",
       alignItems: "center",
-      backgroundColor: withOpacity(colors.text, 0.03),
-      paddingVertical: 8,
-      borderRadius: 8,
-      overflow: "hidden",
+      marginTop: 5,
     },
     jwLabel: { color: colors.surfaceAlt, fontSize: 11 },
-    jwBrand: { color: colors.text, fontSize: 11, fontWeight: "bold" },
+    jwBrand: { color: colors.textSecondary, fontSize: 11, fontWeight: "bold" },
   });
 }

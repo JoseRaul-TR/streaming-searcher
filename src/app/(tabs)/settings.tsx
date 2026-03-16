@@ -181,7 +181,7 @@ export default function SettingsScreen() {
     <View
       style={[
         styles.container,
-        { paddingTop: insets.top + 20, paddingBottom: insets.bottom },
+        { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20},
       ]}
     >
       {/* Appearance */}
@@ -317,8 +317,10 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
       flex: 1,
       backgroundColor: colors.background,
       paddingHorizontal: 20,
+      paddingVertical: 20,
+      justifyContent: "space-between",
     },
-    section: { marginBottom: 30, gap: 30 },
+    section: { gap: 20 },
     sectionHeader: {
       flexDirection: "row",
       alignItems: "center",

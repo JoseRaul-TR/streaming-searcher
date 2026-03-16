@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import * as WebBrowser from "expo-web-browser";
+
 import { WatchProvidersData } from "@/types/providers";
 import ProviderSection from "./ProvidersSection";
 import { ColorScheme, withOpacity } from "@/constants/colors";
@@ -73,8 +75,19 @@ export default function CountryProviderSection({
   return (
     <>
       {data.map((country) => (
-        <View key={country.countryCode} style={styles.countryBlockShadow}>
-          <View style={styles.countryBlock}>
+        <View
+          key={country.countryCode}
+          style={[
+            styles.countryBlockShadow,
+            expanded[country.countryCode] && styles.countryBlockShadowExpanded,
+          ]}
+        >
+          <View
+            style={[
+              styles.countryBlock,
+              expanded[country.countryCode] && styles.countryBlockExpanded,
+            ]}
+          >
             <Pressable
               style={styles.countryHeader}
               onPress={() => toggle(country.countryCode)}
@@ -97,6 +110,27 @@ export default function CountryProviderSection({
                   subscribedKeys={subscribedKeys}
                   countryCode={country.countryCode}
                 />
+                {/* JustWatch link — per country, only when available */}
+                {country.link && (
+                  <Pressable
+                    style={styles.jwRow}
+                    onPress={() =>
+                      void WebBrowser.openBrowserAsync(country.link!)
+                    }
+                    android_ripple={{
+                      color: withOpacity(colors.primary, 0.05),
+                    }}
+                  >
+                    <Text style={styles.jwLabel}>Data provided by </Text>
+                    <Text style={styles.jwBrand}>JustWatch</Text>
+                    <Ionicons
+                      name="open-outline"
+                      size={10}
+                      color={colors.surfaceAlt}
+                      style={{ marginLeft: 3 }}
+                    />
+                  </Pressable>
+                )}
               </View>
             )}
           </View>
@@ -110,20 +144,24 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
   return StyleSheet.create({
     countryBlockShadow: {
       marginBottom: 10,
-      borderRadius: 14,
+      borderRadius: 50,
       backgroundColor: colors.surface,
-      // — iOS shadow —
       shadowColor: isDark ? "#000" : "#64748B",
       shadowOffset: { width: 0, height: isDark ? 4 : 2 },
       shadowOpacity: isDark ? 0.3 : 0.1,
       shadowRadius: isDark ? 10 : 8,
-      // — Android elevation —
       elevation: isDark ? 5 : 2,
     },
-    countryBlock: {
+    countryBlockShadowExpanded: {
       borderRadius: 14,
+    },
+    countryBlock: {
+      borderRadius: 50,
       overflow: "hidden",
       backgroundColor: colors.surface,
+    },
+    countryBlockExpanded: {
+      borderRadius: 14,
     },
     countryHeader: {
       flexDirection: "row",
@@ -141,5 +179,13 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
       paddingHorizontal: 16,
       paddingBottom: 16,
     },
+    jwRow: {
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      marginTop: 5,
+    },
+    jwLabel: { color: colors.surfaceAlt, fontSize: 11 },
+    jwBrand: { color: colors.textSecondary, fontSize: 11, fontWeight: "600" },
   });
 }

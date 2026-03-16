@@ -89,12 +89,15 @@ export default function OnboardingScreen() {
         {step === 0 && (
           <View style={styles.welcomeContainer}>
             <View style={styles.logoWrap}>
-              <View style={styles.logoOuter}>
-                <MaterialCommunityIcons
-                  name="filmstrip-box-multiple"
-                  size={38}
-                  color={colors.primary}
-                />
+              <View style={styles.logoShadow}>
+                {/* ← outer: sombra */}
+                <View style={styles.logoOuter}>
+                  <MaterialCommunityIcons
+                    name="filmstrip-box-multiple"
+                    size={38}
+                    color={colors.primary}
+                  />
+                </View>
               </View>
             </View>
 
@@ -172,7 +175,9 @@ export default function OnboardingScreen() {
                 </Text>
               </View>
             )}
-            <Text style={styles.hint}>This can be edited later in Settings.</Text>
+            <Text style={styles.hint}>
+              This can be edited later in Settings.
+            </Text>
           </View>
         )}
 
@@ -225,7 +230,9 @@ export default function OnboardingScreen() {
               </View>
             )}
 
-            <Text style={styles.hint}>This can be edited later in Settings.</Text>
+            <Text style={styles.hint}>
+              This can be edited later in Settings.
+            </Text>
           </View>
         )}
 
@@ -402,6 +409,15 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
       gap: 24,
     },
     logoWrap: { position: "relative", marginBottom: 8 },
+    logoShadow: {
+      borderRadius: 28,
+      backgroundColor: withOpacity(colors.primary, 0.12),
+      shadowColor: isDark ? "#000" : "#64748B",
+      shadowOffset: { width: 0, height: isDark ? 6 : 3 },
+      shadowOpacity: isDark ? 0.35 : 0.12,
+      shadowRadius: isDark ? 14 : 10,
+      elevation: isDark ? 8 : 4,
+    },
     logoOuter: {
       width: 96,
       height: 96,
@@ -453,7 +469,12 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
       borderRadius: 12,
       padding: 14,
     },
-    infoText: { flex: 1, color: colors.textMuted, fontSize: 14, lineHeight: 20 },
+    infoText: {
+      flex: 1,
+      color: colors.textMuted,
+      fontSize: 14,
+      lineHeight: 20,
+    },
     selectorShadow: {
       borderRadius: 50,
       backgroundColor: colors.surface,
@@ -523,7 +544,11 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
       overflow: "hidden",
     },
     btnPrimaryText: { color: "#FFF", fontSize: 16, fontWeight: "bold" },
-    btnSecondaryText: { color: colors.primary, fontSize: 16, fontWeight: "bold" },
+    btnSecondaryText: {
+      color: colors.primary,
+      fontSize: 16,
+      fontWeight: "bold",
+    },
     disabled: { opacity: 0.4 },
     perfHint: {
       flexDirection: "row",

@@ -77,7 +77,7 @@ export default function CountryAutocomplete({
     <View style={styles.container}>
       {/* Search input */}
       <View style={styles.inputRow}>
-        <Ionicons name="search" size={18} color={colors.primary} />
+        <Ionicons name="search" size={20} color={colors.primary} />
 
         <TextInput
           style={styles.input}
@@ -93,7 +93,7 @@ export default function CountryAutocomplete({
         />
         {search.length > 0 && (
           <Pressable onPress={() => setSearch("")} hitSlop={10}>
-            <Ionicons name="close-circle" size={18} color={colors.surfaceAlt} />
+            <Ionicons name="close-circle-outline" size={20} color={colors.textMuted} />
           </Pressable>
         )}
       </View>

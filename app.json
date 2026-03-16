@@ -5,7 +5,10 @@
     "version": "1.0.0",
     "scheme": "streaming-searcher",
     "orientation": "portrait",
-    "platforms": ["ios", "android"],
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {
@@ -28,7 +31,11 @@
       "predictiveBackGestureEnabled": false,
       "backgroundColor": "#0F172A"
     },
-    "plugins": ["expo-router", "expo-font"],
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-web-browser"
+    ],
     "experiments": {
       "typedRoutes": true
     }

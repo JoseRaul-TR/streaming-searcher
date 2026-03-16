@@ -13,7 +13,8 @@ function AppLayout() {
   const { isDark } = useMode();
   const setSystemScheme = useUserStore((s) => s.setSystemScheme);
 
-  const toScheme = (s: string | null | undefined): "light" | "dark" => s === "light" ? "light" : "dark";
+  const toScheme = (s: string | null | undefined): "light" | "dark" =>
+    s === "light" ? "light" : "dark";
 
   useEffect(() => {
     setSystemScheme(toScheme(Appearance.getColorScheme()));
@@ -36,7 +37,7 @@ function AppLayout() {
         <Stack.Screen name="index" />
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="details" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="details" />
       </Stack>
     </>
   );
