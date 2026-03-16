@@ -25,7 +25,7 @@ export default function TermsModal({ visible, onClose }: Props) {
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Terms of Use</Text>
-          <Pressable onPress={onClose} hitSlop={10}>
+          <Pressable onPress={onClose} hitSlop={10} style={styles.closeBtn}>
             <Ionicons name="close" size={28} color={colors.textMuted} />
           </Pressable>
         </View>
@@ -59,7 +59,9 @@ function makeStyles(colors: ColorScheme) {
       justifyContent: "space-between",
       alignItems: "center",
       marginBottom: 20,
-      paddingBottom: 16,
+    },
+    closeBtn: {
+      padding: 4
     },
     title: { color: colors.text, fontSize: 24, fontWeight: "bold" },
     scroll: { flex: 1 },

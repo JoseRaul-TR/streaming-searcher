@@ -34,6 +34,9 @@ type UserState = {
   setModePreference: (preference: ModePreference) => void;
   systemScheme: "light" | "dark";
   setSystemScheme: (scheme: "light" | "dark") => void;
+
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
 };
 
 export const useUserStore = create<UserState>()(
@@ -45,6 +48,8 @@ export const useUserStore = create<UserState>()(
       subscriptions: [],
       modePreference: "system",
       systemScheme: "dark",
+      searchQuery: "",
+      setSearchQuery: (q) => set({ searchQuery: q }),
 
       addCountry: (country) =>
         set((state) => {

@@ -35,6 +35,7 @@ export default function KnownForSection({ items }: Props) {
           // Known-for items are movies/tv, never persons,
           // so we pass an empty array to satisfy the param shape.
           known_for_items: "[]",
+          from_nested: "true",
         },
       });
     },

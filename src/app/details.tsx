@@ -36,6 +36,7 @@ export default function DetailsScreen() {
     poster_path,
     media_type,
     known_for_items: knownForRaw,
+    from_nested,
   } = useLocalSearchParams<{
     id: string;
     title: string;
@@ -44,6 +45,7 @@ export default function DetailsScreen() {
     poster_path?: string;
     media_type: "movie" | "tv" | "person";
     known_for_items?: string;
+    from_nested?: string;
   }>();
 
   // Parse the JSON-serialised known_for_items passed from ExploreScreen.
@@ -81,6 +83,13 @@ export default function DetailsScreen() {
     router.back();
   }, [router]);
 
+  const isNested = from_nested === "true";
+
+  // Closes all modals and gets back to "Explore" screen
+  const handleCloseAll = useCallback(() => {
+    router.navigate("/(tabs)");
+  }, [router]);
+
   const handleToggleExpanded = useCallback(() => {
     setExpanded((prev) => !prev);
   }, []);
@@ -98,7 +107,10 @@ export default function DetailsScreen() {
         <Pressable
           style={styles.backButton}
           onPress={handleBack}
-          android_ripple={{ color: "rgba(255,255,255,0.1)", borderless: true }}
+          android_ripple={{
+            color: withOpacity(colors.primary, 0.08),
+            borderless: true,
+          }}
           hitSlop={10}
         >
           <Ionicons name="arrow-back" size={24} color={colors.textMuted} />
@@ -106,6 +118,21 @@ export default function DetailsScreen() {
         <Text style={styles.topBarTitle} numberOfLines={1}>
           {title}
         </Text>
+
+        {/* X just in nested details modals — closes all modals and gets back to "Explore" screen */}
+        {isNested && (
+          <Pressable
+            style={styles.backButton}
+            onPress={handleCloseAll}
+            android_ripple={{
+              color: withOpacity(colors.primary, 0.08),
+              borderless: true,
+            }}
+            hitSlop={10}
+          >
+            <Ionicons name="close" size={24} color={colors.textMuted} />
+          </Pressable>
+        )}
       </View>
 
       <ScrollView
@@ -156,19 +183,19 @@ export default function DetailsScreen() {
             </View>
             {/* Hide overview when displaying "person" – This info is displayed in KnownForSection */}
             {media_type !== "person" && (
-            <Pressable onPress={handleToggleExpanded}>
-              <Text
-                style={styles.overview}
-                numberOfLines={expanded ? undefined : 3}
-              >
-                {overview || "No description available."}
-              </Text>
-              {overview && overview.length > 70 && (
-                <Text style={styles.readMore}>
-                  {expanded ? "Show less" : "Read more"}
+              <Pressable onPress={handleToggleExpanded}>
+                <Text
+                  style={styles.overview}
+                  numberOfLines={expanded ? undefined : 3}
+                >
+                  {overview || "No description available."}
                 </Text>
-              )}
-            </Pressable>
+                {overview && overview.length > 70 && (
+                  <Text style={styles.readMore}>
+                    {expanded ? "Show less" : "Read more"}
+                  </Text>
+                )}
+              </Pressable>
             )}
           </View>
         </View>
@@ -294,13 +321,9 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
       position: "absolute",
       top: 6,
       left: 6,
-      backgroundColor: isDark
-        ? "rgba(0,0,0,0.65)"
-        : "rgba(15,23,42,0.72)",
+      backgroundColor: isDark ? "rgba(0,0,0,0.65)" : "rgba(15,23,42,0.72)",
       padding: 6,
       borderRadius: 8,
-      borderWidth: 1,
-      borderColor: "rgba(255,255,255,0.15)",
     },
     info: { flex: 1, marginLeft: 20, paddingTop: 5 },
     title: {

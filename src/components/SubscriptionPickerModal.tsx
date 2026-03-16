@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { tmdbApi } from "@/services/api";
 import { useUserStore } from "@/store/useUserStore";
@@ -23,10 +24,6 @@ import { useMode } from "@/hooks/useMode";
 const ITEM_HEIGHT = 64;
 
 // ————— Extracted item component —————
-// memo() prevents re-rendering when the parent re-renders but this item's
-// props haven't changed. Without this, every keystroke or state change in
-// the modal re-renders all visible rows, which triggers the VirtualizedList
-// slow-update warning on low-end devices.
 type ProviderItemProps = {
   item: Provider;
   isSubscribed: boolean;
@@ -80,20 +77,16 @@ export default function SubscriptionPickerModal({
   onClose,
   countries,
 }: Props) {
+  const insets = useSafeAreaInsets();
   const { colors } = useMode();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const { subscriptions, addSubscription, removeSubscription } = useUserStore();
 
-  // Single country → load directly. Multiple countries → wait for user to pick
-  // one from the tabs first, to avoid showing an unfiltered provider list.
   const [activeCountry, setActiveCountry] = useState<string>(
     countries.length === 1 ? (countries[0]?.code ?? "") : "",
   );
 
-  // Sync activeCountry if the countries array changes while the modal is mounted.
-  // If the active country was removed from the list, reset to empty.
-  // activeCountry is intentionally excluded from deps — this only reacts to external changes.
   useEffect(() => {
     if (countries.length === 1) {
       setActiveCountry(countries[0]?.code ?? "");
@@ -116,8 +109,6 @@ export default function SubscriptionPickerModal({
     enabled: !!activeCode,
   });
 
-  // Subscription check and toggle are scoped to activeCode so the same
-  // provider in a different country is treated as a separate subscription.
   const isProviderSubscribed = useCallback(
     (providerId: number) =>
       subscriptions.some(
@@ -126,8 +117,6 @@ export default function SubscriptionPickerModal({
     [subscriptions, activeCode],
   );
 
-  // useCallback: handleToggle is passed into each FlatList renderItem.
-  // Wrapping prevents a new reference on every render.
   const handleToggle = useCallback(
     (providerId: number) => {
       if (isProviderSubscribed(providerId)) {
@@ -139,10 +128,6 @@ export default function SubscriptionPickerModal({
     [isProviderSubscribed, addSubscription, removeSubscription, activeCode],
   );
 
-  // Stable renderItem: useCallback ensures the function reference doesn't
-  // change on re-renders unless handleToggle or isProviderSubscribed change.
-  // Combined with memo() on ProviderItem, this prevents unnecessary row
-  // re-renders when only one subscription toggles.
   const renderItem = useCallback(
     ({ item }: { item: Provider }) => (
       <ProviderItem
@@ -154,27 +139,36 @@ export default function SubscriptionPickerModal({
     [isProviderSubscribed, handleToggle],
   );
 
-  // Stable key extractor — defined outside render to avoid recreation.
   const keyExtractor = useCallback(
     (item: Provider) => String(item.provider_id),
     [],
   );
 
+  const subsLabel =
+    subscriptions.length === 0
+      ? "No services selected"
+      : `${subscriptions.length} service${subscriptions.length > 1 ? "s" : ""} selected`;
+
+  const countriesLabel =
+    countries.length === 0
+      ? ""
+      : ` in ${countries.length === 1 ? countries[0].name : `${countries.length} countries`}`;
+
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <View style={styles.container}>
-        {/* Header */}
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        {/* Header — same layout as CountryPickerModal */}
         <View style={styles.header}>
-          <Text style={styles.title}>My Subscriptions</Text>
-          <Pressable onPress={onClose} hitSlop={10}>
-            <Ionicons name="close" size={28} color={colors.textMuted} />
+          <Pressable onPress={onClose} hitSlop={10} style={styles.backBtn}>
+            <Ionicons name="arrow-back" size={24} color={colors.textMuted} />
           </Pressable>
+          <View style={styles.headerText}>
+            <Text style={styles.title}>Subscriptions</Text>
+            <Text style={styles.headerSub} numberOfLines={1}>
+              {subsLabel}{countriesLabel}
+            </Text>
+          </View>
         </View>
-
-        <Text style={styles.subtitle}>
-          Select the services you are subscribed to. They will be highlighted in
-          search results.
-        </Text>
 
         {/* Country tabs — only shown when multiple countries */}
         {countries.length > 1 && (
@@ -228,8 +222,6 @@ export default function SubscriptionPickerModal({
             keyExtractor={keyExtractor}
             contentContainerStyle={styles.list}
             renderItem={renderItem}
-            // Tells the VirtualizedList the item height is fixed so it can
-            // skip measuring and calculate layout in O(1) instead of O(n).
             getItemLayout={(_data, index) => ({
               length: ITEM_HEIGHT,
               offset: ITEM_HEIGHT * index,
@@ -247,20 +239,16 @@ function makeStyles(colors: ColorScheme) {
     container: { flex: 1, backgroundColor: colors.background },
     header: {
       flexDirection: "row",
-      justifyContent: "space-between",
       alignItems: "center",
       paddingHorizontal: 25,
-      paddingTop: 75,
-      marginBottom: 8,
+      paddingTop: 20,
+      paddingBottom: 12,
+      gap: 16,
     },
+    backBtn: { padding: 4 },
+    headerText: { flex: 1 },
     title: { color: colors.text, fontSize: 24, fontWeight: "bold" },
-    subtitle: {
-      color: colors.textMuted,
-      fontSize: 13,
-      lineHeight: 18,
-      paddingHorizontal: 25,
-      marginBottom: 20,
-    },
+    headerSub: { color: colors.textDisabled, fontSize: 13, marginTop: 2 },
     tabs: {
       flexDirection: "row",
       flexWrap: "wrap",
@@ -273,14 +261,8 @@ function makeStyles(colors: ColorScheme) {
       paddingVertical: 8,
       borderRadius: 20,
       backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.surfaceMid,
     },
-    tabActive: {
-      backgroundColor: withOpacity(colors.primary, 0.12),
-      borderWidth: 1,
-      borderColor: colors.primary,
-    },
+    tabActive: { backgroundColor: withOpacity(colors.primary, 0.1) },
     tabText: { color: colors.textMuted, fontSize: 13, fontWeight: "600" },
     tabTextActive: { color: colors.primary },
     list: { paddingHorizontal: 25, paddingBottom: 40 },
@@ -302,7 +284,7 @@ function makeStyles(colors: ColorScheme) {
       width: 24,
       height: 24,
       borderRadius: 6,
-      borderWidth: 2,
+      borderWidth: 1,
       borderColor: colors.surfaceAlt,
       justifyContent: "center",
       alignItems: "center",

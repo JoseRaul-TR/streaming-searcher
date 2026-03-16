@@ -37,7 +37,6 @@ function AppLayout() {
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="details" options={{ gestureEnabled: false }} />
-        <Stack.Screen name="country-picker" />
       </Stack>
     </>
   );

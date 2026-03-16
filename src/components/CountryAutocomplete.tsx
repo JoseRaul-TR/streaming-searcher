@@ -35,8 +35,8 @@ export default function CountryAutocomplete({
   onRemove,
   onClear,
 }: Props) {
-  const { colors } = useMode();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { colors, isDark } = useMode();
+  const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
 
   const [search, setSearch] = useState("");
 
@@ -77,7 +77,7 @@ export default function CountryAutocomplete({
     <View style={styles.container}>
       {/* Search input */}
       <View style={styles.inputRow}>
-        <Ionicons name="search" size={18} color={colors.textDisabled} />
+        <Ionicons name="search" size={18} color={colors.primary} />
 
         <TextInput
           style={styles.input}
@@ -105,24 +105,35 @@ export default function CountryAutocomplete({
 
       {/* Inline suggestions — max 4 */}
       {suggestions.length > 0 && (
-        <View style={styles.suggestions}>
-          {suggestions.map((item: Country) => (
-            <Pressable
-              key={item.iso_3166_1}
-              style={styles.suggestion}
-              onPress={() => handleAdd(item)}
-              android_ripple={{ color: withOpacity(colors.primary, 0.08) }}
-            >
-              <Text style={styles.suggestionText}>{item.english_name}</Text>
-              <Ionicons name="add" size={18} color={colors.primary} />
-            </Pressable>
-          ))}
+        <View style={styles.suggestionsShadow}>
+          <View style={styles.suggestions}>
+            {suggestions.map((item: Country, index) => (
+              <Pressable
+                key={item.iso_3166_1}
+                style={[styles.suggestion, index === suggestions.length -1 && styles.suggestionLast,]}
+                onPress={() => handleAdd(item)}
+                android_ripple={{ color: withOpacity(colors.primary, 0.08) }}
+              >
+                <Text style={styles.suggestionText}>{item.english_name}</Text>
+                <Ionicons name="add" size={18} color={colors.primary} />
+              </Pressable>
+            ))}
+          </View>
         </View>
       )}
 
       {/* Selected chips + clear all */}
       {selectedCountries.length > 0 && (
         <View style={styles.chipsContainer}>
+          <Pressable style={styles.clearBtn} onPress={handleClear} hitSlop={10}>
+            <Ionicons
+              name="close-circle-outline"
+              size={15}
+              color={colors.error}
+            />
+            <Text style={styles.clearText}>Clear all</Text>
+          </Pressable>
+
           <View style={styles.chips}>
             {selectedCountries.map((c) => (
               <Pressable
@@ -135,14 +146,6 @@ export default function CountryAutocomplete({
               </Pressable>
             ))}
           </View>
-          <Pressable style={styles.clearBtn} onPress={handleClear} hitSlop={10}>
-            <Ionicons
-              name="close-circle-outline"
-              size={15}
-              color={colors.error}
-            />
-            <Text style={styles.clearText}>Clear all</Text>
-          </Pressable>
         </View>
       )}
 
@@ -160,7 +163,7 @@ export default function CountryAutocomplete({
   );
 }
 
-function makeStyles(colors: ColorScheme) {
+function makeStyles(colors: ColorScheme, isDark: boolean) {
   return StyleSheet.create({
     container: { width: "100%", gap: 12 },
     inputRow: {
@@ -168,11 +171,16 @@ function makeStyles(colors: ColorScheme) {
       alignItems: "center",
       gap: 10,
       backgroundColor: colors.surface,
-      borderRadius: 12,
+      borderRadius: 50,
       paddingHorizontal: 14,
       height: 50,
-      borderWidth: 1,
-      borderColor: colors.surfaceMid,
+      // — iOS shadow —
+      shadowColor: isDark ? "#000" : "#64748B",
+      shadowOffset: { width: 0, height: isDark ? 4 : 2 },
+      shadowOpacity: isDark ? 0.3 : 0.1,
+      shadowRadius: isDark ? 10 : 8,
+      // — Android elevation —
+      elevation: isDark ? 5 : 2,
     },
     input: {
       flex: 1,
@@ -183,12 +191,21 @@ function makeStyles(colors: ColorScheme) {
       alignSelf: "flex-start",
       marginTop: 4,
     },
-    suggestions: {
+    suggestionsShadow: {
+      borderRadius: 26,
       backgroundColor: colors.surface,
-      borderRadius: 12,
+      // — iOS shadow —
+      shadowColor: isDark ? "#000" : "#64748B",
+      shadowOffset: { width: 0, height: isDark ? 4 : 2 },
+      shadowOpacity: isDark ? 0.3 : 0.1,
+      shadowRadius: isDark ? 10 : 8,
+      // — Android elevation —
+      elevation: isDark ? 5 : 2,
+    },
+    suggestions: {
+      borderRadius: 26,
       overflow: "hidden",
-      borderWidth: 1,                 
-      borderColor: colors.surfaceMid,
+      backgroundColor: colors.surface,
     },
     suggestion: {
       flexDirection: "row",
@@ -199,8 +216,11 @@ function makeStyles(colors: ColorScheme) {
       borderBottomWidth: 1,
       borderBottomColor: colors.surfaceMid,
     },
+    suggestionLast: {
+      borderBottomWidth: 0,
+    },
     suggestionText: { color: colors.textSecondary, fontSize: 15 },
-    chipsContainer: { gap: 10 },
+    chipsContainer: { marginTop: 10, gap: 10 },
     chips: {
       flexDirection: "row",
       flexWrap: "wrap",
@@ -211,9 +231,7 @@ function makeStyles(colors: ColorScheme) {
       alignItems: "center",
       gap: 5,
       backgroundColor: withOpacity(colors.primary, 0.12),
-      borderWidth: 1,
-      borderColor: colors.primary,
-      borderRadius: 20,
+      borderRadius: 50,
       paddingHorizontal: 10,
       paddingVertical: 5,
     },

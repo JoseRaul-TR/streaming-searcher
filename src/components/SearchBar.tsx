@@ -17,15 +17,15 @@ type Props = {
 };
 
 export default function SearchBar({ value, onChangeText, isLoading }: Props) {
-  const { colors } = useMode();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { colors, isDark } = useMode();
+  const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
 
   return (
     <View style={styles.container}>
-      <Ionicons name="search" size={20} color={colors.textMuted} />
+      <Ionicons name="search" size={20} color={colors.primary} />
       <TextInput
         style={styles.input}
-        placeholder="Search movies, shows or people"
+        placeholder="Search movies, series ..."
         placeholderTextColor={colors.textMuted}
         value={value}
         onChangeText={onChangeText}
@@ -52,7 +52,7 @@ export default function SearchBar({ value, onChangeText, isLoading }: Props) {
   );
 }
 
-function makeStyles(colors: ColorScheme) {
+function makeStyles(colors: ColorScheme, isDark: boolean) {
   return StyleSheet.create({
     container: {
       flexDirection: "row",
@@ -62,8 +62,13 @@ function makeStyles(colors: ColorScheme) {
       paddingHorizontal: 15,
       borderRadius: 52,
       height: 52,
-      borderWidth: 1,
-      borderColor: colors.surfaceMid,
+            // — iOS shadow —
+      shadowColor: isDark ? "#000" : "#64748B",
+      shadowOffset: { width: 0, height: isDark ? 4 : 2 },
+      shadowOpacity: isDark ? 0.3 : 0.1,
+      shadowRadius: isDark ? 10 : 8,
+      // — Android elevation —
+      elevation: isDark ? 5 : 2,
     },
     input: {
       flex: 1,

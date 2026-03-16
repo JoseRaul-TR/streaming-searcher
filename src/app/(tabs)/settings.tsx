@@ -13,6 +13,7 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useUserStore } from "@/store/useUserStore";
+import CountryPickerModal from "@/components/CountryPickerModal";
 import SubscriptionPickerModal from "@/components/SubscriptionPickerModal";
 import { ColorScheme, ModePreference, withOpacity } from "@/constants/colors";
 import { useMode } from "@/hooks/useMode";
@@ -29,10 +30,12 @@ function ModeSelector({
   value,
   onChange,
   colors,
+  isDark,
 }: {
   value: ModePreference;
   onChange: (v: ModePreference) => void;
   colors: ColorScheme;
+  isDark: boolean;
 }) {
   const translateX = useRef(new Animated.Value(0)).current;
   const [containerWidth, setContainerWidth] = useState(0);
@@ -40,7 +43,6 @@ function ModeSelector({
   const currentIndex = MODE_OPTIONS.findIndex((o) => o.value === value);
   const segmentWidth = containerWidth / MODE_OPTIONS.length;
 
-  // Slide the pill to the active segment whenever the selection changes
   useEffect(() => {
     if (containerWidth === 0) return;
     Animated.spring(translateX, {
@@ -57,12 +59,15 @@ function ModeSelector({
         selectorStyles.track,
         {
           backgroundColor: colors.surface,
-          borderColor: colors.surfaceMid,
+          shadowColor: isDark ? "#000" : "#64748B",
+          shadowOffset: { width: 0, height: isDark ? 4 : 2 },
+          shadowOpacity: isDark ? 0.3 : 0.1,
+          shadowRadius: isDark ? 10 : 8,
+          elevation: isDark ? 5 : 2,
         },
       ]}
       onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}
     >
-      {/* Sliding Pill — only rendered once the container width is known */}
       {containerWidth > 0 && (
         <Animated.View
           style={[
@@ -76,7 +81,6 @@ function ModeSelector({
         />
       )}
 
-      {/* Segment Labels */}
       {MODE_OPTIONS.map((option) => (
         <Pressable
           key={option.value}
@@ -88,8 +92,7 @@ function ModeSelector({
             style={[
               selectorStyles.label,
               {
-                color:
-                  value === option.value ? "#FFF" : colors.textMuted,
+                color: value === option.value ? "#FFF" : colors.textMuted,
                 fontWeight: value === option.value ? "700" : "400",
               },
             ]}
@@ -102,13 +105,11 @@ function ModeSelector({
   );
 }
 
-// Static styles for ModeSelector — no theme dependency, colors come via props
 const selectorStyles = StyleSheet.create({
   track: {
     flexDirection: "row",
     borderRadius: 50,
     padding: 4,
-    borderWidth: 1,
     position: "relative",
   },
   pill: {
@@ -124,18 +125,17 @@ const selectorStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  label: {
-    fontSize: 13,
-  },
+  label: { fontSize: 13 },
 });
 
 // ————— Main Component —————
 export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colors } = useMode();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { colors, isDark } = useMode();
+  const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
 
+  const [showCountryModal, setShowCountryModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
   const {
@@ -184,7 +184,7 @@ export default function SettingsScreen() {
         { paddingTop: insets.top + 20, paddingBottom: insets.bottom },
       ]}
     >
-      {/* Appearance settings (System|Light|Dark Mode) */}
+      {/* Appearance */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <MaterialCommunityIcons
@@ -199,6 +199,7 @@ export default function SettingsScreen() {
           value={modePreference}
           onChange={setModePreference}
           colors={colors}
+          isDark={isDark}
         />
       </View>
 
@@ -209,53 +210,57 @@ export default function SettingsScreen() {
           <Text style={styles.sectionLabel}>Search Settings</Text>
         </View>
 
-        {/* Countries → dedicated screen */}
-        <Pressable
-          style={styles.row}
-          onPress={() => router.push("/country-picker")}
-          android_ripple={{ color: withOpacity(colors.primary, 0.08) }}
-        >
-          <View style={styles.rowLeft}>
-            <Ionicons name="globe-outline" size={22} color={colors.primary} />
-            <Text style={styles.rowTitle}>Countries</Text>
-          </View>
-          <View style={styles.rowRight}>
-            <Text style={styles.rowValue} numberOfLines={1}>
-              {countriesLabel}
-            </Text>
-            <Ionicons
-              name="chevron-forward"
-              size={18}
-              color={colors.surfaceAlt}
-            />
-          </View>
-        </Pressable>
+        {/* Countries → modal */}
+        <View style={styles.rowShadow}>
+          <Pressable
+            style={styles.row}
+            onPress={() => setShowCountryModal(true)}
+            android_ripple={{ color: withOpacity(colors.primary, 0.08) }}
+          >
+            <View style={styles.rowLeft}>
+              <Ionicons name="globe-outline" size={22} color={colors.primary} />
+              <Text style={styles.rowTitle}>Countries</Text>
+            </View>
+            <View style={styles.rowRight}>
+              <Text style={styles.rowValue} numberOfLines={1}>
+                {countriesLabel}
+              </Text>
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={colors.surfaceAlt}
+              />
+            </View>
+          </Pressable>
+        </View>
 
         {/* Subscriptions — disabled when global */}
-        <Pressable
-          style={[styles.row, isGlobal && styles.rowDisabled]}
-          onPress={() => !isGlobal && setShowSubscriptionModal(true)}
-          android_ripple={{ color: withOpacity(colors.primary, 0.08) }}
-        >
-          <View style={styles.rowLeft}>
-            <MaterialIcons
-              name="subscriptions"
-              size={22}
-              color={colors.primary}
-            />
-            <Text style={styles.rowTitle}>Subscriptions</Text>
-          </View>
-          <View style={styles.rowRight}>
-            <Text style={styles.rowValue} numberOfLines={1}>
-              {subscriptionsLabel}
-            </Text>
-            <Ionicons
-              name="chevron-forward"
-              size={18}
-              color={colors.surfaceAlt}
-            />
-          </View>
-        </Pressable>
+        <View style={[styles.rowShadow, isGlobal && styles.rowDisabled]}>
+          <Pressable
+            style={styles.row}
+            onPress={() => !isGlobal && setShowSubscriptionModal(true)}
+            android_ripple={{ color: withOpacity(colors.primary, 0.08) }}
+          >
+            <View style={styles.rowLeft}>
+              <MaterialIcons
+                name="subscriptions"
+                size={22}
+                color={colors.primary}
+              />
+              <Text style={styles.rowTitle}>Subscriptions</Text>
+            </View>
+            <View style={styles.rowRight}>
+              <Text style={styles.rowValue} numberOfLines={1}>
+                {subscriptionsLabel}
+              </Text>
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={colors.surfaceAlt}
+              />
+            </View>
+          </Pressable>
+        </View>
 
         {isGlobal && (
           <Text style={styles.hint}>
@@ -271,24 +276,31 @@ export default function SettingsScreen() {
           <Text style={styles.sectionLabel}>App</Text>
         </View>
 
-        <Pressable
-          style={styles.row}
-          onPress={handleResetOnboarding}
-          android_ripple={{ color: withOpacity(colors.error, 0.08) }}
-        >
-          <View style={styles.rowLeft}>
-            <Ionicons name="refresh-outline" size={22} color={colors.error} />
-            <Text style={[styles.rowTitle, styles.rowTitleDanger]}>
-              Restart Setup
-            </Text>
-          </View>
-          <Ionicons
-            name="chevron-forward"
-            size={18}
-            color={colors.surfaceAlt}
-          />
-        </Pressable>
+        <View style={styles.rowShadow}>
+          <Pressable
+            style={styles.row}
+            onPress={handleResetOnboarding}
+            android_ripple={{ color: withOpacity(colors.error, 0.08) }}
+          >
+            <View style={styles.rowLeft}>
+              <Ionicons name="refresh-outline" size={22} color={colors.error} />
+              <Text style={[styles.rowTitle, styles.rowTitleDanger]}>
+                Restart Setup
+              </Text>
+            </View>
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color={colors.surfaceAlt}
+            />
+          </Pressable>
+        </View>
       </View>
+
+      <CountryPickerModal
+        visible={showCountryModal}
+        onClose={() => setShowCountryModal(false)}
+      />
 
       <SubscriptionPickerModal
         visible={showSubscriptionModal}
@@ -299,7 +311,7 @@ export default function SettingsScreen() {
   );
 }
 
-function makeStyles(colors: ColorScheme) {
+function makeStyles(colors: ColorScheme, isDark: boolean) {
   return StyleSheet.create({
     container: {
       flex: 1,
@@ -319,8 +331,15 @@ function makeStyles(colors: ColorScheme) {
       letterSpacing: 1,
       textTransform: "uppercase",
     },
-
-    // — Rows —
+    rowShadow: {
+      borderRadius: 50,
+      backgroundColor: colors.surface,
+      shadowColor: isDark ? "#000" : "#64748B",
+      shadowOffset: { width: 0, height: isDark ? 4 : 2 },
+      shadowOpacity: isDark ? 0.3 : 0.1,
+      shadowRadius: isDark ? 10 : 8,
+      elevation: isDark ? 5 : 2,
+    },
     row: {
       flexDirection: "row",
       alignItems: "center",
@@ -328,10 +347,8 @@ function makeStyles(colors: ColorScheme) {
       backgroundColor: colors.surface,
       paddingVertical: 16,
       paddingHorizontal: 18,
-      borderRadius: 14,
+      borderRadius: 50,
       overflow: "hidden",
-      borderWidth: 1,
-      borderColor: colors.surfaceMid,
     },
     rowDisabled: { opacity: 0.4 },
     rowLeft: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },

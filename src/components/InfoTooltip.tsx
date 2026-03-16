@@ -13,8 +13,8 @@ type Props = {
  * Tapping the backdrop or the close button dismisses it.
  */
 export default function InfoTooltip({ text }: Props) {
-  const { colors } = useMode();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { colors, isDark } = useMode();
+  const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
 
   const [visible, setVisible] = useState(false);
 
@@ -65,7 +65,7 @@ export default function InfoTooltip({ text }: Props) {
   );
 }
 
-function makeStyles(colors: ColorScheme) {
+function makeStyles(colors: ColorScheme, isDark: boolean) {
   return StyleSheet.create({
     iconButton: {
       padding: 2,
@@ -83,8 +83,12 @@ function makeStyles(colors: ColorScheme) {
       padding: 20,
       width: "100%",
       gap: 12,
-      borderWidth: 1,
-      borderColor: colors.surfaceMid,
+      // Shadow instead of border — card floats over the backdrop
+      shadowColor: isDark ? "#000" : "#64748B",
+      shadowOffset: { width: 0, height: isDark ? 8 : 4 },
+      shadowOpacity: isDark ? 0.5 : 0.15,
+      shadowRadius: isDark ? 20 : 12,
+      elevation: isDark ? 12 : 6,
     },
     cardHeader: {
       flexDirection: "row",

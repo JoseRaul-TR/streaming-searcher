@@ -122,8 +122,6 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
       backgroundColor: "rgba(15,23,42,0.7)",
       padding: 6,
       borderRadius: 8,
-      borderWidth: 1,
-      borderColor: withOpacity(colors.text, 0.1),
     },
     title: {
       color: colors.text,

@@ -60,8 +60,8 @@ export default function CountryProviderSection({
   subscribedKeys,
   defaultExpanded = false,
 }: Props) {
-  const { colors } = useMode();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { colors, isDark } = useMode();
+  const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
 
   const [expanded, setExpanded] = useState<Record<string, boolean>>(
     Object.fromEntries(data.map((c) => [c.countryCode, defaultExpanded])),
@@ -73,46 +73,57 @@ export default function CountryProviderSection({
   return (
     <>
       {data.map((country) => (
-        <View key={country.countryCode} style={styles.countryBlock}>
-          <Pressable
-            style={styles.countryHeader}
-            onPress={() => toggle(country.countryCode)}
-            android_ripple={{ color: withOpacity(colors.primary, 0.08) }}
-          >
-            <Text style={styles.countryName}>{country.countryName}</Text>
-            <Ionicons
-              name={
-                expanded[country.countryCode] ? "chevron-up" : "chevron-down"
-              }
-              size={18}
-              color={colors.surfaceAlt}
-            />
-          </Pressable>
-
-          {expanded[country.countryCode] && (
-            <View style={styles.categories}>
-              <ProviderCategories
-                data={country}
-                subscribedKeys={subscribedKeys}
-                countryCode={country.countryCode}
+        <View key={country.countryCode} style={styles.countryBlockShadow}>
+          <View style={styles.countryBlock}>
+            <Pressable
+              style={styles.countryHeader}
+              onPress={() => toggle(country.countryCode)}
+              android_ripple={{ color: withOpacity(colors.primary, 0.08) }}
+            >
+              <Text style={styles.countryName}>{country.countryName}</Text>
+              <Ionicons
+                name={
+                  expanded[country.countryCode] ? "chevron-up" : "chevron-down"
+                }
+                size={18}
+                color={colors.surfaceAlt}
               />
-            </View>
-          )}
+            </Pressable>
+
+            {expanded[country.countryCode] && (
+              <View style={styles.categories}>
+                <ProviderCategories
+                  data={country}
+                  subscribedKeys={subscribedKeys}
+                  countryCode={country.countryCode}
+                />
+              </View>
+            )}
+          </View>
         </View>
       ))}
     </>
   );
 }
 
-function makeStyles(colors: ColorScheme) {
+function makeStyles(colors: ColorScheme, isDark: boolean) {
   return StyleSheet.create({
-    countryBlock: {
+    countryBlockShadow: {
       marginBottom: 10,
+      borderRadius: 14,
       backgroundColor: colors.surface,
+      // — iOS shadow —
+      shadowColor: isDark ? "#000" : "#64748B",
+      shadowOffset: { width: 0, height: isDark ? 4 : 2 },
+      shadowOpacity: isDark ? 0.3 : 0.1,
+      shadowRadius: isDark ? 10 : 8,
+      // — Android elevation —
+      elevation: isDark ? 5 : 2,
+    },
+    countryBlock: {
       borderRadius: 14,
       overflow: "hidden",
-      borderWidth: 1,
-      borderColor: colors.surfaceMid,
+      backgroundColor: colors.surface,
     },
     countryHeader: {
       flexDirection: "row",

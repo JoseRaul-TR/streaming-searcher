@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useUserStore } from "@/store/useUserStore";
 
 import { tmdbApi } from "@/services/api";
 import { SearchedItem } from "@/types/searchedItem";
@@ -14,6 +15,7 @@ type UseSearchResult = {
   results: SearchedItem[];
   isLoading: boolean;
   isError: boolean;
+  error: Error | null;
   hasSearched: boolean;
 };
 
@@ -25,7 +27,7 @@ type UseSearchResult = {
  * the input, while `debouncedQuery` drives the actual fetch.
  */
 export function useSearch(): UseSearchResult {
-  const [query, setQuery] = useState("");
+  const {searchQuery: query, setSearchQuery: setQuery } = useUserStore();
   const [debouncedQuery, setDebouncedQuery] = useState("");
 
   // Debounce: wait DEBOUNCE_MS after the user stops typing before updating
@@ -39,7 +41,7 @@ export function useSearch(): UseSearchResult {
     return () => clearTimeout(timer);
   }, [query]);
 
-  const { data, isLoading, isFetching, isError } = useQuery<SearchedItem[]>({
+  const { data, isLoading, isFetching, isError, error } = useQuery<SearchedItem[], Error>({
     queryKey: ["search", debouncedQuery],
     queryFn: () => tmdbApi.searchItem(debouncedQuery),
     enabled: debouncedQuery.length >= MIN_QUERY_LENGTH,
@@ -52,6 +54,7 @@ export function useSearch(): UseSearchResult {
     results: data ?? [],
     isLoading: isLoading || isFetching,
     isError,
+    error: error ?? null,
     hasSearched: debouncedQuery.length >= MIN_QUERY_LENGTH,
   };
 }

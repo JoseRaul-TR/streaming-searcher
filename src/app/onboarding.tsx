@@ -2,17 +2,17 @@ import React, { useState, useMemo } from "react";
 import { View, Text, Pressable, StyleSheet, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { useUserStore } from "@/store/useUserStore";
-import CountryAutocomplete from "@/components/CountryAutocomplete";
 import SubscriptionPickerModal from "@/components/SubscriptionPickerModal";
 import TermsModal from "@/components/TermsModal";
 import InfoTooltip from "@/components/InfoTooltip";
 import { ColorScheme, withOpacity } from "@/constants/colors";
 import { useMode } from "@/hooks/useMode";
+import CountryPickerModal from "@/components/CountryPickerModal";
 
-const TOTAL_STEPS = 3;
+const TOTAL_STEPS = 4;
 
 const STEP_INFO = {
   1: "Select one or more countries to filter streaming availability. Leave empty to check global availability across all countries.",
@@ -23,18 +23,16 @@ export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
-  const { colors } = useMode();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const { colors, isDark } = useMode();
+  const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
 
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0);
+  const [showCountryModal, setShowCountryModal] = useState(false);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
 
   const {
     countries,
-    addCountry,
-    removeCountry,
-    removeAllCountries,
     subscriptions,
     completeOnboarding,
     hasAcceptedTerms,
@@ -45,6 +43,13 @@ export default function OnboardingScreen() {
     completeOnboarding();
     router.replace("/(tabs)");
   };
+
+  const countriesLabel =
+    countries.length === 0
+      ? "Select countries (optional)"
+      : countries.length === 1
+        ? countries[0].name
+        : `${countries.length} countries selected`;
 
   const subscriptionsLabel =
     subscriptions.length === 0
@@ -60,14 +65,18 @@ export default function OnboardingScreen() {
         { paddingTop: insets.top, paddingBottom: insets.bottom },
       ]}
     >
-      {/* Progress dots */}
+      {/* Progress dots – hidden on welcome slide */}
       <View style={styles.progressBar}>
-        {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-          <View
-            key={i}
-            style={[styles.progressDot, i < step && styles.progressDotActive]}
-          />
-        ))}
+        {step === 0 ? (
+          <View style={styles.progressPlaceholder} />
+        ) : (
+          Array.from({ length: TOTAL_STEPS - 1 }).map((_, i) => (
+            <View
+              key={i}
+              style={[styles.progressDot, i < step && styles.progressDotActive]}
+            />
+          ))
+        )}
       </View>
 
       <ScrollView
@@ -76,6 +85,44 @@ export default function OnboardingScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
+        {/* ————— Step 0 — Welcome ————— */}
+        {step === 0 && (
+          <View style={styles.welcomeContainer}>
+            <View style={styles.logoWrap}>
+              <View style={styles.logoOuter}>
+                <MaterialCommunityIcons
+                  name="filmstrip-box-multiple"
+                  size={38}
+                  color={colors.primary}
+                />
+              </View>
+            </View>
+
+            <Text style={styles.welcomeTitle}>StreamSearch</Text>
+            <Text style={styles.welcomeTagline}>
+              Find where to watch anything,{"\n"}in any country.
+            </Text>
+
+            <View style={styles.welcomeFeatures}>
+              <FeatureRow
+                icon="search-outline"
+                text="Search movies, series and people"
+                colors={colors}
+              />
+              <FeatureRow
+                icon="globe-outline"
+                text="Check streaming availability by country"
+                colors={colors}
+              />
+              <FeatureRow
+                icon="star-outline"
+                text="Highlight the services you subscribe to"
+                colors={colors}
+              />
+            </View>
+          </View>
+        )}
+
         {/* ————— Step 1 — Countries ————— */}
         {step === 1 && (
           <View style={styles.stepContainer}>
@@ -86,12 +133,29 @@ export default function OnboardingScreen() {
               <InfoTooltip text={STEP_INFO[1]} />
             </View>
 
-            <CountryAutocomplete
-              selectedCountries={countries}
-              onAdd={addCountry}
-              onRemove={removeCountry}
-              onClear={removeAllCountries}
-            />
+            {/* Country selector — opens CountryPickerModal */}
+            <View style={styles.selectorShadow}>
+              <Pressable
+                style={styles.selector}
+                onPress={() => setShowCountryModal(true)}
+                android_ripple={{ color: withOpacity(colors.primary, 0.15) }}
+              >
+                <Text
+                  style={[
+                    styles.selectorText,
+                    countries.length === 0 && styles.selectorPlaceholder,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {countriesLabel}
+                </Text>
+                <Ionicons
+                  name="chevron-down"
+                  size={20}
+                  color={colors.textMuted}
+                />
+              </Pressable>
+            </View>
 
             {countries.length === 0 && (
               <View style={styles.perfHint}>
@@ -104,13 +168,11 @@ export default function OnboardingScreen() {
                   By not selecting at least one country you will be performing
                   global searches. A global search loads availability for every
                   country at once and at this stage of app development can
-                  creates performance issues.
+                  create performance issues.
                 </Text>
               </View>
             )}
-            <Text style={styles.hint}>
-              This can be edited later in Settings.
-            </Text>
+            <Text style={styles.hint}>This can be edited later in Settings.</Text>
           </View>
         )}
 
@@ -133,37 +195,37 @@ export default function OnboardingScreen() {
                 />
                 <Text style={styles.infoText}>
                   You selected global search. If you want to have highlighted
-                  the providers your are subscribed to in the search results go
+                  the providers you are subscribed to in the search results go
                   back and pick specific country or countries to enable
                   subscription highlights.
                 </Text>
               </View>
             ) : (
-              <Pressable
-                style={styles.selector}
-                onPress={() => setShowSubscriptionModal(true)}
-                android_ripple={{ color: withOpacity(colors.primary, 0.15) }}
-              >
-                <Text
-                  style={[
-                    styles.selectorText,
-                    subscriptions.length === 0 && styles.selectorPlaceholder,
-                  ]}
-                  numberOfLines={1}
+              <View style={styles.selectorShadow}>
+                <Pressable
+                  style={styles.selector}
+                  onPress={() => setShowSubscriptionModal(true)}
+                  android_ripple={{ color: withOpacity(colors.primary, 0.15) }}
                 >
-                  {subscriptionsLabel}
-                </Text>
-                <Ionicons
-                  name="chevron-down"
-                  size={20}
-                  color={colors.textMuted}
-                />
-              </Pressable>
+                  <Text
+                    style={[
+                      styles.selectorText,
+                      subscriptions.length === 0 && styles.selectorPlaceholder,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {subscriptionsLabel}
+                  </Text>
+                  <Ionicons
+                    name="chevron-down"
+                    size={20}
+                    color={colors.textMuted}
+                  />
+                </Pressable>
+              </View>
             )}
 
-            <Text style={styles.hint}>
-              This can be edited later in Settings.
-            </Text>
+            <Text style={styles.hint}>This can be edited later in Settings.</Text>
           </View>
         )}
 
@@ -174,7 +236,6 @@ export default function OnboardingScreen() {
             <Text style={styles.title}>Terms of Use</Text>
 
             <View style={styles.checkboxRow}>
-              {/* Pressable solo en el checkbox */}
               <Pressable
                 onPress={toggleTerms}
                 android_ripple={{
@@ -195,7 +256,6 @@ export default function OnboardingScreen() {
                 </View>
               </Pressable>
 
-              {/* Label con link separado — Text anidado, sin Pressable dentro de Text */}
               <Text style={styles.checkboxLabel}>
                 I accept the following{" "}
                 <Text
@@ -213,7 +273,7 @@ export default function OnboardingScreen() {
       {/* Footer */}
       <View style={styles.footer}>
         <View style={styles.row}>
-          {step > 1 && (
+          {step > 0 && (
             <Pressable
               style={styles.btnSecondary}
               onPress={() => setStep((s) => s - 1)}
@@ -223,16 +283,18 @@ export default function OnboardingScreen() {
             </Pressable>
           )}
 
-          {step < TOTAL_STEPS ? (
+          {step < TOTAL_STEPS - 1 ? (
             <Pressable
               style={[
                 styles.btnPrimary,
-                step === 1 ? styles.btnFull : styles.btnRowItem,
+                step === 0 ? styles.btnFull : styles.btnRowItem,
               ]}
               onPress={() => setStep((s) => s + 1)}
               android_ripple={{ color: "rgba(255,255,255,0.2)" }}
             >
-              <Text style={styles.btnPrimaryText}>Next</Text>
+              <Text style={styles.btnPrimaryText}>
+                {step === 0 ? "Get Started" : "Next"}
+              </Text>
               <Ionicons name="arrow-forward" size={20} color="white" />
             </Pressable>
           ) : (
@@ -252,6 +314,11 @@ export default function OnboardingScreen() {
         </View>
       </View>
 
+      <CountryPickerModal
+        visible={showCountryModal}
+        onClose={() => setShowCountryModal(false)}
+      />
+
       <SubscriptionPickerModal
         visible={showSubscriptionModal}
         onClose={() => setShowSubscriptionModal(false)}
@@ -266,7 +333,46 @@ export default function OnboardingScreen() {
   );
 }
 
-function makeStyles(colors: ColorScheme) {
+// ————— Feature row helper —————
+function FeatureRow({
+  icon,
+  text,
+  colors,
+}: {
+  icon: React.ComponentProps<typeof Ionicons>["name"];
+  text: string;
+  colors: ColorScheme;
+}) {
+  return (
+    <View style={featureStyles.row}>
+      <View
+        style={[
+          featureStyles.iconWrap,
+          { backgroundColor: withOpacity(colors.primary, 0.12) },
+        ]}
+      >
+        <Ionicons name={icon} size={18} color={colors.primary} />
+      </View>
+      <Text style={[featureStyles.text, { color: colors.textSecondary }]}>
+        {text}
+      </Text>
+    </View>
+  );
+}
+
+const featureStyles = StyleSheet.create({
+  row: { flexDirection: "row", alignItems: "center", gap: 14 },
+  iconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  text: { flex: 1, fontSize: 15, lineHeight: 20 },
+});
+
+function makeStyles(colors: ColorScheme, isDark: boolean) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
     progressBar: {
@@ -275,7 +381,9 @@ function makeStyles(colors: ColorScheme) {
       gap: 8,
       paddingTop: 16,
       paddingBottom: 8,
+      minHeight: 28,
     },
+    progressPlaceholder: { height: 4 },
     progressDot: {
       width: 28,
       height: 4,
@@ -285,6 +393,43 @@ function makeStyles(colors: ColorScheme) {
     progressDotActive: { backgroundColor: colors.primary },
     scroll: { flex: 1 },
     scrollContent: { paddingHorizontal: 28, paddingTop: 20, paddingBottom: 20 },
+
+    // — Welcome —
+    welcomeContainer: {
+      flex: 1,
+      alignItems: "center",
+      paddingTop: 20,
+      gap: 24,
+    },
+    logoWrap: { position: "relative", marginBottom: 8 },
+    logoOuter: {
+      width: 96,
+      height: 96,
+      borderRadius: 28,
+      backgroundColor: withOpacity(colors.primary, 0.12),
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    welcomeTitle: {
+      color: colors.text,
+      fontSize: 32,
+      fontWeight: "800",
+      letterSpacing: -0.5,
+    },
+    welcomeTagline: {
+      color: colors.textSecondary,
+      fontSize: 16,
+      lineHeight: 24,
+      textAlign: "center",
+    },
+    welcomeFeatures: {
+      width: "100%",
+      gap: 16,
+      marginTop: 8,
+      paddingHorizontal: 4,
+    },
+
+    // — Setup steps —
     stepContainer: { gap: 20 },
     stepLabel: {
       color: colors.primary,
@@ -304,34 +449,31 @@ function makeStyles(colors: ColorScheme) {
       flexDirection: "row",
       alignItems: "flex-start",
       gap: 10,
-      backgroundColor: withOpacity(colors.primary, 0.12), // ← 0.08 → 0.12
+      backgroundColor: withOpacity(colors.primary, 0.12),
       borderRadius: 12,
       padding: 14,
     },
-    infoText: {
-      flex: 1,
-      color: colors.textMuted,
-      fontSize: 14,
-      lineHeight: 20,
+    infoText: { flex: 1, color: colors.textMuted, fontSize: 14, lineHeight: 20 },
+    selectorShadow: {
+      borderRadius: 50,
+      backgroundColor: colors.surface,
+      shadowColor: isDark ? "#000" : "#64748B",
+      shadowOffset: { width: 0, height: isDark ? 4 : 2 },
+      shadowOpacity: isDark ? 0.3 : 0.1,
+      shadowRadius: isDark ? 10 : 8,
+      elevation: isDark ? 5 : 2,
     },
     selector: {
-      backgroundColor: colors.surface,
-      padding: 18,
-      borderRadius: 14,
+      borderRadius: 50,
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
       overflow: "hidden",
-      borderWidth: 1, // ← añadir
-      borderColor: colors.surfaceMid, // ← añadir — visible en light, sutil en dark
+      padding: 18,
     },
     selectorText: { color: colors.text, fontSize: 15, flex: 1, marginRight: 8 },
     selectorPlaceholder: { color: colors.textDisabled },
-    hint: {
-      color: colors.textMuted, // ← surfaceAlt → textMuted (mejor contraste en light)
-      fontSize: 13,
-      textAlign: "center",
-    },
+    hint: { color: colors.textMuted, fontSize: 13, textAlign: "center" },
     checkboxRow: {
       flexDirection: "row",
       alignItems: "center",
@@ -343,7 +485,7 @@ function makeStyles(colors: ColorScheme) {
       height: 24,
       borderRadius: 6,
       borderWidth: 2,
-      borderColor: colors.surfaceAlt, // ← surfaceMid → surfaceAlt (visible en light)
+      borderColor: colors.surfaceAlt,
       marginRight: 15,
       justifyContent: "center",
       alignItems: "center",
@@ -374,31 +516,26 @@ function makeStyles(colors: ColorScheme) {
     btnRowItem: { flex: 2 },
     btnSecondary: {
       flex: 1,
-      backgroundColor: withOpacity(colors.primary, 0.12), // ← opción C
+      backgroundColor: withOpacity(colors.primary, 0.12),
       padding: 18,
       borderRadius: 50,
       alignItems: "center",
       overflow: "hidden",
     },
-    // ← separar texto de botones — primary siempre blanco, secondary en primary color
     btnPrimaryText: { color: "#FFF", fontSize: 16, fontWeight: "bold" },
-    btnSecondaryText: {
-      color: colors.primary,
-      fontSize: 16,
-      fontWeight: "bold",
-    },
+    btnSecondaryText: { color: colors.primary, fontSize: 16, fontWeight: "bold" },
     disabled: { opacity: 0.4 },
     perfHint: {
       flexDirection: "row",
       alignItems: "flex-start",
       gap: 8,
-      backgroundColor: colors.surfaceMid, // ← opacity 0.15 → surfaceMid sólido
+      backgroundColor: colors.surfaceMid,
       borderRadius: 10,
       padding: 12,
     },
     perfHintText: {
       flex: 1,
-      color: colors.textMuted, // ← surfaceAlt → textMuted
+      color: colors.textMuted,
       fontSize: 12,
       lineHeight: 18,
     },
