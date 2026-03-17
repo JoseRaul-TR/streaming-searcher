@@ -1,6 +1,11 @@
 {
     "cmake.ignoreCMakeListsMissing": true,
     "cSpell.words": [
-        "Pressable"
+        "flatrate",
+        "partialize",
+        "Pressable",
+        "RRGGBBAA",
+        "tmdb",
+        "watchlist"
     ]
 }

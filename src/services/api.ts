@@ -6,7 +6,7 @@ import {
 } from "@/types/providers";
 import { MediaItem, SearchedItem } from "@/types/searchedItem";
 
-const BASE_URL = "https://api.themoviedb.org/";
+const BASE_URL = "https://api.themoviedb.org";
 const BEARER_TOKEN = process.env.EXPO_PUBLIC_TMDB_BEARER_TOKEN;
 
 const fetchOptions: RequestInit = {
@@ -177,6 +177,13 @@ export const tmdbApi = {
       `/3/search/multi?query=${encodeURIComponent(query)}`,
     );
     return (data.results ?? []).map(toSearchedItem);
+  },
+
+  /**
+   * Fetch extra details for a specific item (used to fetch missing overviews on saved items)
+   */
+  getMediaDetails: async (mediaType: string, id: number): Promise<any> => {
+    return await fetchTMDB<any>(`/3/${mediaType}/${id}`);
   },
 
   /**

@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -7,7 +7,8 @@ import {
   StyleSheet,
   useWindowDimensions,
 } from "react-native";
-import { Ionicons, Feather } from "@expo/vector-icons";
+import { Ionicons, Feather, MaterialIcons } from "@expo/vector-icons";
+import { useUserStore } from "@/store/useUserStore";
 import { SearchedItem } from "@/types/searchedItem";
 import { ColorScheme, withOpacity } from "@/constants/colors";
 import { useMode } from "@/hooks/useMode";
@@ -24,12 +25,32 @@ type Props = {
 export default function MediaCard({ item, onPress, width: widthProp }: Props) {
   const { colors, isDark } = useMode();
   const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
+  const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useUserStore();
 
   // useWindowDimensions re-renders if dimensions change (rotation, iPad
   // multitasking), unlike the module-level Dimensions.get() which is
   // calculated once at import time.
   const { width: windowWidth } = useWindowDimensions();
   const cardWith = widthProp ?? (windowWidth - 40) / 2;
+
+  const saved =
+    item.media_type !== "person" && isInWatchlist(item.id, item.media_type);
+
+  const handleWatchlist = useCallback(() => {
+    if (item.media_type === "person") return;
+    if (saved) {
+      removeFromWatchlist(item.id, item.media_type);
+    } else {
+      addToWatchlist({
+        id: item.id,
+        media_type: item.media_type,
+        title: item.title,
+        year: item.year,
+        poster_path: item.poster_path,
+        added_at: Date.now(),
+      });
+    }
+  }, [saved, item, addToWatchlist, removeFromWatchlist]);
 
   return (
     <Pressable style={[styles.card, { width: cardWith }]} onPress={onPress}>
@@ -64,7 +85,8 @@ export default function MediaCard({ item, onPress, width: widthProp }: Props) {
           </View>
         )}
 
-        <View style={styles.badge}>
+        {/* Media type badge - top left */}
+        <View style={styles.mediaBadge}>
           {item.media_type === "movie" && (
             <Ionicons name="film" size={14} color="#FFF" />
           )}
@@ -75,6 +97,24 @@ export default function MediaCard({ item, onPress, width: widthProp }: Props) {
             <Ionicons name="person-circle" size={14} color="#FFF" />
           )}
         </View>
+        {/* Watchlist badge - top tight, only for movie/series */}
+        {item.media_type !== "person" && (
+          <Pressable
+            style={styles.bookmarkBadge}
+            onPress={handleWatchlist}
+            hitSlop={6}
+            android_ripple={{
+              color: "rgba(255,255,255,0.15)",
+              borderless: true,
+            }}
+          >
+            <MaterialIcons
+              name={saved ? "bookmark-added" : "bookmark-add"}
+              size={18}
+              color={saved ? colors.primary : "#FFF"}
+            />
+          </Pressable>
+        )}
       </View>
 
       <Text style={styles.title} numberOfLines={1}>
@@ -115,12 +155,20 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
       alignItems: "center",
       backgroundColor: colors.surfaceMid,
     },
-    badge: {
+    mediaBadge: {
       position: "absolute",
       top: 8,
       left: 8,
       backgroundColor: "rgba(15,23,42,0.7)",
       padding: 6,
+      borderRadius: 8,
+    },
+    bookmarkBadge: {
+      position: "absolute",
+      top: 8,
+      right: 8,
+      backgroundColor: "rgba(15,23,42,0.7)",
+      padding: 5,
       borderRadius: 8,
     },
     title: {

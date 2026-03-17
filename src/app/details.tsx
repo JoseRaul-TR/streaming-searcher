@@ -8,7 +8,7 @@ import {
   Pressable,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Ionicons, Feather } from "@expo/vector-icons";
+import { Ionicons, Feather, MaterialIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as WebBrowser from "expo-web-browser";
 
@@ -21,6 +21,8 @@ import KnownForSection from "@/components/KnownForSection";
 import { ColorScheme, withOpacity } from "@/constants/colors";
 import { useMode } from "@/hooks/useMode";
 import { MediaItem } from "@/types/searchedItem";
+import { useQuery } from "@tanstack/react-query";
+import { tmdbApi } from "@/services/api";
 
 export default function DetailsScreen() {
   const router = useRouter();
@@ -48,6 +50,16 @@ export default function DetailsScreen() {
     from_nested?: string;
   }>();
 
+  // Recover details if overview is empty (from Watchlist)
+  const { data: mediaDetails, isLoading: isLoadingDetails } = useQuery({
+    queryKey: ["media-details", media_type, id],
+    queryFn: () => tmdbApi.getMediaDetails(media_type, Number(id)),
+    enabled: !overview && media_type !== "person",
+  });
+
+  const displayOverview =
+    overview || mediaDetails?.overview || mediaDetails?.biography || "";
+
   // Parse the JSON-serialised known_for_items passed from ExploreScreen.
   // Wrapped in try/catch so a malformed param never crashes the screen.
   const knownForItems = useMemo((): MediaItem[] => {
@@ -60,7 +72,13 @@ export default function DetailsScreen() {
   }, [knownForRaw]);
 
   const [expanded, setExpanded] = useState(false);
-  const { countries, subscriptions } = useUserStore();
+  const {
+    countries,
+    subscriptions,
+    addToWatchlist,
+    removeFromWatchlist,
+    isInWatchlist,
+  } = useUserStore();
 
   // Composite key: "${countryCode}:${providerId}"
   // This ensures that the same provider available in multiple countries
@@ -80,17 +98,37 @@ export default function DetailsScreen() {
   );
 
   const isNested = from_nested === "true";
-
   const hasProviders = providers.length > 0;
+  const canSave = media_type !== "person";
+  const saved =
+    canSave && isInWatchlist(Number(id), media_type as "movie" | "tv");
 
-  const handleBack = useCallback(() => {
-    router.back();
-  }, [router]);
-
-  // Closes the full details stack and returns to the Explore tab
-  const handleCloseAll = useCallback(() => {
-    router.navigate("/(tabs)");
-  }, [router]);
+  const handleWatchlist = useCallback(() => {
+    if (!canSave) return;
+    const mediaType = media_type as "movie" | "tv";
+    if (saved) {
+      removeFromWatchlist(Number(id), mediaType);
+    } else {
+      addToWatchlist({
+        id: Number(id),
+        media_type: mediaType,
+        title: title ?? "",
+        year: year ?? "",
+        poster_path: poster_path ?? null,
+        added_at: Date.now(),
+      });
+    }
+  }, [
+    canSave,
+    saved,
+    id,
+    media_type,
+    title,
+    year,
+    poster_path,
+    addToWatchlist,
+    removeFromWatchlist,
+  ]);
 
   const handleToggleExpanded = useCallback(() => {
     setExpanded((prev) => !prev);
@@ -102,7 +140,7 @@ export default function DetailsScreen() {
       <View style={styles.topBar}>
         <Pressable
           style={styles.backButton}
-          onPress={handleBack}
+          onPress={() => router.back()}
           android_ripple={{
             color: withOpacity(colors.primary, 0.08),
             borderless: true,
@@ -120,7 +158,7 @@ export default function DetailsScreen() {
         {isNested && (
           <Pressable
             style={styles.backButton}
-            onPress={handleCloseAll}
+            onPress={() => router.navigate("/(tabs)")}
             android_ripple={{
               color: withOpacity(colors.primary, 0.08),
               borderless: true,
@@ -133,72 +171,119 @@ export default function DetailsScreen() {
       </View>
 
       {/* ── Poster + Info — outside ScrollView ── */}
-      <View style={styles.header}>
-        <View style={styles.posterWrap}>
-          {poster_path ? (
-            <Image
-              source={{ uri: `https://image.tmdb.org/t/p/w500${poster_path}` }}
-              style={styles.poster}
-              resizeMode="cover"
-            />
-          ) : (
-            <View style={[styles.poster, styles.posterPlaceholder]}>
-              <Ionicons
-                name={
-                  media_type === "person" ? "person-outline" : "film-outline"
-                }
-                size={40}
-                color={colors.surfaceAlt}
-              />
-            </View>
-          )}
-          <View style={styles.badge}>
-            {media_type === "movie" && (
-              <Ionicons name="film" size={16} color="#FFF" />
-            )}
-            {media_type === "tv" && (
-              <Feather name="tv" size={16} color="#FFF" />
-            )}
-            {media_type === "person" && (
-              <Ionicons name="person-circle" size={16} color="#FFF" />
-            )}
-          </View>
-        </View>
-
-        <View style={styles.info}>
-          <Text style={styles.title} numberOfLines={3}>
-            {title}
-          </Text>
-          <View style={styles.yearBadge}>
-            <Text style={styles.yearText}>{year}</Text>
-          </View>
-          {/* Overview hidden for persons — info is shown in KnownForSection */}
-          {media_type !== "person" && (
-            <Pressable onPress={handleToggleExpanded}>
-              <Text
-                style={styles.overview}
-                numberOfLines={expanded ? undefined : 3}
-              >
-                {overview || "No description available."}
-              </Text>
-              {overview && overview.length > 70 && (
-                <Text style={styles.readMore}>
-                  {expanded ? "Show less" : "Read more"}
-                </Text>
-              )}
-            </Pressable>
-          )}
-        </View>
-      </View>
-
-      {/* ── Scrollable bottom section ── */}
       <ScrollView
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: insets.bottom + 40 },
+        ]}
         showsVerticalScrollIndicator={false}
       >
+        <View style={styles.header}>
+          <View style={styles.posterCol}>
+            <View style={styles.posterWrap}>
+              {poster_path ? (
+                <Image
+                  source={{
+                    uri: `https://image.tmdb.org/t/p/w500${poster_path}`,
+                  }}
+                  style={styles.poster}
+                  resizeMode="cover"
+                />
+              ) : (
+                // No poster_path
+                <View style={[styles.poster, styles.posterPlaceholder]}>
+                  <Ionicons
+                    name={
+                      media_type === "person"
+                        ? "person-outline"
+                        : "film-outline"
+                    }
+                    size={40}
+                    color={colors.surfaceAlt}
+                  />
+                </View>
+              )}
+              <View style={styles.badge}>
+                {media_type === "movie" && (
+                  <Ionicons name="film" size={16} color="#FFF" />
+                )}
+                {media_type === "tv" && (
+                  <Feather name="tv" size={16} color="#FFF" />
+                )}
+                {media_type === "person" && (
+                  <Ionicons name="person-circle" size={16} color="#FFF" />
+                )}
+              </View>
+            </View>
+
+            {/* Watchlist button - below poster, only for movie/tv */}
+            {canSave && (
+              <Pressable
+                style={styles.watchlistBtn}
+                onPress={handleWatchlist}
+                android_ripple={{
+                  color: withOpacity(colors.primary, 0.1),
+                  borderless: false,
+                }}
+              >
+                <MaterialIcons
+                  name={saved ? "bookmark-added" : "bookmark-add"}
+                  size={16}
+                  color={saved ? colors.primary : colors.textMuted}
+                />
+                <Text
+                  style={[
+                    styles.watchlistLabel,
+                    saved && styles.watchlistLabelSaved,
+                  ]}
+                >
+                  {saved ? "Saved" : "Save"}
+                </Text>
+              </Pressable>
+            )}
+          </View>
+
+          <View style={styles.info}>
+            <Text style={styles.title} numberOfLines={3}>
+              {title}
+            </Text>
+            <View style={styles.yearBadge}>
+              <Text style={styles.yearText}>{year}</Text>
+            </View>
+
+            {/* Overview hidden for persons — info is shown in KnownForSection */}
+            {media_type !== "person" && (
+              <View style={{ marginTop: 4 }}>
+                {isLoadingDetails ? (
+                  <Text style={[styles.overview, { fontStyle: "italic" }]}>
+                    Loading description...
+                  </Text>
+                ) : (
+                  <Pressable onPress={handleToggleExpanded}>
+                    <Text
+                      style={styles.overview}
+                      numberOfLines={expanded ? undefined : 4}
+                    >
+                      {displayOverview || "No description available."}
+                    </Text>
+                    {displayOverview.length > 100 && (
+                      <Text style={styles.readMore}>
+                        {expanded ? "Show less" : "Read more"}
+                      </Text>
+                    )}
+                  </Pressable>
+                )}
+              </View>
+            )}
+          </View>
+        </View>
+
+        {/* ── Bottom section (Providers / Known For)── */}
         <View style={styles.bottomSection}>
           <Text style={styles.sectionTitle}>
-            {media_type === "person" ? "Notable Works" : "Where can you watch it?"}
+            {media_type === "person"
+              ? "Notable Works"
+              : "Where can you watch it?"}
           </Text>
 
           {media_type === "person" ? (
@@ -302,6 +387,10 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
       flex: 1,
     },
 
+    scrollContent: {
+      paddingHorizontal: 20,
+    },
+
     // — Poster + Info (static, outside scroll) —
     header: {
       flexDirection: "row",
@@ -318,6 +407,10 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
       shadowOpacity: isDark ? 0.4 : 0.15,
       shadowRadius: isDark ? 12 : 8,
     },
+    posterCol: {
+      alignItems: "center",
+      gap: 10,
+    },
     poster: {
       width: 110,
       height: 165,
@@ -333,12 +426,34 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
       padding: 6,
       borderRadius: 8,
     },
+    watchlistBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
+      backgroundColor: colors.surface,
+      paddingHorizontal: 14,
+      paddingVertical: 7,
+      borderRadius: 50,
+      shadowColor: isDark ? "#000" : "#64748B",
+      shadowOffset: { width: 0, height: isDark ? 3 : 1 },
+      shadowOpacity: isDark ? 0.25 : 0.08,
+      shadowRadius: isDark ? 6 : 4,
+      elevation: isDark ? 4 : 2,
+    },
+    watchlistLabel: {
+      color: colors.textMuted,
+      fontSize: 12,
+      fontWeight: "600",
+    },
+    watchlistLabelSaved: {
+      color: colors.primary,
+    },
     info: { flex: 1, marginLeft: 20, paddingTop: 5 },
     title: {
       color: colors.text,
-      fontSize: 20,
+      fontSize: 16,
       fontWeight: "800",
-      lineHeight: 24,
+      lineHeight: 20,
       marginBottom: 8,
     },
     yearBadge: {
@@ -350,7 +465,7 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
       marginBottom: 8,
     },
     yearText: { color: colors.textSecondary, fontSize: 13, fontWeight: "600" },
-    overview: { color: colors.textMuted, fontSize: 13, lineHeight: 18 },
+    overview: { color: colors.textMuted, fontSize: 12, lineHeight: 15 },
     readMore: { color: colors.primary, fontWeight: "500", marginTop: 4 },
 
     // — Scrollable providers/known-for section —

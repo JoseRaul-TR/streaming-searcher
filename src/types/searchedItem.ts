@@ -9,7 +9,7 @@ export type MediaItem = BaseItem & {
   media_type: "movie" | "tv";
   title: string;
   year: string;
-  overview: string;
+  overview?: string;
 };
 
 type PersonItem = BaseItem & {

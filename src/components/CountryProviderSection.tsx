@@ -8,7 +8,7 @@ import ProviderSection from "./ProvidersSection";
 import { ColorScheme, withOpacity } from "@/constants/colors";
 import { useMode } from "@/hooks/useMode";
 
-// ————— Internal Subcomponent —————
+// ————— Internal Sub-component —————
 type ProviderCategoriesProps = {
   data: Pick<WatchProvidersData, "free" | "flatrate" | "rent" | "buy">;
   subscribedKeys: Set<string>;

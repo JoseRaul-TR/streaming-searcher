@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from "react";
-import { View, Text, FlatList, StyleSheet } from "react-native";
+import { View, FlatList, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { MediaItem } from "@/types/searchedItem";
 import MediaCard from "./MediaCard";

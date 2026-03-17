@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SelectedCountry } from "@/types/providers";
+import { WatchlistItem } from "@/types/watchlist";
 
 // Subscription now carries the country so the same provider in different
 // countries can be subscribed to independently.
@@ -37,6 +38,11 @@ type UserState = {
 
   searchQuery: string;
   setSearchQuery: (q: string) => void;
+
+  watchlist: WatchlistItem[];
+  addToWatchlist: (item: WatchlistItem) => void;
+  removeFromWatchlist: (id: number, mediaType: "movie" | "tv") => void;
+  isInWatchlist: (id: number, mediaType: "movie" | "tv") => boolean;
 };
 
 export const useUserStore = create<UserState>()(
@@ -50,6 +56,7 @@ export const useUserStore = create<UserState>()(
       systemScheme: "dark",
       searchQuery: "",
       setSearchQuery: (q) => set({ searchQuery: q }),
+      watchlist: [],
 
       addCountry: (country) =>
         set((state) => {
@@ -110,6 +117,25 @@ export const useUserStore = create<UserState>()(
       setModePreference: (preference) => set({ modePreference: preference }),
 
       setSystemScheme: (scheme) => set({ systemScheme: scheme }),
+
+      addToWatchlist: (item) =>
+        set((state) => {
+          const exists = state.watchlist.some(
+            (w) => w.id === item.id && w.media_type === item.media_type,
+          );
+          if (exists) return state;
+          return { watchlist: [item, ...state.watchlist] }; // most recent will get first
+        }),
+
+      removeFromWatchlist: (id, mediaType) =>
+        set((state) => ({
+          watchlist: state.watchlist.filter(
+            (w) => !(w.id === id && w.media_type === mediaType),
+          ),
+        })),
+
+      isInWatchlist: (id, mediaType) =>
+        get().watchlist.some((w) => w.id === id && w.media_type === mediaType),
     }),
     {
       name: "user-storage",
@@ -121,6 +147,7 @@ export const useUserStore = create<UserState>()(
         countries: state.countries,
         subscriptions: state.subscriptions,
         modePreference: state.modePreference,
+        watchlist: state.watchlist,
       }),
     },
   ),
