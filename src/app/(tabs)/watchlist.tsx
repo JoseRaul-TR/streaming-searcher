@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { View, FlatList, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -9,6 +9,10 @@ import { ColorScheme } from "@/constants/colors";
 import MediaCard from "@/components/MediaCard";
 import ApiStateDisplay from "@/components/ApiStateDisplay";
 import { Ionicons } from "@expo/vector-icons";
+import WatchlistControls from "@/components/WatchlistControls";
+
+type FilterType = "all" | "movie" | "tv";
+type SortKey = "added_at" | "title" | "year";
 
 export default function WatchlistScreen() {
   const router = useRouter();
@@ -16,14 +20,58 @@ export default function WatchlistScreen() {
   const { colors } = useMode();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
+  const [filter, setFilter] = useState<FilterType>("all");
+  const [sortBy, setSortBy] = useState<SortKey>("added_at");
+  const [isAscending, setIsAscending] = useState(false);
+
   // Get the watchlist list from store
   const { watchlist } = useUserStore();
 
+  const filteredAndSortedWatchlist = useMemo(() => {
+    let result = [...watchlist]; // Copy to avoid alterating original
+
+    // Filtering
+    if (filter !== "all") {
+      result = result.filter((item) => item.media_type === filter);
+    }
+
+    // Sorting
+    result.sort((a, b) => {
+      let comparison = 0;
+      switch (sortBy) {
+        case "title":
+          comparison = a.title.localeCompare(b.title);
+          break;
+        case "year":
+          // Comparing years (managing cases with "N/A")
+          comparison =  b.year.localeCompare(a.year);
+          break;
+        case "added_at":
+        default:
+          comparison = b.added_at - a.added_at; // More recent first
+          break;
+      }
+
+      // If is not ascending, invert the result
+      return isAscending ? comparison : -comparison
+    });
+
+    return result;
+  }, [watchlist, filter, sortBy, isAscending]);
+
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container]}>
+      <WatchlistControls
+        colors={colors}
+        filter={filter}
+        setFilter={setFilter}
+        sortBy={sortBy}
+        setSortBy={setSortBy}
+        isAscending={isAscending}
+        onToggleDirection={() => setIsAscending(!isAscending)}
+        />
       <FlatList
-        data={watchlist}
-        keyExtractor={(item) => `${item.media_type}-${item.id}`}
+        data={filteredAndSortedWatchlist}
         numColumns={2}
         contentContainerStyle={styles.listContent}
         columnWrapperStyle={styles.columnWrapper}
@@ -33,7 +81,7 @@ export default function WatchlistScreen() {
           <View style={styles.emptyWrapper}>
             <ApiStateDisplay
               state="empty"
-              message="Your watchlist is empty. Save moview or series to keep track of them."
+              message="Your watchlist is empty. Save movies or series to keep track of them."
               icon={
                 <Ionicons
                   name="bookmark-outline"

@@ -141,7 +141,7 @@ export default function SettingsScreen() {
   const {
     countries,
     subscriptions,
-    resetOnboarding,
+    resetApp,
     modePreference,
     setModePreference,
   } = useUserStore();
@@ -159,17 +159,17 @@ export default function SettingsScreen() {
       ? "None"
       : `${subscriptions.length} service${subscriptions.length > 1 ? "s" : ""}`;
 
-  const handleResetOnboarding = () => {
+  const handleResetApp = () => {
     Alert.alert(
-      "Restart Setup",
-      "This will reset your preferences and take you back to the initial setup screen.",
+      "Restart App",
+      "This will delete your watchlist, preferences, and all saved data.",
       [
         { text: "Cancel", style: "cancel" },
         {
-          text: "Reset",
+          text: "Reset App",
           style: "destructive",
           onPress: () => {
-            resetOnboarding();
+            resetApp();
             router.replace("/onboarding");
           },
         },
@@ -181,7 +181,7 @@ export default function SettingsScreen() {
     <View
       style={[
         styles.container,
-        { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20},
+        { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20 },
       ]}
     >
       {/* Appearance */}
@@ -279,7 +279,7 @@ export default function SettingsScreen() {
         <View style={styles.rowShadow}>
           <Pressable
             style={styles.row}
-            onPress={handleResetOnboarding}
+            onPress={handleResetApp}
             android_ripple={{ color: withOpacity(colors.error, 0.08) }}
           >
             <View style={styles.rowLeft}>

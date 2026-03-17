@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "streaming-searcher",
-    "slug": "streaming-searcher",
+    "name": "FoundIt",
+    "slug": "FoundIt",
     "version": "1.0.0",
-    "scheme": "streaming-searcher",
+    "scheme": "found-it",
     "orientation": "portrait",
     "platforms": [
       "ios",

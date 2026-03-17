@@ -10,7 +10,7 @@ import {
 import { Ionicons, Feather, MaterialIcons } from "@expo/vector-icons";
 import { useUserStore } from "@/store/useUserStore";
 import { SearchedItem } from "@/types/searchedItem";
-import { ColorScheme, withOpacity } from "@/constants/colors";
+import { ColorScheme } from "@/constants/colors";
 import { useMode } from "@/hooks/useMode";
 
 type Props = {
@@ -88,7 +88,7 @@ export default function MediaCard({ item, onPress, width: widthProp }: Props) {
         {/* Media type badge - top left */}
         <View style={styles.mediaBadge}>
           {item.media_type === "movie" && (
-            <Ionicons name="film" size={14} color="#FFF" />
+            <Ionicons name="film-outline" size={14} color="#FFF" />
           )}
           {item.media_type === "tv" && (
             <Feather name="tv" size={14} color="#FFF" />

@@ -29,7 +29,7 @@ type UserState = {
 
   completeOnboarding: () => void;
   toggleTerms: () => void;
-  resetOnboarding: () => void;
+  resetApp: () => void;
 
   modePreference: ModePreference;
   setModePreference: (preference: ModePreference) => void;
@@ -105,13 +105,14 @@ export const useUserStore = create<UserState>()(
       toggleTerms: () =>
         set((state) => ({ hasAcceptedTerms: !state.hasAcceptedTerms })),
 
-      // resetOnboarding only resets search settings (country and streaming services choices). No reset to modePreference.
-      resetOnboarding: () =>
+      // resets countries, providers and elements saved in watchlist. No reset to modePreference.
+      resetApp: () =>
         set({
           hasCompletedOnboarding: false,
           hasAcceptedTerms: false,
           countries: [],
           subscriptions: [],
+          watchlist: [],
         }),
 
       setModePreference: (preference) => set({ modePreference: preference }),

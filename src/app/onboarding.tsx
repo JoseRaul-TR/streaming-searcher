@@ -101,7 +101,7 @@ export default function OnboardingScreen() {
               </View>
             </View>
 
-            <Text style={styles.welcomeTitle}>StreamSearch</Text>
+            <Text style={styles.welcomeTitle}>FoundIt</Text>
             <Text style={styles.welcomeTagline}>
               Find where to watch anything,{"\n"}in any country.
             </Text>
