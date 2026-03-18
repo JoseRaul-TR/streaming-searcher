@@ -156,7 +156,7 @@ export default function SettingsScreen() {
   const handleResetApp = () => {
     Alert.alert(
       "Restart App",
-      "This will delete your watchlist, preferences, and all saved data.",
+      "This will delete your items saved in watchlist and search preferences.",
       [
         { text: "Cancel", style: "cancel" },
         {

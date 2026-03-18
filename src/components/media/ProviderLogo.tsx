@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Provider } from "@/types/providers";
-import { ColorScheme } from "@/constants/colors";
+import { ColorScheme, withOpacity } from "@/constants/colors";
 import { useMode } from "@/hooks/useMode";
 
 type Props = {
@@ -219,7 +219,7 @@ export default function ProviderLogo({
     return (
       <Pressable
         onPress={() => onToggle(provider.provider_id)}
-        android_ripple={{ color: "rgba(96,165,250,0.08)", borderless: true }}
+        android_ripple={{ color: withOpacity(colors.primary, 0.08), borderless: true }}
       >
         {content}
       </Pressable>

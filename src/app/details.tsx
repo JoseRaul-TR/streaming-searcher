@@ -64,7 +64,7 @@ export default function DetailsScreen() {
   const displayOverview =
     overview || mediaDetails?.overview || mediaDetails?.biography || "";
 
-  // Parse the JSON-serialised known_for_items passed from ExploreScreen.
+  // Parse the JSON-serialized known_for_items passed from ExploreScreen.
   // Wrapped in try/catch so a malformed param never crashes the screen.
   const knownForItems = useMemo((): MediaItem[] => {
     if (!knownForRaw) return [];
@@ -87,8 +87,9 @@ export default function DetailsScreen() {
   // Composite key: "${countryCode}:${providerId}"
   // This ensures that the same provider available in multiple countries
   // only gets highlighted in the country the user is actually subscribed to.
-  const subscribedKeys = new Set(
-    subscriptions.map((s) => `${s.countryCode}:${s.providerId}`),
+  const subscribedKeys = useMemo(
+    () => new Set(subscriptions.map((s) => `${s.countryCode}:${s.providerId}`)),
+    [subscriptions],
   );
 
   // Single country → flat category layout (no country header needed).
@@ -425,7 +426,9 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
       position: "absolute",
       top: 6,
       left: 6,
-      backgroundColor: isDark ? "rgba(0,0,0,0.65)" : "rgba(15,23,42,0.72)",
+      backgroundColor: isDark
+        ? withOpacity("#000000", 0.65)
+        : withOpacity("#0F172A", 0.72),
       padding: 6,
       borderRadius: 8,
     },
@@ -468,7 +471,6 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
     readMore: { color: colors.primary, fontWeight: "500", marginTop: 4 },
 
     // — Scrollable providers/known-for section —
-    scroll: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 20 },
     bottomSection: { gap: 4 },
     sectionTitle: {
       color: colors.text,

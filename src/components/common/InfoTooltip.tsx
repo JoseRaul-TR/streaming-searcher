@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from "react";
 import { Modal, View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { ColorScheme } from "@/constants/colors";
+import { ColorScheme, withOpacity } from "@/constants/colors";
 import { useMode } from "@/hooks/useMode";
+import { getShadow } from "@/utils/shadow";
 
 type Props = {
   text: string;
@@ -72,7 +73,7 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
     },
     backdrop: {
       flex: 1,
-      backgroundColor: "rgba(0,0,0,0.6)",
+      backgroundColor: withOpacity("#000", 0.6),
       justifyContent: "center",
       alignItems: "center",
       paddingHorizontal: 40,
@@ -83,12 +84,7 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
       padding: 20,
       width: "100%",
       gap: 12,
-      // Shadow instead of border — card floats over the backdrop
-      shadowColor: isDark ? "#000" : "#64748B",
-      shadowOffset: { width: 0, height: isDark ? 8 : 4 },
-      shadowOpacity: isDark ? 0.5 : 0.15,
-      shadowRadius: isDark ? 20 : 12,
-      elevation: isDark ? 12 : 6,
+      ...getShadow({ isDark, intensity: "high" }),
     },
     cardHeader: {
       flexDirection: "row",

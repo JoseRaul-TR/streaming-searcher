@@ -11,14 +11,14 @@ const queryClient = new QueryClient();
 
 // Resolves the OS color scheme string to our union type.
 // Defined at module level — it's a pure function with no component dependencies.
-const toScheme = (s: string | null | undefined): "light" | "dark" =>
-  s === "light" ? "light" : "dark";
+function toScheme(s: string | null | undefined): "light" | "dark" {
+  return s === "light" ? "light" : "dark";
+}
 
 function AppLayout() {
   const { isDark } = useMode();
   const setSystemScheme = useUserStore((s) => s.setSystemScheme);
 
-  // ————— OS appearance listener —————
   useEffect(() => {
     setSystemScheme(toScheme(Appearance.getColorScheme()));
 
@@ -31,11 +31,6 @@ function AppLayout() {
 
     return () => subscription.remove();
   }, [setSystemScheme]);
-
-  // Overlay color is the opposite of the target theme:
-  // switching to dark → flash white → reveals dark UI underneath.
-  // switching to light → flash black → reveals light UI underneath.
-  const overlayColor = isDark ? "#FFFFFF" : "#000000";
 
   return (
     <>

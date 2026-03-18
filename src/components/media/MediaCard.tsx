@@ -10,7 +10,7 @@ import {
 import { Ionicons, Feather, MaterialIcons } from "@expo/vector-icons";
 import { useUserStore } from "@/store/useUserStore";
 import { SearchedItem } from "@/types/searchedItem";
-import { ColorScheme } from "@/constants/colors";
+import { ColorScheme, withOpacity } from "@/constants/colors";
 import { useMode } from "@/hooks/useMode";
 import { getShadow } from "@/utils/shadow";
 
@@ -105,7 +105,7 @@ export default function MediaCard({ item, onPress, width: widthProp }: Props) {
             onPress={handleWatchlist}
             hitSlop={6}
             android_ripple={{
-              color: "rgba(255,255,255,0.15)",
+              color: withOpacity("#FFFFFF", 0.15),
               borderless: true,
             }}
           >
@@ -154,7 +154,7 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
       position: "absolute",
       top: 8,
       left: 8,
-      backgroundColor: "rgba(15,23,42,0.7)",
+      backgroundColor: withOpacity("#0F172A", 0.7),
       padding: 6,
       borderRadius: 8,
     },
@@ -162,7 +162,7 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
       position: "absolute",
       top: 8,
       right: 8,
-      backgroundColor: "rgba(15,23,42,0.7)",
+      backgroundColor: withOpacity("#0F172A", 0.7),
       padding: 5,
       borderRadius: 8,
     },

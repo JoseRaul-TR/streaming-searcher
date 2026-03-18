@@ -145,7 +145,7 @@ export default function SubscriptionPickerModal({
     subscriptions.length === 0
       ? "No services selected"
       : `${formatCount(subscriptions.length, "service")} selected${
-          countries.length > 0 ? `in ${formatCountriesLabel(countries)}` : ""
+          countries.length > 0 ? ` in ${formatCountriesLabel(countries)}` : ""
         }`;
 
   return (

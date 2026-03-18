@@ -52,8 +52,11 @@ function OptionsMenu({
   onSelect,
   onClose,
 }: MenuProps) {
-  const { colors } = useMode();
-  const styles = useMemo(() => makeMenuStyles(colors), [colors]);
+  const { colors, isDark } = useMode();
+  const styles = useMemo(
+    () => makeMenuStyles(colors, isDark),
+    [colors, isDark],
+  );
 
   return (
     <Modal visible={visible} transparent animationType="fade">
@@ -204,11 +207,11 @@ export default function WatchlistControls({
 // ————— Styles —————
 
 // Styles for OptionsMenu — does not need isDark.
-function makeMenuStyles(colors: ColorScheme) {
+function makeMenuStyles(colors: ColorScheme, isDark: boolean) {
   return StyleSheet.create({
     modalOverlay: {
       flex: 1,
-      backgroundColor: "rgba(0,0,0,0.5)",
+      backgroundColor: withOpacity("#000", 0.5),
       justifyContent: "center",
       alignItems: "center",
     },
@@ -216,11 +219,7 @@ function makeMenuStyles(colors: ColorScheme) {
       width: "80%",
       borderRadius: 25,
       padding: 10,
-      elevation: 20,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 10 },
-      shadowOpacity: 0.3,
-      shadowRadius: 15,
+      ...getShadow({ isDark }),
     },
     menuItem: {
       flexDirection: "row",
@@ -275,7 +274,7 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
     divider: {
       width: 1,
       height: "100%",
-      backgroundColor: "rgba(128,128,128,0.2)",
+      backgroundColor: withOpacity(colors.surfaceAlt, 0.4),
       marginHorizontal: 4,
     },
     triggerText: {

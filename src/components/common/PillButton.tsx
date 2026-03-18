@@ -50,7 +50,7 @@ export default function PillButton({
 
   const rippleColor =
     variant === "primary"
-      ? "rgba(255,255,255,0.2)"
+      ? withOpacity("#FFFFFF", 0.2)
       : withOpacity(colors.primary, 0.1);
 
   return (
