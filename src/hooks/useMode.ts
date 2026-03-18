@@ -1,8 +1,4 @@
-import {
-  lightColors,
-  darkColors,
-  ColorScheme,
-} from "@/constants/colors";
+import { lightColors, darkColors, ColorScheme } from "@/constants/colors";
 import { useUserStore } from "@/store/useUserStore";
 
 type UseModeResult = {
@@ -11,21 +7,12 @@ type UseModeResult = {
 };
 
 /**
- * Resolves which color scheme to apply based on the user's stored preference
- * and the current system setting.
- *
- * — "system": follows the OS, defaulting to dark if the system value is null
- * — "light" / "dark": user's explicit override, ignores the system setting
- *
- * Returns a stable object reference (either lightColors or darkColors),
- * so useMemo([colors]) in components only recomputes on actual theme changes.
+ * Resolves the active color scheme from the user preference and OS setting.
+ * "system" follows the OS (defaults to dark); "light"/"dark" are explicit overrides.
  */
 export function useMode(): UseModeResult {
   const { modePreference, systemScheme } = useUserStore();
 
-  // Resolve which scheme to actually apply:
-  // "system" → follow the OS, defaulting to dark if null
-  // "light" / "dark" → use the user's explicit choice
   const isDark =
     modePreference === "system"
       ? systemScheme === "dark"

@@ -9,12 +9,12 @@ import { useUserStore } from "@/store/useUserStore";
 
 const queryClient = new QueryClient();
 
+const toScheme = (s: string | null | undefined): "light" | "dark" =>
+  s === "light" ? "light" : "dark";
+
 function AppLayout() {
   const { isDark } = useMode();
   const setSystemScheme = useUserStore((s) => s.setSystemScheme);
-
-  const toScheme = (s: string | null | undefined): "light" | "dark" =>
-    s === "light" ? "light" : "dark";
 
   useEffect(() => {
     setSystemScheme(toScheme(Appearance.getColorScheme()));

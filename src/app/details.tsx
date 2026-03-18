@@ -23,6 +23,7 @@ import { useMode } from "@/hooks/useMode";
 import { MediaItem } from "@/types/searchedItem";
 import { useQuery } from "@tanstack/react-query";
 import { tmdbApi } from "@/services/api";
+import { MediaDetails } from "@/types/watchlist";
 
 export default function DetailsScreen() {
   const router = useRouter();
@@ -51,7 +52,7 @@ export default function DetailsScreen() {
   }>();
 
   // Recover details if overview is empty (from Watchlist)
-  const { data: mediaDetails, isLoading: isLoadingDetails } = useQuery({
+  const { data: mediaDetails, isLoading: isLoadingDetails } = useQuery<MediaDetails>({
     queryKey: ["media-details", media_type, id],
     queryFn: () => tmdbApi.getMediaDetails(media_type, Number(id)),
     enabled: !overview && media_type !== "person",

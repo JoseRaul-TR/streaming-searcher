@@ -1,11 +1,10 @@
-import React, { useCallback, useMemo } from "react";
-import { View, FlatList, StyleSheet } from "react-native";
+import React, { useCallback } from "react";
+import { FlatList, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
+
 import { MediaItem } from "@/types/searchedItem";
 import MediaCard from "./MediaCard";
 import ApiStateDisplay from "./ApiStateDisplay";
-import { ColorScheme } from "@/constants/colors";
-import { useMode } from "@/hooks/useMode";
 
 type Props = {
   items: MediaItem[];
@@ -16,9 +15,6 @@ type Props = {
 const CARD_WIDTH = 140;
 
 export default function KnownForSection({ items }: Props) {
-  const { colors } = useMode();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
-
   const router = useRouter();
 
   const handlePress = useCallback(
@@ -49,27 +45,24 @@ export default function KnownForSection({ items }: Props) {
   }
 
   return (
-    <View>
-      <FlatList
-        data={items}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        keyExtractor={(item) => `${item.media_type}-${item.id}`}
-        contentContainerStyle={styles.list}
-        renderItem={({ item }) => (
-          <MediaCard
-            item={item}
-            width={CARD_WIDTH}
-            onPress={() => handlePress(item)}
-          />
-        )}
-      />
-    </View>
+    <FlatList
+      data={items}
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      keyExtractor={(item) => `${item.media_type}-${item.id}`}
+      contentContainerStyle={styles.list}
+      renderItem={({ item }) => (
+        <MediaCard
+          item={item}
+          width={CARD_WIDTH}
+          onPress={() => handlePress(item)}
+        />
+      )}
+    />
   );
 }
 
-function makeStyles(_colors: ColorScheme) {
-  return StyleSheet.create({
-    list: { gap: 10, paddingBottom: 4 },
-  });
-}
+// Static styles — no theme-dependent values, so no makeStyles needed.
+const styles = StyleSheet.create({
+  list: { gap: 10, paddingBottom: 4 },
+});

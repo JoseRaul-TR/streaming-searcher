@@ -5,6 +5,7 @@ import {
   WatchProvidersData,
 } from "@/types/providers";
 import { MediaItem, SearchedItem } from "@/types/searchedItem";
+import { MediaDetails } from "@/types/watchlist";
 
 const BASE_URL = "https://api.themoviedb.org";
 const BEARER_TOKEN = process.env.EXPO_PUBLIC_TMDB_BEARER_TOKEN;
@@ -182,8 +183,8 @@ export const tmdbApi = {
   /**
    * Fetch extra details for a specific item (used to fetch missing overviews on saved items)
    */
-  getMediaDetails: async (mediaType: string, id: number): Promise<any> => {
-    return await fetchTMDB<any>(`/3/${mediaType}/${id}`);
+  getMediaDetails: async (mediaType: string, id: number): Promise<MediaDetails> => {
+    return await fetchTMDB<MediaDetails>(`/3/${mediaType}/${id}`);
   },
 
   /**

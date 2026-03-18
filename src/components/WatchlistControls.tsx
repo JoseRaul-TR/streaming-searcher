@@ -10,51 +10,58 @@ import {
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { ColorScheme, withOpacity } from "@/constants/colors";
 import { useMode } from "@/hooks/useMode";
+import { FilterType, SortKey } from "@/types/watchlist";
 
-interface WatchlistControlsProps {
-  colors: ColorScheme;
-  filter: string;
-  setFilter: (f: any) => void;
-  sortBy: string;
-  setSortBy: (s: any) => void;
-  isAscending: boolean;
-  onToggleDirection: () => void;
-}
+// ————— Module level —————
 
-export default function WatchlistControls({
-  filter,
-  setFilter,
-  sortBy,
-  setSortBy,
-  isAscending,
-  onToggleDirection,
-}: WatchlistControlsProps) {
-  const { colors, isDark } = useMode();
-  const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
+type MenuOption = {
+  label: string;
+  value: string;
+  icon: React.ComponentProps<typeof Ionicons>["name"];
+};
 
-  const [showFilterMenu, setShowFilterMenu] = useState(false);
-  const [showSortMenu, setShowSortMenu] = useState(false);
+type MenuProps = {
+  visible: boolean;
+  options: MenuOption[];
+  current: string;
+  onSelect: (value: string) => void;
+  onClose: () => void;
+};
 
-  const filterOptions = [
-    { label: "All", value: "all", icon: "grid-outline" },
-    { label: "Movies", value: "movie", icon: "film-outline" },
-    { label: "Series", value: "tv", icon: "tv-outline" },
-  ];
+// Static constants — do not depend on state or props.
+// Defining them inside the component would recreate them on every render.
+const FILTER_OPTIONS: MenuOption[] = [
+  { label: "All", value: "all", icon: "grid-outline" },
+  { label: "Movies", value: "movie", icon: "film-outline" },
+  { label: "Series", value: "tv", icon: "tv-outline" },
+];
 
-  const sortOptions = [
-    { label: "Recently Added", value: "added_at", icon: "time-outline" },
-    { label: "Title", value: "title", icon: "text-outline" },
-    { label: "Release Year", value: "year", icon: "calendar-outline" },
-  ];
+const SORT_OPTIONS: MenuOption[] = [
+  { label: "Recently Added", value: "added_at", icon: "time-outline" },
+  { label: "Title", value: "title", icon: "text-outline" },
+  { label: "Release Year", value: "year", icon: "calendar-outline" },
+];
 
-  const Menu = ({ visible, options, current, onSelect, onClose }: any) => (
+// Extracted to module level to avoid remounts caused by
+// redefinition on every render of the parent component.
+function OptionsMenu({
+  visible,
+  options,
+  current,
+  onSelect,
+  onClose,
+}: MenuProps) {
+  const { colors } = useMode();
+  const styles = useMemo(() => makeMenuStyles(colors), [colors]);
+
+  return (
     <Modal visible={visible} transparent animationType="fade">
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.modalOverlay}>
           <View
             style={[styles.menuContent, { backgroundColor: colors.surface }]}
           >
-            {options.map((opt: any) => (
+            {options.map((opt) => (
               <Pressable
                 key={opt.value}
                 style={[
@@ -69,7 +76,7 @@ export default function WatchlistControls({
                 }}
               >
                 <Ionicons
-                  name={opt.icon as any}
+                  name={opt.icon}
                   size={20}
                   color={
                     current === opt.value
@@ -96,6 +103,32 @@ export default function WatchlistControls({
       </TouchableWithoutFeedback>
     </Modal>
   );
+}
+
+// ————— Main Component —————
+
+interface WatchlistControlsProps {
+  filter: FilterType;
+  setFilter: (f: FilterType) => void;
+  sortBy: SortKey;
+  setSortBy: (s: SortKey) => void;
+  isAscending: boolean;
+  onToggleDirection: () => void;
+}
+
+export default function WatchlistControls({
+  filter,
+  setFilter,
+  sortBy,
+  setSortBy,
+  isAscending,
+  onToggleDirection,
+}: WatchlistControlsProps) {
+  const { colors, isDark } = useMode();
+  const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
+
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const [showSortMenu, setShowSortMenu] = useState(false);
 
   return (
     <View style={styles.container}>
@@ -109,7 +142,7 @@ export default function WatchlistControls({
           style={[styles.triggerText, { color: colors.text }]}
           numberOfLines={1}
         >
-          {filterOptions.find((o) => o.value === filter)?.label}
+          {FILTER_OPTIONS.find((o) => o.value === filter)?.label}
         </Text>
         <MaterialIcons
           name="arrow-drop-down"
@@ -118,7 +151,7 @@ export default function WatchlistControls({
         />
       </Pressable>
 
-      {/*Sort Button + Direction Toggle */}
+      {/* Sort Button + Direction Toggle */}
       <View style={[styles.sortGroup, { backgroundColor: colors.surface }]}>
         <Pressable
           style={styles.sortTrigger}
@@ -129,7 +162,7 @@ export default function WatchlistControls({
             style={[styles.triggerText, { color: colors.text }]}
             numberOfLines={1}
           >
-            {sortOptions.find((o) => o.value === sortBy)?.label}
+            {SORT_OPTIONS.find((o) => o.value === sortBy)?.label}
           </Text>
         </Pressable>
 
@@ -148,25 +181,58 @@ export default function WatchlistControls({
         </Pressable>
       </View>
 
-      <Menu
+      <OptionsMenu
         visible={showFilterMenu}
-        options={filterOptions}
+        options={FILTER_OPTIONS}
         current={filter}
-        onSelect={setFilter}
+        onSelect={(v) => setFilter(v as FilterType)}
         onClose={() => setShowFilterMenu(false)}
       />
 
-      <Menu
+      <OptionsMenu
         visible={showSortMenu}
-        options={sortOptions}
+        options={SORT_OPTIONS}
         current={sortBy}
-        onSelect={setSortBy}
+        onSelect={(v) => setSortBy(v as SortKey)}
         onClose={() => setShowSortMenu(false)}
       />
     </View>
   );
 }
 
+// ————— Styles —————
+
+// Styles for OptionsMenu — does not need isDark.
+function makeMenuStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.5)",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    menuContent: {
+      width: "80%",
+      borderRadius: 25,
+      padding: 10,
+      elevation: 20,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.3,
+      shadowRadius: 15,
+    },
+    menuItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      padding: 16,
+      borderRadius: 16,
+      gap: 12,
+    },
+    menuItemText: { fontSize: 16, color: colors.text },
+  });
+}
+
+// Styles for WatchlistControls — needs isDark for shadow values.
 function makeStyles(colors: ColorScheme, isDark: boolean) {
   return StyleSheet.create({
     container: {
@@ -223,29 +289,5 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
       fontWeight: "600",
       marginLeft: 8,
     },
-    modalOverlay: {
-      flex: 1,
-      backgroundColor: "rgba(0,0,0,0.5)",
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    menuContent: {
-      width: "80%",
-      borderRadius: 25,
-      padding: 10,
-      elevation: 20,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 10 },
-      shadowOpacity: 0.3,
-      shadowRadius: 15,
-    },
-    menuItem: {
-      flexDirection: "row",
-      alignItems: "center",
-      padding: 16,
-      borderRadius: 16,
-      gap: 12,
-    },
-    menuItemText: { fontSize: 16 },
   });
 }

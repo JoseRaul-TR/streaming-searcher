@@ -97,7 +97,7 @@ export default function MediaCard({ item, onPress, width: widthProp }: Props) {
             <Ionicons name="person-circle" size={14} color="#FFF" />
           )}
         </View>
-        {/* Watchlist badge - top tight, only for movie/series */}
+        {/* Watchlist badge - top right, only for movie/series */}
         {item.media_type !== "person" && (
           <Pressable
             style={styles.bookmarkBadge}

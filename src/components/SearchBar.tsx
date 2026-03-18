@@ -77,7 +77,7 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
       marginLeft: 8,
     },
     rightArea: {
-      width: 30,
+      minWidth: 30,
       alignItems: "center",
       justifyContent: "center",
     },

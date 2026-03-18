@@ -84,17 +84,20 @@ export default function SubscriptionPickerModal({
   const { subscriptions, addSubscription, removeSubscription } = useUserStore();
 
   const [activeCountry, setActiveCountry] = useState<string>(
-    countries.length === 1 ? (countries[0]?.code ?? "") : "",
+    countries.length === 1 ? countries[0].code : "",
   );
 
   useEffect(() => {
     if (countries.length === 1) {
-      setActiveCountry(countries[0]?.code ?? "");
+      setActiveCountry(countries[0].code);
       return;
     }
-    const stillValid = countries.some((c) => c.code === activeCountry);
-    if (!stillValid) setActiveCountry("");
-  }, [countries]); // eslint-disable-line react-hooks/exhaustive-deps
+    // Read activeCountry from ref
+    setActiveCountry((prev) => {
+      const stillValid = countries.some((c) => c.code === activeCountry);
+      return stillValid ? prev : "";
+    });
+  }, [countries]);
 
   const activeCode =
     activeCountry || (countries.length === 1 ? (countries[0]?.code ?? "") : "");
@@ -177,7 +180,6 @@ export default function SubscriptionPickerModal({
             {countries.map((c) => (
               <View key={c.code} style={styles.tabShadow}>
                 <Pressable
-                  key={c.code}
                   style={[
                     styles.tab,
                     activeCountry === c.code && styles.tabActive,

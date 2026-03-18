@@ -10,9 +10,7 @@ import MediaCard from "@/components/MediaCard";
 import ApiStateDisplay from "@/components/ApiStateDisplay";
 import { Ionicons } from "@expo/vector-icons";
 import WatchlistControls from "@/components/WatchlistControls";
-
-type FilterType = "all" | "movie" | "tv";
-type SortKey = "added_at" | "title" | "year";
+import { FilterType, SortKey } from "@/types/watchlist";
 
 export default function WatchlistScreen() {
   const router = useRouter();
@@ -28,7 +26,7 @@ export default function WatchlistScreen() {
   const { watchlist } = useUserStore();
 
   const filteredAndSortedWatchlist = useMemo(() => {
-    let result = [...watchlist]; // Copy to avoid alterating original
+    let result = [...watchlist]; // Copy to avoid mutating the original
 
     // Filtering
     if (filter !== "all") {
@@ -43,17 +41,26 @@ export default function WatchlistScreen() {
           comparison = a.title.localeCompare(b.title);
           break;
         case "year":
-          // Comparing years (managing cases with "N/A")
-          comparison =  b.year.localeCompare(a.year);
+          const ya = parseInt(a.year, 10);
+          const yb = parseInt(b.year, 10);
+          // NaN ("N/A") goes to the end
+          comparison =
+            isNaN(ya) && isNaN(yb)
+              ? 0
+              : isNaN(ya)
+                ? 1
+                : isNaN(yb)
+                  ? -1
+                  : ya - yb;
           break;
         case "added_at":
         default:
-          comparison = b.added_at - a.added_at; // More recent first
+          comparison = a.added_at - b.added_at; // More recent first
           break;
       }
 
       // If is not ascending, invert the result
-      return isAscending ? comparison : -comparison
+      return isAscending ? comparison : -comparison;
     });
 
     return result;
@@ -62,16 +69,16 @@ export default function WatchlistScreen() {
   return (
     <View style={[styles.container]}>
       <WatchlistControls
-        colors={colors}
         filter={filter}
         setFilter={setFilter}
         sortBy={sortBy}
         setSortBy={setSortBy}
         isAscending={isAscending}
         onToggleDirection={() => setIsAscending(!isAscending)}
-        />
+      />
       <FlatList
         data={filteredAndSortedWatchlist}
+        keyExtractor={(item) => `${item.media_type}-${item.id}`}
         numColumns={2}
         contentContainerStyle={styles.listContent}
         columnWrapperStyle={styles.columnWrapper}
@@ -109,7 +116,7 @@ export default function WatchlistScreen() {
             }
           />
         )}
-      ></FlatList>
+      />
     </View>
   );
 }
