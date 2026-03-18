@@ -243,7 +243,7 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
       borderRadius: 52,
       height: 52,
       zIndex: 10,
-      ...getShadow({ isDark }), // Imported shadow
+      ...getShadow({ isDark }),
     },
     trigger: {
       flex: 1,

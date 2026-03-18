@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import { MediaItem } from "@/types/searchedItem";
 import MediaCard from "./MediaCard";
 import ApiStateDisplay from "../common/ApiStateDisplay";
+import FadeView from "../common/FadeView";
 
 type Props = {
   items: MediaItem[];
@@ -52,11 +53,13 @@ export default function KnownForSection({ items }: Props) {
       keyExtractor={(item) => `${item.media_type}-${item.id}`}
       contentContainerStyle={styles.list}
       renderItem={({ item }) => (
-        <MediaCard
-          item={item}
-          width={CARD_WIDTH}
-          onPress={() => handlePress(item)}
-        />
+        <FadeView>
+          <MediaCard
+            item={item}
+            width={CARD_WIDTH}
+            onPress={() => handlePress(item)}
+          />
+        </FadeView>
       )}
     />
   );

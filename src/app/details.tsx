@@ -25,6 +25,7 @@ import { useQuery } from "@tanstack/react-query";
 import { tmdbApi } from "@/services/api";
 import { MediaDetails } from "@/types/watchlist";
 import { getShadow } from "@/utils/shadow";
+import FadeView from "@/components/common/FadeView";
 
 export default function DetailsScreen() {
   const router = useRouter();
@@ -312,57 +313,61 @@ export default function DetailsScreen() {
               }
             />
           ) : isSingleCountry ? (
-            <>
-              <ProviderSection
-                title="Free"
-                providers={providers[0]?.free ?? []}
-                subscribedKeys={subscribedKeys}
-                countryCode={providers[0]?.countryCode ?? ""}
-              />
-              <ProviderSection
-                title="Stream"
-                providers={providers[0]?.flatrate ?? []}
-                subscribedKeys={subscribedKeys}
-                countryCode={providers[0]?.countryCode ?? ""}
-              />
-              <ProviderSection
-                title="Rent"
-                providers={providers[0]?.rent ?? []}
-                subscribedKeys={subscribedKeys}
-                countryCode={providers[0]?.countryCode ?? ""}
-              />
-              <ProviderSection
-                title="Buy"
-                providers={providers[0]?.buy ?? []}
-                subscribedKeys={subscribedKeys}
-                countryCode={providers[0]?.countryCode ?? ""}
-              />
-              {/* Footer — just in single-country search settings, multi-country is grouped by country */}
-              {providers[0]?.link && (
-                <Pressable
-                  style={styles.justWatch}
-                  onPress={() =>
-                    void WebBrowser.openBrowserAsync(providers[0].link!)
-                  }
-                  android_ripple={{ color: withOpacity(colors.text, 0.05) }}
-                >
-                  <Text style={styles.jwLabel}>Data provided by </Text>
-                  <Text style={styles.jwBrand}>JustWatch</Text>
-                  <Ionicons
-                    name="open-outline"
-                    size={11}
-                    color={colors.surfaceAlt}
-                    style={{ marginLeft: 4 }}
-                  />
-                </Pressable>
-              )}
-            </>
+            <FadeView>
+              <>
+                <ProviderSection
+                  title="Free"
+                  providers={providers[0]?.free ?? []}
+                  subscribedKeys={subscribedKeys}
+                  countryCode={providers[0]?.countryCode ?? ""}
+                />
+                <ProviderSection
+                  title="Stream"
+                  providers={providers[0]?.flatrate ?? []}
+                  subscribedKeys={subscribedKeys}
+                  countryCode={providers[0]?.countryCode ?? ""}
+                />
+                <ProviderSection
+                  title="Rent"
+                  providers={providers[0]?.rent ?? []}
+                  subscribedKeys={subscribedKeys}
+                  countryCode={providers[0]?.countryCode ?? ""}
+                />
+                <ProviderSection
+                  title="Buy"
+                  providers={providers[0]?.buy ?? []}
+                  subscribedKeys={subscribedKeys}
+                  countryCode={providers[0]?.countryCode ?? ""}
+                />
+                {/* Footer — just in single-country search settings, multi-country is grouped by country */}
+                {providers[0]?.link && (
+                  <Pressable
+                    style={styles.justWatch}
+                    onPress={() =>
+                      void WebBrowser.openBrowserAsync(providers[0].link!)
+                    }
+                    android_ripple={{ color: withOpacity(colors.text, 0.05) }}
+                  >
+                    <Text style={styles.jwLabel}>Data provided by </Text>
+                    <Text style={styles.jwBrand}>JustWatch</Text>
+                    <Ionicons
+                      name="open-outline"
+                      size={11}
+                      color={colors.surfaceAlt}
+                      style={{ marginLeft: 4 }}
+                    />
+                  </Pressable>
+                )}
+              </>
+            </FadeView>
           ) : (
-            <CountryProviderSection
-              data={providers}
-              subscribedKeys={subscribedKeys}
-              defaultExpanded={false}
-            />
+            <FadeView>
+              <CountryProviderSection
+                data={providers}
+                subscribedKeys={subscribedKeys}
+                defaultExpanded={false}
+              />
+            </FadeView>
           )}
         </View>
       </ScrollView>

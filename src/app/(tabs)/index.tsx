@@ -8,6 +8,7 @@ import MediaCard from "@/components/media/MediaCard";
 import SearchBar from "@/components/search/SearchBar";
 import { ColorScheme } from "@/constants/colors";
 import { useMode } from "@/hooks/useMode";
+import FadeView from "@/components/common/FadeView";
 
 export default function ExploreScreen() {
   const router = useRouter();
@@ -58,30 +59,32 @@ export default function ExploreScreen() {
               </View>
             ) : null
           }
-          renderItem={({ item }) => (
-            <MediaCard
-              item={item}
-              onPress={() =>
-                router.push({
-                  pathname: "/details",
-                  params: {
-                    id: item.id,
-                    title: item.title,
-                    year: item.year ?? "N/A",
-                    overview: item.overview ?? "",
-                    poster_path: item.poster_path ?? "",
-                    media_type: item.media_type,
-                    // Serialise known_for_items as JSON — Expo Router params
-                    // are strings, so complex objects must be encoded.
-                    // Non-persons get an empty array to keep the param shape consistent.
-                    known_for_items:
-                      item.media_type === "person"
-                        ? JSON.stringify(item.known_for_items)
-                        : "[]",
-                  },
-                })
-              }
-            />
+          renderItem={({ item, index }) => (
+            <FadeView delay={Math.min(index, 6) * 30} duration={200}>
+              <MediaCard
+                item={item}
+                onPress={() =>
+                  router.push({
+                    pathname: "/details",
+                    params: {
+                      id: item.id,
+                      title: item.title,
+                      year: item.year ?? "N/A",
+                      overview: item.overview ?? "",
+                      poster_path: item.poster_path ?? "",
+                      media_type: item.media_type,
+                      // Serialise known_for_items as JSON — Expo Router params
+                      // are strings, so complex objects must be encoded.
+                      // Non-persons get an empty array to keep the param shape consistent.
+                      known_for_items:
+                        item.media_type === "person"
+                          ? JSON.stringify(item.known_for_items)
+                          : "[]",
+                    },
+                  })
+                }
+              />
+            </FadeView>
           )}
         />
       )}
