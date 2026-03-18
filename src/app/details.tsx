@@ -14,16 +14,17 @@ import * as WebBrowser from "expo-web-browser";
 
 import { useWatchProviders } from "@/hooks/useWatchProviders";
 import { useUserStore } from "@/store/useUserStore";
-import CountryProviderSection from "@/components/CountryProviderSection";
-import ProviderSection from "@/components/ProvidersSection";
-import ApiStateDisplay from "@/components/ApiStateDisplay";
-import KnownForSection from "@/components/KnownForSection";
+import CountryProviderSection from "@/components/media/CountryProviderSection";
+import ProviderSection from "@/components/media/ProvidersSection";
+import ApiStateDisplay from "@/components/common/ApiStateDisplay";
+import KnownForSection from "@/components/media/KnownForSection";
 import { ColorScheme, withOpacity } from "@/constants/colors";
 import { useMode } from "@/hooks/useMode";
 import { MediaItem } from "@/types/searchedItem";
 import { useQuery } from "@tanstack/react-query";
 import { tmdbApi } from "@/services/api";
 import { MediaDetails } from "@/types/watchlist";
+import { getShadow } from "@/utils/shadow";
 
 export default function DetailsScreen() {
   const router = useRouter();
@@ -52,11 +53,12 @@ export default function DetailsScreen() {
   }>();
 
   // Recover details if overview is empty (from Watchlist)
-  const { data: mediaDetails, isLoading: isLoadingDetails } = useQuery<MediaDetails>({
-    queryKey: ["media-details", media_type, id],
-    queryFn: () => tmdbApi.getMediaDetails(media_type, Number(id)),
-    enabled: !overview && media_type !== "person",
-  });
+  const { data: mediaDetails, isLoading: isLoadingDetails } =
+    useQuery<MediaDetails>({
+      queryKey: ["media-details", media_type, id],
+      queryFn: () => tmdbApi.getMediaDetails(media_type, Number(id)),
+      enabled: !overview && media_type !== "person",
+    });
 
   const displayOverview =
     overview || mediaDetails?.overview || mediaDetails?.biography || "";
@@ -335,7 +337,7 @@ export default function DetailsScreen() {
                 subscribedKeys={subscribedKeys}
                 countryCode={providers[0]?.countryCode ?? ""}
               />
-              {/* Footer — solo en single-country, multi-country lo muestra por país */}
+              {/* Footer — just in single-country search settings, multi-country is grouped by country */}
               {providers[0]?.link && (
                 <Pressable
                   style={styles.justWatch}
@@ -401,12 +403,7 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
     },
     posterWrap: {
       position: "relative",
-      elevation: 8,
-      // — iOS shadow —
-      shadowColor: isDark ? "#000" : "#64748B",
-      shadowOffset: { width: 0, height: isDark ? 6 : 3 },
-      shadowOpacity: isDark ? 0.4 : 0.15,
-      shadowRadius: isDark ? 12 : 8,
+      ...getShadow({ isDark, intensity: "high" }),
     },
     posterCol: {
       alignItems: "center",
@@ -435,11 +432,7 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
       paddingHorizontal: 14,
       paddingVertical: 7,
       borderRadius: 50,
-      shadowColor: isDark ? "#000" : "#64748B",
-      shadowOffset: { width: 0, height: isDark ? 3 : 1 },
-      shadowOpacity: isDark ? 0.25 : 0.08,
-      shadowRadius: isDark ? 6 : 4,
-      elevation: isDark ? 4 : 2,
+      ...getShadow({ isDark }),
     },
     watchlistLabel: {
       color: colors.textMuted,

@@ -9,6 +9,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { ColorScheme } from "@/constants/colors";
 import { useMode } from "@/hooks/useMode";
+import { getShadow } from "@/utils/shadow";
 
 type Props = {
   value: string;
@@ -62,13 +63,7 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
       paddingHorizontal: 15,
       borderRadius: 52,
       height: 52,
-            // — iOS shadow —
-      shadowColor: isDark ? "#000" : "#64748B",
-      shadowOffset: { width: 0, height: isDark ? 4 : 2 },
-      shadowOpacity: isDark ? 0.3 : 0.1,
-      shadowRadius: isDark ? 10 : 8,
-      // — Android elevation —
-      elevation: isDark ? 5 : 2,
+      ...getShadow({ isDark }), // Shadow imported from helper
     },
     input: {
       flex: 1,

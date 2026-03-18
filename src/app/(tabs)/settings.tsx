@@ -13,10 +13,12 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useUserStore } from "@/store/useUserStore";
-import CountryPickerModal from "@/components/CountryPickerModal";
-import SubscriptionPickerModal from "@/components/SubscriptionPickerModal";
+import CountryPickerModal from "@/components/modals/CountryPickerModal";
+import SubscriptionPickerModal from "@/components/modals/SubscriptionPickerModal";
 import { ColorScheme, ModePreference, withOpacity } from "@/constants/colors";
 import { useMode } from "@/hooks/useMode";
+import { getShadow } from "@/utils/shadow";
+import { formatCount, formatCountriesLabel } from "@/utils/format";
 
 // ————— Mode/Theme Options —————
 const MODE_OPTIONS: { label: string; value: ModePreference }[] = [
@@ -59,11 +61,7 @@ function ModeSelector({
         selectorStyles.track,
         {
           backgroundColor: colors.surface,
-          shadowColor: isDark ? "#000" : "#64748B",
-          shadowOffset: { width: 0, height: isDark ? 4 : 2 },
-          shadowOpacity: isDark ? 0.3 : 0.1,
-          shadowRadius: isDark ? 10 : 8,
-          elevation: isDark ? 5 : 2,
+          ...getShadow({ isDark }),
         },
       ]}
       onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}
@@ -148,16 +146,12 @@ export default function SettingsScreen() {
 
   const isGlobal = countries.length === 0;
 
-  const countriesLabel = isGlobal
-    ? "All countries"
-    : countries.length === 1
-      ? countries[0].name
-      : `${countries[0].name} +${countries.length - 1} more`;
+  const countriesLabel = formatCountriesLabel(countries);
 
   const subscriptionsLabel =
     subscriptions.length === 0
       ? "None"
-      : `${subscriptions.length} service${subscriptions.length > 1 ? "s" : ""}`;
+      : formatCount(subscriptions.length, "service");
 
   const handleResetApp = () => {
     Alert.alert(
@@ -336,11 +330,7 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
     rowShadow: {
       borderRadius: 50,
       backgroundColor: colors.surface,
-      shadowColor: isDark ? "#000" : "#64748B",
-      shadowOffset: { width: 0, height: isDark ? 4 : 2 },
-      shadowOpacity: isDark ? 0.3 : 0.1,
-      shadowRadius: isDark ? 10 : 8,
-      elevation: isDark ? 5 : 2,
+      ...getShadow({ isDark }),
     },
     row: {
       flexDirection: "row",

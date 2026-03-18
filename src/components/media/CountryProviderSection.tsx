@@ -7,6 +7,7 @@ import { WatchProvidersData } from "@/types/providers";
 import ProviderSection from "./ProvidersSection";
 import { ColorScheme, withOpacity } from "@/constants/colors";
 import { useMode } from "@/hooks/useMode";
+import { getShadow } from "@/utils/shadow";
 
 // ————— Internal Sub-component —————
 type ProviderCategoriesProps = {
@@ -146,11 +147,7 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
       marginBottom: 10,
       borderRadius: 50,
       backgroundColor: colors.surface,
-      shadowColor: isDark ? "#000" : "#64748B",
-      shadowOffset: { width: 0, height: isDark ? 4 : 2 },
-      shadowOpacity: isDark ? 0.3 : 0.1,
-      shadowRadius: isDark ? 10 : 8,
-      elevation: isDark ? 5 : 2,
+      ...getShadow({ isDark }),
     },
     countryBlockShadowExpanded: {
       borderRadius: 14,

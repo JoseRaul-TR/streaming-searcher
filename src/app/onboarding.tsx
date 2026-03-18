@@ -5,12 +5,16 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { useUserStore } from "@/store/useUserStore";
-import SubscriptionPickerModal from "@/components/SubscriptionPickerModal";
-import TermsModal from "@/components/TermsModal";
-import InfoTooltip from "@/components/InfoTooltip";
+
+import SubscriptionPickerModal from "@/components/modals/SubscriptionPickerModal";
+import TermsModal from "@/components/modals/TermsModal";
+import InfoTooltip from "@/components/common/InfoTooltip";
+import CountryPickerModal from "@/components/modals/CountryPickerModal";
 import { ColorScheme, withOpacity } from "@/constants/colors";
 import { useMode } from "@/hooks/useMode";
-import CountryPickerModal from "@/components/CountryPickerModal";
+import { getShadow } from "@/utils/shadow";
+import { formatCount, formatCountriesPickerLabel } from "@/utils/format";
+import PillButton from "@/components/common/PillButton";
 
 const TOTAL_STEPS = 4;
 
@@ -44,17 +48,12 @@ export default function OnboardingScreen() {
     router.replace("/(tabs)");
   };
 
-  const countriesLabel =
-    countries.length === 0
-      ? "Select countries (optional)"
-      : countries.length === 1
-        ? countries[0].name
-        : `${countries.length} countries selected`;
+  const countriesLabel = formatCountriesPickerLabel(countries);
 
   const subscriptionsLabel =
     subscriptions.length === 0
       ? "Select your services (optional)"
-      : `${subscriptions.length} service${subscriptions.length > 1 ? "s" : ""} selected`;
+      : `${formatCount(subscriptions.length, "service")} selected`;
 
   const isGlobal = countries.length === 0;
 
@@ -90,7 +89,7 @@ export default function OnboardingScreen() {
           <View style={styles.welcomeContainer}>
             <View style={styles.logoWrap}>
               <View style={styles.logoShadow}>
-                {/* ← outer: sombra */}
+                {/* ← Outer Shadow */}
                 <View style={styles.logoOuter}>
                   <MaterialCommunityIcons
                     name="filmstrip-box-multiple"
@@ -103,7 +102,7 @@ export default function OnboardingScreen() {
 
             <Text style={styles.welcomeTitle}>FoundIt</Text>
             <Text style={styles.welcomeTagline}>
-              Find where to watch anything,{"\n"}in any country.
+              Find where to watch any movie or series anywhere.
             </Text>
 
             <View style={styles.welcomeFeatures}>
@@ -279,44 +278,32 @@ export default function OnboardingScreen() {
 
       {/* Footer */}
       <View style={styles.footer}>
-        <View style={styles.row}>
+        <View style={styles.footerRow}>
+          {/* Back button hidden on welcome slide */}
           {step > 0 && (
-            <Pressable
-              style={styles.btnSecondary}
+            <PillButton
+              label="Back"
+              variant="secondary"
               onPress={() => setStep((s) => s - 1)}
-              android_ripple={{ color: "rgba(255,255,255,0.1)" }}
-            >
-              <Text style={styles.btnSecondaryText}>Back</Text>
-            </Pressable>
+              flex={1}
+            />
           )}
 
+          {/* Next / Get Started */}
           {step < TOTAL_STEPS - 1 ? (
-            <Pressable
-              style={[
-                styles.btnPrimary,
-                step === 0 ? styles.btnFull : styles.btnRowItem,
-              ]}
+            <PillButton
+              label={step === 0 ? "Get Started" : "Next"}
+              trailingIcon="arrow-forward"
               onPress={() => setStep((s) => s + 1)}
-              android_ripple={{ color: "rgba(255,255,255,0.2)" }}
-            >
-              <Text style={styles.btnPrimaryText}>
-                {step === 0 ? "Get Started" : "Next"}
-              </Text>
-              <Ionicons name="arrow-forward" size={20} color="white" />
-            </Pressable>
+              flex={step === 0 ? 1 : 2}
+            />
           ) : (
-            <Pressable
-              style={[
-                styles.btnPrimary,
-                styles.btnRowItem,
-                !hasAcceptedTerms && styles.disabled,
-              ]}
+            <PillButton
+              label="Get Started"
               onPress={handleComplete}
               disabled={!hasAcceptedTerms}
-              android_ripple={{ color: "rgba(255,255,255,0.2)" }}
-            >
-              <Text style={styles.btnPrimaryText}>Get Started</Text>
-            </Pressable>
+              flex={2}
+            />
           )}
         </View>
       </View>
@@ -412,11 +399,7 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
     logoShadow: {
       borderRadius: 28,
       backgroundColor: withOpacity(colors.primary, 0.12),
-      shadowColor: isDark ? "#000" : "#64748B",
-      shadowOffset: { width: 0, height: isDark ? 6 : 3 },
-      shadowOpacity: isDark ? 0.35 : 0.12,
-      shadowRadius: isDark ? 14 : 10,
-      elevation: isDark ? 8 : 4,
+      ...getShadow({ isDark }),
     },
     logoOuter: {
       width: 96,
@@ -478,11 +461,7 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
     selectorShadow: {
       borderRadius: 50,
       backgroundColor: colors.surface,
-      shadowColor: isDark ? "#000" : "#64748B",
-      shadowOffset: { width: 0, height: isDark ? 4 : 2 },
-      shadowOpacity: isDark ? 0.3 : 0.1,
-      shadowRadius: isDark ? 10 : 8,
-      elevation: isDark ? 5 : 2,
+      ...getShadow({ isDark }),
     },
     selector: {
       borderRadius: 50,
@@ -522,34 +501,7 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
       textDecorationLine: "underline",
     },
     footer: { paddingHorizontal: 28, paddingBottom: 16, paddingTop: 8 },
-    row: { flexDirection: "row", gap: 12 },
-    btnPrimary: {
-      backgroundColor: colors.primary,
-      padding: 18,
-      borderRadius: 50,
-      flexDirection: "row",
-      justifyContent: "center",
-      alignItems: "center",
-      gap: 8,
-      overflow: "hidden",
-    },
-    btnFull: { flex: 1 },
-    btnRowItem: { flex: 2 },
-    btnSecondary: {
-      flex: 1,
-      backgroundColor: withOpacity(colors.primary, 0.12),
-      padding: 18,
-      borderRadius: 50,
-      alignItems: "center",
-      overflow: "hidden",
-    },
-    btnPrimaryText: { color: "#FFF", fontSize: 16, fontWeight: "bold" },
-    btnSecondaryText: {
-      color: colors.primary,
-      fontSize: 16,
-      fontWeight: "bold",
-    },
-    disabled: { opacity: 0.4 },
+    footerRow: { flexDirection: "row", gap: 12 },
     perfHint: {
       flexDirection: "row",
       alignItems: "flex-start",

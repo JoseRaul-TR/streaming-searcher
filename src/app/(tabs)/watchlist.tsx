@@ -1,15 +1,15 @@
 import React, { useMemo, useState } from "react";
 import { View, FlatList, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useUserStore } from "@/store/useUserStore";
 import { useMode } from "@/hooks/useMode";
 import { ColorScheme } from "@/constants/colors";
-import MediaCard from "@/components/MediaCard";
-import ApiStateDisplay from "@/components/ApiStateDisplay";
-import { Ionicons } from "@expo/vector-icons";
-import WatchlistControls from "@/components/WatchlistControls";
+import MediaCard from "@/components/media/MediaCard";
+import ApiStateDisplay from "@/components/common/ApiStateDisplay";
+import WatchlistControls from "@/components/watchlist/WatchlistControls";
 import { FilterType, SortKey } from "@/types/watchlist";
 
 export default function WatchlistScreen() {
@@ -59,7 +59,7 @@ export default function WatchlistScreen() {
           break;
       }
 
-      // If is not ascending, invert the result
+      // TODO - Correct indication order
       return isAscending ? comparison : -comparison;
     });
 

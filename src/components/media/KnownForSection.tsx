@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 
 import { MediaItem } from "@/types/searchedItem";
 import MediaCard from "./MediaCard";
-import ApiStateDisplay from "./ApiStateDisplay";
+import ApiStateDisplay from "../common/ApiStateDisplay";
 
 type Props = {
   items: MediaItem[];

@@ -11,6 +11,7 @@ import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { ColorScheme, withOpacity } from "@/constants/colors";
 import { useMode } from "@/hooks/useMode";
 import { FilterType, SortKey } from "@/types/watchlist";
+import { getShadow } from "@/utils/shadow";
 
 // ————— Module level —————
 
@@ -242,13 +243,7 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
       borderRadius: 52,
       height: 52,
       zIndex: 10,
-      // — iOS shadow —
-      shadowColor: isDark ? "#000" : "#64748B",
-      shadowOffset: { width: 0, height: isDark ? 4 : 2 },
-      shadowOpacity: isDark ? 0.3 : 0.1,
-      shadowRadius: isDark ? 10 : 8,
-      // — Android elevation —
-      elevation: isDark ? 5 : 2,
+      ...getShadow({ isDark }), // Imported shadow
     },
     trigger: {
       flex: 1,

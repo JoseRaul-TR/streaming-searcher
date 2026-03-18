@@ -8,16 +8,18 @@ import {
   StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useQuery } from "@tanstack/react-query";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { tmdbApi } from "@/services/api";
 import { useUserStore } from "@/store/useUserStore";
 import { SelectedCountry, Provider } from "@/types/providers";
-import ProviderLogo from "./ProviderLogo";
-import ApiStateDisplay from "./ApiStateDisplay";
+import ProviderLogo from "../media/ProviderLogo";
+import ApiStateDisplay from "../common/ApiStateDisplay";
 import { ColorScheme, withOpacity } from "@/constants/colors";
 import { useMode } from "@/hooks/useMode";
+import { getShadow } from "@/utils/shadow";
+import { formatCount, formatCountriesLabel } from "@/utils/format";
+import ModalHeader from "../common/ModalHeader";
+import { useProvidersByCountry } from "@/hooks/useProvidersByCountry";
 
 // Fixed row height used by getItemLayout.
 // Must match paddingVertical (10 * 2) + content height (44px logo).
@@ -94,7 +96,7 @@ export default function SubscriptionPickerModal({
     }
     // Read activeCountry from ref
     setActiveCountry((prev) => {
-      const stillValid = countries.some((c) => c.code === activeCountry);
+      const stillValid = countries.some((c) => c.code === prev);
       return stillValid ? prev : "";
     });
   }, [countries]);
@@ -102,15 +104,7 @@ export default function SubscriptionPickerModal({
   const activeCode =
     activeCountry || (countries.length === 1 ? (countries[0]?.code ?? "") : "");
 
-  const {
-    data: providers = [],
-    isLoading,
-    isError,
-  } = useQuery<Provider[]>({
-    queryKey: ["providers-by-country", activeCode],
-    queryFn: () => tmdbApi.getProvidersByCountry(activeCode),
-    enabled: !!activeCode,
-  });
+  const { providers, isLoading, isError } = useProvidersByCountry(activeCode);
 
   const isProviderSubscribed = useCallback(
     (providerId: number) =>
@@ -150,29 +144,19 @@ export default function SubscriptionPickerModal({
   const subsLabel =
     subscriptions.length === 0
       ? "No services selected"
-      : `${subscriptions.length} service${subscriptions.length > 1 ? "s" : ""} selected`;
-
-  const countriesLabel =
-    countries.length === 0
-      ? ""
-      : ` in ${countries.length === 1 ? countries[0].name : `${countries.length} countries`}`;
+      : `${formatCount(subscriptions.length, "service")} selected${
+          countries.length > 0 ? `in ${formatCountriesLabel(countries)}` : ""
+        }`;
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={[styles.container, { paddingTop: insets.top }]}>
-        {/* Header — same layout as CountryPickerModal */}
-        <View style={styles.header}>
-          <Pressable onPress={onClose} hitSlop={10} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={24} color={colors.textMuted} />
-          </Pressable>
-          <View style={styles.headerText}>
-            <Text style={styles.title}>Subscriptions</Text>
-            <Text style={styles.headerSub} numberOfLines={1}>
-              {subsLabel}
-              {countriesLabel}
-            </Text>
-          </View>
-        </View>
+        {/* Header — uses same component for all modals to achieve the same layout*/}
+        <ModalHeader
+          title="Subscriptions"
+          subtitle={subsLabel}
+          onClose={onClose}
+        />
 
         {/* Country tabs — only shown when multiple countries */}
         {countries.length > 1 && (
@@ -242,18 +226,6 @@ export default function SubscriptionPickerModal({
 function makeStyles(colors: ColorScheme, isDark: boolean) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
-    header: {
-      flexDirection: "row",
-      alignItems: "center",
-      paddingHorizontal: 25,
-      paddingTop: 20,
-      paddingBottom: 12,
-      gap: 16,
-    },
-    backBtn: { padding: 4 },
-    headerText: { flex: 1 },
-    title: { color: colors.text, fontSize: 24, fontWeight: "bold" },
-    headerSub: { color: colors.textDisabled, fontSize: 13, marginTop: 2 },
     tabs: {
       flexDirection: "row",
       flexWrap: "wrap",
@@ -264,11 +236,7 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
     tabShadow: {
       borderRadius: 20,
       backgroundColor: colors.surface,
-      shadowColor: isDark ? "#000" : "#64748B",
-      shadowOffset: { width: 0, height: isDark ? 3 : 1 },
-      shadowOpacity: isDark ? 0.25 : 0.08,
-      shadowRadius: isDark ? 6 : 4,
-      elevation: isDark ? 4 : 2,
+      ...getShadow({ isDark }), // Imported shadow
     },
     tab: {
       paddingHorizontal: 14,

@@ -4,8 +4,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
 import { useSearch } from "@/hooks/useSearch";
-import MediaCard from "@/components/MediaCard";
-import SearchBar from "@/components/SearchBar";
+import MediaCard from "@/components/media/MediaCard";
+import SearchBar from "@/components/search/SearchBar";
 import { ColorScheme } from "@/constants/colors";
 import { useMode } from "@/hooks/useMode";
 

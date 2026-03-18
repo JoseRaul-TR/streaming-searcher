@@ -14,6 +14,7 @@ import { tmdbApi } from "@/services/api";
 import { Country, SelectedCountry } from "@/types/providers";
 import { ColorScheme, withOpacity } from "@/constants/colors";
 import { useMode } from "@/hooks/useMode";
+import { getShadow } from "@/utils/shadow";
 
 const MAX_SUGGESTIONS = 4;
 
@@ -93,7 +94,11 @@ export default function CountryAutocomplete({
         />
         {search.length > 0 && (
           <Pressable onPress={() => setSearch("")} hitSlop={10}>
-            <Ionicons name="close-circle-outline" size={20} color={colors.textMuted} />
+            <Ionicons
+              name="close-circle-outline"
+              size={20}
+              color={colors.textMuted}
+            />
           </Pressable>
         )}
       </View>
@@ -110,7 +115,10 @@ export default function CountryAutocomplete({
             {suggestions.map((item: Country, index) => (
               <Pressable
                 key={item.iso_3166_1}
-                style={[styles.suggestion, index === suggestions.length -1 && styles.suggestionLast,]}
+                style={[
+                  styles.suggestion,
+                  index === suggestions.length - 1 && styles.suggestionLast,
+                ]}
                 onPress={() => handleAdd(item)}
                 android_ripple={{ color: withOpacity(colors.primary, 0.08) }}
               >
@@ -174,13 +182,7 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
       borderRadius: 50,
       paddingHorizontal: 14,
       height: 50,
-      // — iOS shadow —
-      shadowColor: isDark ? "#000" : "#64748B",
-      shadowOffset: { width: 0, height: isDark ? 4 : 2 },
-      shadowOpacity: isDark ? 0.3 : 0.1,
-      shadowRadius: isDark ? 10 : 8,
-      // — Android elevation —
-      elevation: isDark ? 5 : 2,
+      ...getShadow({ isDark }), // Imported shadow
     },
     input: {
       flex: 1,
@@ -194,13 +196,7 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
     suggestionsShadow: {
       borderRadius: 26,
       backgroundColor: colors.surface,
-      // — iOS shadow —
-      shadowColor: isDark ? "#000" : "#64748B",
-      shadowOffset: { width: 0, height: isDark ? 4 : 2 },
-      shadowOpacity: isDark ? 0.3 : 0.1,
-      shadowRadius: isDark ? 10 : 8,
-      // — Android elevation —
-      elevation: isDark ? 5 : 2,
+      ...getShadow({ isDark }), // Imported shadow
     },
     suggestions: {
       borderRadius: 26,

@@ -12,6 +12,7 @@ import { useUserStore } from "@/store/useUserStore";
 import { SearchedItem } from "@/types/searchedItem";
 import { ColorScheme } from "@/constants/colors";
 import { useMode } from "@/hooks/useMode";
+import { getShadow } from "@/utils/shadow";
 
 type Props = {
   item: SearchedItem;
@@ -133,13 +134,7 @@ function makeStyles(colors: ColorScheme, isDark: boolean) {
       borderRadius: 12,
       padding: 10,
       alignItems: "center",
-      // — iOS shadow —
-      shadowColor: isDark ? "#000" : "#64748B",
-      shadowOffset: { width: 0, height: isDark ? 4 : 2 },
-      shadowOpacity: isDark ? 0.35 : 0.12,
-      shadowRadius: isDark ? 8 : 6,
-      // — Android elevation —
-      elevation: isDark ? 6 : 3,
+      ...getShadow({ isDark }),
     },
     posterContainer: {
       width: "100%",

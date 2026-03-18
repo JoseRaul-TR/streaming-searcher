@@ -4,12 +4,11 @@ import {
   View,
   Text,
   ScrollView,
-  Pressable,
   StyleSheet,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { ColorScheme } from "@/constants/colors";
 import { useMode } from "@/hooks/useMode";
+import ModalHeader from "../common/ModalHeader";
 
 type Props = {
   visible: boolean;
@@ -23,12 +22,8 @@ export default function TermsModal({ visible, onClose }: Props) {
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Terms of Use</Text>
-          <Pressable onPress={onClose} hitSlop={10} style={styles.closeBtn}>
-            <Ionicons name="close" size={28} color={colors.textMuted} />
-          </Pressable>
-        </View>
+        {/* Header — uses same component for all modals to achieve the same layout*/}
+        <ModalHeader title="Terms of Use" onClose={onClose} closeIcon="close" />
 
         <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
           <Text style={styles.body}>
@@ -51,19 +46,7 @@ function makeStyles(colors: ColorScheme) {
     container: {
       flex: 1,
       backgroundColor: colors.background,
-      paddingHorizontal: 25,
-      paddingTop: 75,
     },
-    header: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 20,
-    },
-    closeBtn: {
-      padding: 4
-    },
-    title: { color: colors.text, fontSize: 24, fontWeight: "bold" },
     scroll: { flex: 1 },
     body: {
       color: colors.textSecondary,
