@@ -104,7 +104,7 @@ type TmdbWatchProvidersResponse = {
  * @returns A SearchedItem — either a MediaItem (movie/tv) or a PersonItem (person).
  *
  * For persons, known_for entries are filtered to only "movie" | "tv" media types
- * and mapped to typed MediaItem objects. Entries with unrecognised media_type are
+ * and mapped to typed MediaItem objects. Entries with unrecognized media_type are
  * dropped to keep the union type honest.
  *
  * For movies and TV shows, the title is resolved from item.title (movies) or
