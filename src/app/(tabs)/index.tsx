@@ -51,7 +51,7 @@ export default function ExploreScreen() {
                   color={colors.surfaceMid}
                 />
                 <Text style={styles.feedbackTitle}>
-                  No results for "{query}"
+                  No results for &ldquo;{query}&rdquo;
                 </Text>
                 <Text style={styles.feedbackSub}>
                   Try a different title or name.

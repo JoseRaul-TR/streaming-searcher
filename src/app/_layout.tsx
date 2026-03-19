@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { StrictMode, useEffect } from "react";
 import { Appearance } from "react-native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
@@ -105,6 +105,7 @@ function AppLayout() {
  * The root layout of the Expo Router app.
  *
  * Wraps the entire app in the three providers required by its children:
+ * - StrictMode from React.
  * - SafeAreaProvider: makes useSafeAreaInsets() available to all screens.
  * - QueryClientProvider: makes TanStack Query available for all useQuery calls.
  * - AppLayout: renders the Stack navigator and manages the OS theme listener.
@@ -115,10 +116,12 @@ function AppLayout() {
  */
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
-      <QueryClientProvider client={queryClient}>
-        <AppLayout />
-      </QueryClientProvider>
-    </SafeAreaProvider>
+    <StrictMode>
+      <SafeAreaProvider>
+        <QueryClientProvider client={queryClient}>
+          <AppLayout />
+        </QueryClientProvider>
+      </SafeAreaProvider>
+    </StrictMode>
   );
 }

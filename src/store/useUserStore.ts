@@ -185,9 +185,20 @@ export const useUserStore = create<UserState>()(
       removeCountry: (code) =>
         set((state) => ({
           countries: state.countries.filter((c) => c.code !== code),
+          // Remove all subscriptions tied to the removed country so
+          // stale provider highlights don't appear if the country is re-added.
+          subscriptions: state.subscriptions.filter(
+            (s) => s.countryCode !== code,
+          ),
         })),
 
-      removeAllCountries: () => set({ countries: [] }),
+      removeAllCountries: () =>
+        set({
+          countries: [],
+          // Clear all subscriptions — no country selected means global mode,
+          // where subscription highlights are not available.
+          subscriptions: [],
+        }),
 
       addSubscription: (providerId, countryCode) =>
         set((state) => {
