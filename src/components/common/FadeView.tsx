@@ -11,15 +11,23 @@ type Props = {
 };
 
 /**
- * Wraps children in a fade-in animation that plays once on mount.
+ * Wraps children in a one-shot fade-in animation that plays once on mount.
  *
- * Used to soften the entrance of content that loads asynchronously,
- * such as provider lists, watchlist cards, and search results.
+ * Uses Animated.timing with useNativeDriver: true so the animation runs on
+ * the UI thread and is not blocked by JavaScript work. This is safer than
+ * LayoutAnimation for list items, which requires enabling an experimental
+ * Android flag and can produce unexpected results when items are added or
+ * removed.
  *
- * Example:
- *   <FadeView delay={100}>
- *     <ProviderSection ... />
- *   </FadeView>
+ * The delay prop enables staggered entrance animations in FlatList render items:
+ *   delay={Math.min(index, 6) * 30}
+ * The cap at index 6 (180ms maximum) prevents long waits on large lists.
+ *
+ * @param props.children - The content to fade in.
+ * @param props.delay - How long to wait before starting, in ms. Defaults to 0.
+ *   Used to stagger multiple cards so they appear one after another.
+ * @param props.duration - How long the fade takes, in ms. Defaults to 250.
+ * @param props.style - Optional additional styles applied to the Animated.View wrapper.
  */
 export default function FadeView({
   children,

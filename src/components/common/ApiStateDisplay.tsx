@@ -5,25 +5,49 @@ import { Ionicons } from "@expo/vector-icons";
 import { ColorScheme, withOpacity } from "@/constants/colors";
 import { useMode } from "@/hooks/useMode";
 
+/**
+ * Discriminated union for ApiStateDisplay props.
+ *
+ * Each state variant only exposes the props that are relevant to it:
+ * - "loading" has no extra props — the spinner is self-contained.
+ * - "error" accepts an optional message to override the default text.
+ * - "empty" accepts an optional message and an optional custom icon node.
+ *
+ * Using a discriminated union instead of a flat interface with all optional
+ * fields means TypeScript enforces that callers only provide props that make
+ * sense for the given state, and narrows the type correctly inside the component.
+ */
 type Props =
   | { state: "loading" }
   | { state: "error"; message?: string }
   | { state: "empty"; message?: string; icon?: React.ReactNode };
 
 /**
- * Renders the three common API states: loading, error, and empty.
- * Uses a discriminated union so each state only exposes relevant props.
+ * Renders one of three common asynchronous states: loading, error, or empty.
+ *
+ * Centralizes these states so every screen and component shows a consistent
+ * UI when data is not available, without duplicating spinner/error/empty markup.
+ *
+ * - loading: renders an ActivityIndicator in colors.primary.
+ * - error: renders an alert icon and message on a colors.error tinted background.
+ * - empty: renders a customizable icon (defaults to alert-circle-outline) and
+ *     message on a neutral background.
+ *
+ * @param props.state - The current state to render. Determines which variant
+ *   of the discriminated union is active and which JSX branch is returned.
+ * @param props.message - (error, empty) Human-readable description shown below
+ *   the icon. Falls back to a sensible default when omitted.
+ * @param props.icon - (empty only) A custom React node to render instead of the
+ *   default alert icon. Used in WatchlistScreen to show a bookmark icon.
  */
 export default function ApiStateDisplay(props: Props) {
   const { colors } = useMode();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
-  // loading state
   if (props.state === "loading") {
     return <ActivityIndicator color={colors.primary} style={styles.centered} />;
   }
 
-  // error state
   if (props.state === "error") {
     return (
       <View style={[styles.box, styles.errorBox]}>
