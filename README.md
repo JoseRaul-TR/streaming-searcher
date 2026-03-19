@@ -1,4 +1,4 @@
-# FoundIt
+# FoundIt (streaming-searcher)
 
 Find where to watch any movie, series or person — across any country, on any streaming service.
 
