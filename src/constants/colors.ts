@@ -1,7 +1,22 @@
+/**
+ * Design system color tokens and opacity utility.
+ *
+ * Two color schemes are defined as const objects — lightColors and darkColors —
+ * sharing an identical set of keys. ColorScheme is derived from the key set of
+ * darkColors so that both objects are guaranteed to be structurally identical
+ * at compile time.
+ *
+ * Components access colors via the useMode() hook, which returns the active
+ * scheme based on the user's modePreference and the OS setting.
+ */
+
+/** Union of all valid color token keys, derived from darkColors. */
 export type ColorScheme = Record<keyof typeof darkColors, string>;
 
+/** The three possible theme preference values stored in the Zustand store. */
 export type ModePreference = "system" | "light" | "dark";
 
+/** Color tokens for light mode. All values are 6-digit hex strings. */
 export const lightColors = {
   background: "#F8FAFC",
   surface: "#FFFFFF",
@@ -16,6 +31,7 @@ export const lightColors = {
   success: "#22C55E",
 } as const;
 
+/** Color tokens for dark mode. Keys are identical to lightColors. */
 export const darkColors = {
   background: "#0F172A",
   surface: "#1E293B",
@@ -31,9 +47,23 @@ export const darkColors = {
 } as const;
 
 /**
- * Appends an opacity value to a hex color as two extra hex digits.
- * withOpacity(Colors.primary, 0.15) → "#60A5FA26"
- * React Native supports 8-digit hex colors (#RRGGBBAA).
+ * Appends an opacity value to a hex color as two extra hex digits,
+ * producing the 8-digit #RRGGBBAA format supported natively by React Native.
+ *
+ * @param hex - A 6-digit hex color string, with or without a leading "#"
+ *              (e.g. "#3B82F6" or "#000000").
+ * @param opacity - A number between 0 (fully transparent) and 1 (fully opaque).
+ *                  Values outside this range are not clamped — pass valid values.
+ * @returns The hex color string with the alpha channel appended
+ *          (e.g. withOpacity("#3B82F6", 0.15) → "#3B82F626").
+ *
+ * @example
+ * Semi-transparent primary background for a chip
+ * backgroundColor: withOpacity(colors.primary, 0.12)
+ *
+ * @example
+ * Dark modal backdrop
+ * backgroundColor: withOpacity("#000000", 0.6)
  */
 export function withOpacity(hex: string, opacity: number): string {
   const alpha = Math.round(opacity * 255)

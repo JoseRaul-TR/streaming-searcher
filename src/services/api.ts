@@ -19,10 +19,17 @@ const fetchOptions: RequestInit = {
 };
 
 /**
- * ————————— Generic TMDB fetcher —————————
- * Using generics so every endpoint gets a typed response without repeating
- * the fetch boilerplate. T is the expected shape of response.json().
- * */
+ * Generic TMDB fetcher.
+ *
+ * @param path - The API path to append to the base URL
+ *               (e.g. "/3/search/multi?query=inception").
+ * @returns A Promise that resolves to the parsed JSON response body typed as T.
+ * @throws An Error with the HTTP status and status text if response.ok is false
+ *         (e.g. 401 Unauthorized, 429 Too Many Requests, 500 Internal Server Error).
+ *
+ * @example
+ * const data = await fetchTMDB<TmdbSearchResponse>("/3/search/multi?query=inception");
+ */
 
 async function fetchTMDB<T>(path: string): Promise<T> {
   const response = await fetch(`${BASE_URL}${path}`, fetchOptions);
@@ -34,11 +41,9 @@ async function fetchTMDB<T>(path: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-/**
- * ————————— Rab TMDB response shapes —————————
- * These types describe the raw API response before we transform it into our
- * own domain types. Avoid using 'any' while still handling optional fields.
- */
+// ————————— Raw TMDB response shapes —————————
+// These types describe the raw API response before we transform it into our
+// own domain types. Avoids 'any' while still handling optional fields.
 
 type TmdbKnownForItem = {
   id: number;
@@ -91,11 +96,24 @@ type TmdbWatchProvidersResponse = {
 
 // ————————— Transform helpers —————————
 
+/**
+ * Transforms a raw TMDB search result item into the app's typed SearchedItem domain type.
+ *
+ * @param item - A raw search result object as returned by /3/search/multi.
+ *               May be a movie, TV show, or person, distinguished by item.media_type.
+ * @returns A SearchedItem — either a MediaItem (movie/tv) or a PersonItem (person).
+ *
+ * For persons, known_for entries are filtered to only "movie" | "tv" media types
+ * and mapped to typed MediaItem objects. Entries with unrecognised media_type are
+ * dropped to keep the union type honest.
+ *
+ * For movies and TV shows, the title is resolved from item.title (movies) or
+ * item.name (TV shows), and the year is extracted from the first segment of
+ * release_date or first_air_date split by "-".
+ */
+
 function toSearchedItem(item: TmdbRawSearchItem): SearchedItem {
   if (item.media_type === "person") {
-    // Transform each known_for entry into a typed MediaItem.
-    // Entries without a recognised media_type are filtered out to keep
-    // the union type honest — we never render unknown content.
     const known_for_items: MediaItem[] = (item.known_for ?? [])
       .filter(
         (m): m is TmdbKnownForItem & { media_type: "movie" | "tv" } =>
@@ -136,7 +154,12 @@ function toSearchedItem(item: TmdbRawSearchItem): SearchedItem {
 // ————————— Public API —————————
 
 export const tmdbApi = {
-  // Fetch all available countries
+  /**
+   * Fetches the full list of countries/regions that have streaming provider data on TMDB.
+   *
+   * @returns A Promise resolving to an array of Country objects
+   *          ({ iso_3166_1, english_name, native_name }), or an empty array on empty response.
+   */
   getCountries: async (): Promise<Country[]> => {
     const data = await fetchTMDB<TmdbCountriesResponse>(
       "/3/watch/providers/regions",
@@ -145,9 +168,16 @@ export const tmdbApi = {
   },
 
   /**
-   * Fetch all providers available in a country.
-   * Makes two parallel requests (movie + tv) and deduplicates by provider_id
-   * so both types are represented in the subscription picker.
+   * Fetches all streaming providers available in a given country, deduplicated
+   * across both movie and TV provider lists.
+   *
+   * @param countryCode - An ISO 3166-1 alpha-2 country code (e.g. "SE", "US").
+   * @returns A Promise resolving to a deduplicated array of Provider objects
+   *          ({ provider_id, provider_name, logo_path }).
+   *
+   * Makes two parallel requests — one for movie providers and one for TV providers —
+   * then merges and deduplicates by provider_id so that a service present in both
+   * (e.g. Netflix) only appears once in the subscription picker.
    */
   getProvidersByCountry: async (countryCode: string): Promise<Provider[]> => {
     const [movieData, tvData] = await Promise.all([
@@ -162,7 +192,7 @@ export const tmdbApi = {
     const combined = [...(movieData.results ?? []), ...(tvData.results ?? [])];
 
     // Deduplicate by provider_id — a provider present in both movie and tv
-    // would otherwise appear twice in the subscription picker
+    // would otherwise appear twice in the subscription picker.
     const seen = new Set<number>();
     return combined.filter((p) => {
       if (seen.has(p.provider_id)) return false;
@@ -171,7 +201,17 @@ export const tmdbApi = {
     });
   },
 
-  // Search movies, TV shows and people
+  /**
+   * Searches TMDB for movies, TV shows and people matching the given query string.
+   *
+   * @param query - The search string entered by the user.
+   * @returns A Promise resolving to an array of SearchedItem (MediaItem | PersonItem).
+   *          Returns an empty array immediately if query is blank or whitespace-only,
+   *          avoiding an unnecessary network request.
+   *
+   * Raw results are transformed via toSearchedItem() into typed domain objects
+   * before being returned to the caller.
+   */
   searchItem: async (query: string): Promise<SearchedItem[]> => {
     if (!query.trim()) return [];
     const data = await fetchTMDB<TmdbSearchResponse>(
@@ -181,26 +221,39 @@ export const tmdbApi = {
   },
 
   /**
-   * Fetch extra details for a specific item (used to fetch missing overviews on saved items)
+   * Fetches full details for a movie or TV show by its TMDB id.
+   *
+   * @param mediaType - The type of media: "movie" or "tv".
+   * @param id - The TMDB numeric id of the title.
+   * @returns A Promise resolving to a MediaDetails object ({ overview?, biography? }).
+   *
+   * Used as a fallback in the Details screen when a Watchlist item is opened
+   * and the overview was not stored at save time (WatchlistItem only persists
+   * id, title, year, poster_path, and media_type).
    */
-  getMediaDetails: async (mediaType: string, id: number): Promise<MediaDetails> => {
+  getMediaDetails: async (
+    mediaType: string,
+    id: number,
+  ): Promise<MediaDetails> => {
     return await fetchTMDB<MediaDetails>(`/3/${mediaType}/${id}`);
   },
 
   /**
-   * Fetch streaming availability for a movie or TV show.
+   * Fetches streaming availability for a movie or TV show, optionally filtered by country.
    *
-   * Two modes:
-   *
-   * — Filtered (countries.length > 0):
-   *   TMDB returns all countries in a single response. We filter client-side
-   *   to only the countries the user has selected.
-   *
-   * — Global (countries.length === 0):
-   *   Return every country in the response that has at least one provider.
-   *   Country names are resolved by fetching the regions list in parallel
-   *   with the providers call so we can display full names instead of codes.
-   *   Results are sorted alphabetically.
+   * @param id - The TMDB numeric id of the title (number or string).
+   * @param mediaType - "movie" | "tv" | "person". Returns [] immediately for persons
+   *                    since the providers endpoint does not apply to them.
+   * @param countries - Array of SelectedCountry objects the user has selected.
+   *   - Empty array (global mode): fetches all countries that have at least one provider,
+   *     resolves country codes to full names by fetching the regions list in parallel,
+   *     and returns results sorted alphabetically by country name.
+   *   - Non-empty (filtered mode): makes a single API call and filters client-side
+   *     to only the selected countries, avoiding N parallel requests.
+   * @returns A Promise resolving to an array of WatchProvidersData, one entry per country.
+   *          Each entry contains countryCode, countryName, an optional JustWatch link,
+   *          and arrays for free, flatrate, rent, and buy providers (empty arrays when absent).
+   *          Countries with no providers in any category are filtered out of the result.
    */
   getWatchProviders: async (
     id: number | string,
@@ -212,7 +265,7 @@ export const tmdbApi = {
     const isGlobal = countries.length === 0;
 
     if (isGlobal) {
-      // Fetch providers and countries names in parallel
+      // Fetch providers and country names in parallel to avoid a sequential waterfall.
       const [providerRes, countriesRes] = await Promise.all([
         fetchTMDB<TmdbWatchProvidersResponse>(
           `/3/${mediaType}/${id}/watch/providers`,
@@ -220,7 +273,7 @@ export const tmdbApi = {
         fetchTMDB<TmdbCountriesResponse>("/3/watch/providers/regions"),
       ]);
 
-      // Build a code -> english_name lookup map
+      // Build a code → english_name lookup map for O(1) resolution per country.
       const nameByCode = new Map<string, string>(
         (countriesRes.results ?? []).map((c) => [c.iso_3166_1, c.english_name]),
       );
@@ -247,7 +300,7 @@ export const tmdbApi = {
         .sort((a, b) => a.countryName.localeCompare(b.countryName));
     }
 
-    // Filtered mode - single API call, client side country filter
+    // Filtered mode — single API call, client-side country filter.
     const data = await fetchTMDB<TmdbWatchProvidersResponse>(
       `/3/${mediaType}/${id}/watch/providers`,
     );
