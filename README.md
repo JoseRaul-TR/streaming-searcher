@@ -3,11 +3,17 @@
 Find where to watch any movie, series or person — across any country, on any streaming service.
 
 Built with React Native, Expo and TypeScript as a final project for a mobile development course.
+
 <img width="295" height="639" alt="IMG_0956" src="https://github.com/user-attachments/assets/5953013e-744b-45f3-82f5-d51c8522f7a3" />
+
 <img width="295" height="639" alt="Captura 2026-03-19 a las 7 50 29" src="https://github.com/user-attachments/assets/ede3c99a-2265-422a-81c9-a56ca84934ce" />
+
 <img width="295" height="639" alt="Captura 2026-03-19 a las 7 52 10" src="https://github.com/user-attachments/assets/4740dd86-3e15-410f-97c8-531a323ff9af" />
+
 <img width="295" height="639" alt="Captura 2026-03-19 a las 7 54 14" src="https://github.com/user-attachments/assets/5018f043-de6e-4ff6-b31e-0455d1115c14" />
+
 <img width="295" height="639" alt="Captura 2026-03-19 a las 7 54 33" src="https://github.com/user-attachments/assets/a498d927-3d2d-4f19-b7e4-afdcebf5125e" />
+
 <img width="295" height="639" alt="Captura 2026-03-19 a las 7 54 56" src="https://github.com/user-attachments/assets/13991da6-681e-4ea3-b5b9-05d9845e70bc" />
 
 ---
