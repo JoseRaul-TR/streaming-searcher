@@ -70,7 +70,7 @@ type PersonItem = BaseItem & {
    * objects. Entries whose media_type is neither "movie" nor "tv" are filtered
    * out during the API transform to keep the union type honest.
    *
-   * Serialised as JSON when passed as an Expo Router route param (params are
+   * Serialized as JSON when passed as an Expo Router route param (params are
    * strings), and parsed back in DetailsScreen with useMemo + try/catch.
    */
   known_for_items: MediaItem[];

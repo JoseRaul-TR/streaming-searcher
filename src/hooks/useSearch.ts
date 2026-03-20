@@ -78,10 +78,10 @@ export function useSearch(): UseSearchResult {
     SearchedItem[],
     Error
   >({
-    queryKey: ["search", debouncedQuery],
-    queryFn: () => tmdbApi.searchItem(debouncedQuery),
-    enabled: debouncedQuery.length >= MIN_QUERY_LENGTH,
-    staleTime: STALE_TIME_MS,
+    queryKey: ["search", debouncedQuery], // Cache key — if it already exists, no re-fetch
+    queryFn: () => tmdbApi.searchItem(debouncedQuery), // What to fetch
+    enabled: debouncedQuery.length >= MIN_QUERY_LENGTH, // Condition to perform fetch
+    staleTime: STALE_TIME_MS, // How long cache is used to avoid re-fetch and existing key
   });
 
   return {
