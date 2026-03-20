@@ -1,99 +1,120 @@
-import React, { useState } from "react";
+import React, { useMemo } from "react";
 import { View, FlatList, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useQuery } from "@tanstack/react-query";
 
-import { tmdbApi } from "@/services/api";
-import { SearchedItem } from "@/types/searchedItem";
-import { MediaCard } from "@/components/MediaCard";
-import SearchBar from "@/components/SearchBar";
+import { useSearch } from "@/hooks/useSearch";
+import MediaCard from "@/components/media/MediaCard";
+import SearchBar from "@/components/search/SearchBar";
+import { ColorScheme } from "@/constants/colors";
+import { useMode } from "@/hooks/useMode";
+import FadeView from "@/components/common/FadeView";
 
 export default function ExploreScreen() {
   const router = useRouter();
-  const [query, setQuery] = useState("");
+  const { colors } = useMode();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
-  const {
-    data: results = [],
-    isLoading,
-    isFetching,
-  } = useQuery<SearchedItem[]>({
-    queryKey: ["search", query],
-    queryFn: () => tmdbApi.searchItem(query),
-    enabled: query.length > 2,
-    staleTime: 1000 * 60 * 5,
-  });
+  const { query, setQuery, results, isLoading, isError, hasSearched } =
+    useSearch();
 
   return (
     <View style={styles.container}>
-      <SearchBar
-        value={query}
-        onChangeText={setQuery}
-        isLoading={isLoading || isFetching}
-      />
+      <SearchBar value={query} onChangeText={setQuery} isLoading={isLoading} />
 
-      <FlatList
-        data={results}
-        keyExtractor={(item) => `${item.media_type}-${item.id}`}
-        numColumns={2}
-        contentContainerStyle={styles.listContent}
-        columnWrapperStyle={styles.columnWrapper}
-        ListEmptyComponent={() =>
-          !isLoading && !isFetching && query.length > 2 ? (
-            <View style={styles.empty}>
-              <Ionicons name="search-outline" size={80} color="#1E293B" />
-              <Text style={styles.emptyTitle}>No results for "{query}"</Text>
-              <Text style={styles.emptySub}>
-                Try a different title or name.
-              </Text>
-            </View>
-          ) : null
-        }
-        renderItem={({ item }) => (
-          <MediaCard
-            item={item}
-            onPress={() =>
-              router.push({
-                pathname: "/details",
-                params: {
-                  id: item.id,
-                  title: item.title,
-                  year: item.year ?? "N/A",
-                  overview: item.overview ?? "",
-                  poster_path: item.poster_path ?? "",
-                  media_type: item.media_type,
-                },
-              })
-            }
+      {isError ? (
+        <View style={styles.feedback}>
+          <Ionicons
+            name="alert-circle-outline"
+            size={48}
+            color={colors.error}
           />
-        )}
-      />
+          <Text style={styles.feedbackTitle}>Something went wrong</Text>
+          <Text style={styles.feedbackSub}>
+            Could not reach TMDB. Check your connection and try again.
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={results}
+          keyExtractor={(item) => `${item.media_type}-${item.id}`}
+          numColumns={2}
+          contentContainerStyle={styles.listContent}
+          columnWrapperStyle={styles.columnWrapper}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={() =>
+            !isLoading && hasSearched ? (
+              <View style={styles.feedback}>
+                <Ionicons
+                  name="search-outline"
+                  size={80}
+                  color={colors.surfaceMid}
+                />
+                <Text style={styles.feedbackTitle}>
+                  No results for &ldquo;{query}&rdquo;
+                </Text>
+                <Text style={styles.feedbackSub}>
+                  Try a different title or name.
+                </Text>
+              </View>
+            ) : null
+          }
+          renderItem={({ item, index }) => (
+            <FadeView delay={Math.min(index, 6) * 30} duration={200}>
+              <MediaCard
+                item={item}
+                onPress={() =>
+                  router.push({
+                    pathname: "/details",
+                    params: {
+                      id: item.id,
+                      title: item.title,
+                      year: item.year ?? "N/A",
+                      overview: item.overview ?? "",
+                      poster_path: item.poster_path ?? "",
+                      media_type: item.media_type,
+                      // Serialise known_for_items as JSON — Expo Router params
+                      // are strings, so complex objects must be encoded.
+                      // Non-persons get an empty array to keep the param shape consistent.
+                      known_for_items:
+                        item.media_type === "person"
+                          ? JSON.stringify(item.known_for_items)
+                          : "[]",
+                    },
+                  })
+                }
+              />
+            </FadeView>
+          )}
+        />
+      )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0F172A" },
-  listContent: { paddingHorizontal: 10, paddingBottom: 20, flexGrow: 1 },
-  columnWrapper: { justifyContent: "space-between", paddingHorizontal: 5 },
-  empty: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    margin: 'auto',
-    paddingHorizontal: 40,
-  },
-  emptyTitle: {
-    color: "#F8FAFC",
-    fontSize: 18,
-    fontWeight: "600",
-    textAlign: "center",
-    marginTop: 20,
-  },
-  emptySub: {
-    color: "#64748B",
-    fontSize: 14,
-    textAlign: "center",
-    marginTop: 8,
-  },
-});
+function makeStyles(colors: ColorScheme) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    listContent: { paddingHorizontal: 10, paddingBottom: 20, flexGrow: 1 },
+    columnWrapper: { justifyContent: "space-between", paddingHorizontal: 5 },
+    feedback: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      marginTop: 100,
+      paddingHorizontal: 40,
+      gap: 12,
+    },
+    feedbackTitle: {
+      color: colors.text,
+      fontSize: 18,
+      fontWeight: "600",
+      textAlign: "center",
+    },
+    feedbackSub: {
+      color: colors.textMuted,
+      fontSize: 14,
+      textAlign: "center",
+    },
+  });
+}

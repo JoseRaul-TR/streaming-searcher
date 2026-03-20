@@ -3,7 +3,7 @@
   "compilerOptions": {
     /* Strict Inheritance */
     "strict": true,
-    
+
     /* Path Aliases */
     "paths": {
       "@/*": ["./src/*"]
@@ -13,11 +13,15 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
+    "noImplicitAny": true,
+    "exactOptionalPropertyTypes": false, // Note: Can give problems with some React-Native libraries, activate only if necessary.
+
+    "allowUnreachableCode": false,
+
     "noFallthroughCasesInSwitch": true,
 
     /* Type Rigor */
     "noImplicitOverride": true,
-    // "exactOptionalPropertyTypes": true, // Nota: Puede dar problemas con algunas librerías de RN, actívalo solo si es necesario.
     "noPropertyAccessFromIndexSignature": true,
 
     /* Robustness in the environment */

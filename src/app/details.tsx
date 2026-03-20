@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -6,103 +6,246 @@ import {
   Image,
   ScrollView,
   Pressable,
-  ActivityIndicator,
-  Linking,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Ionicons, Feather } from "@expo/vector-icons";
-import { useQuery } from "@tanstack/react-query";
+import { Ionicons, Feather, MaterialIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as WebBrowser from "expo-web-browser";
 
-import { tmdbApi } from "@/services/api";
+import { useWatchProviders } from "@/hooks/useWatchProviders";
 import { useUserStore } from "@/store/useUserStore";
-import { ProviderSection } from "@/components/ProvidersSection";
+import CountryProviderSection from "@/components/media/CountryProviderSection";
+import ProviderSection from "@/components/media/ProvidersSection";
+import ApiStateDisplay from "@/components/common/ApiStateDisplay";
+import KnownForSection from "@/components/media/KnownForSection";
+import { ColorScheme, withOpacity } from "@/constants/colors";
+import { useMode } from "@/hooks/useMode";
+import { MediaItem } from "@/types/searchedItem";
+import { useQuery } from "@tanstack/react-query";
+import { tmdbApi } from "@/services/api";
+import { MediaDetails } from "@/types/watchlist";
+import { getShadow } from "@/utils/shadow";
+import FadeView from "@/components/common/FadeView";
 
 export default function DetailsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useMode();
+  const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
 
-  const { id, title, year, overview, poster_path, media_type } =
-    useLocalSearchParams<{
-      id: string;
-      title: string;
-      year: string;
-      overview: string;
-      poster_path?: string;
-      media_type: "movie" | "tv" | "person";
-    }>();
+  const {
+    id,
+    title,
+    year,
+    overview,
+    poster_path,
+    media_type,
+    known_for_items: knownForRaw,
+    from_nested,
+  } = useLocalSearchParams<{
+    id: string;
+    title: string;
+    year: string;
+    overview: string;
+    poster_path?: string;
+    media_type: "movie" | "tv" | "person";
+    known_for_items?: string;
+    from_nested?: string;
+  }>();
+
+  // Recover details if overview is empty (from Watchlist)
+  const { data: mediaDetails, isLoading: isLoadingDetails } =
+    useQuery<MediaDetails>({
+      queryKey: ["media-details", media_type, id],
+      queryFn: () => tmdbApi.getMediaDetails(media_type, Number(id)),
+      enabled: !overview && media_type !== "person",
+    });
+
+  const displayOverview =
+    overview || mediaDetails?.overview || mediaDetails?.biography || "";
+
+  // Parse the JSON-serialized known_for_items passed from ExploreScreen.
+  // Wrapped in try/catch so a malformed param never crashes the screen.
+  const knownForItems = useMemo((): MediaItem[] => {
+    if (!knownForRaw) return [];
+    try {
+      return JSON.parse(knownForRaw) as MediaItem[];
+    } catch {
+      return [];
+    }
+  }, [knownForRaw]);
 
   const [expanded, setExpanded] = useState(false);
-  const { country } = useUserStore();
+  const {
+    countries,
+    subscriptions,
+    addToWatchlist,
+    removeFromWatchlist,
+    isInWatchlist,
+  } = useUserStore();
 
-  const { data: providers, isLoading } = useQuery({
-    queryKey: ["providers", id, media_type, country],
-    queryFn: () => tmdbApi.getWatchProviders(id, media_type, country),
-    enabled: media_type !== "person",
-  });
+  // Composite key: "${countryCode}:${providerId}"
+  // This ensures that the same provider available in multiple countries
+  // only gets highlighted in the country the user is actually subscribed to.
+  const subscribedKeys = useMemo(
+    () => new Set(subscriptions.map((s) => `${s.countryCode}:${s.providerId}`)),
+    [subscriptions],
+  );
 
-  const hasProviders =
-    providers?.free?.length ||
-    providers?.flatrate?.length ||
-    providers?.rent?.length ||
-    providers?.buy?.length;
+  // Single country → flat category layout (no country header needed).
+  // Multiple countries or global (countries=[]) → collapsible tabs per country.
+  const isSingleCountry = countries.length === 1;
+
+  const { providers, isLoading, isError } = useWatchProviders(
+    id,
+    media_type,
+    countries,
+  );
+
+  const isNested = from_nested === "true";
+  const hasProviders = providers.length > 0;
+  const canSave = media_type !== "person";
+  const saved =
+    canSave && isInWatchlist(Number(id), media_type as "movie" | "tv");
+
+  const handleWatchlist = useCallback(() => {
+    if (!canSave) return;
+    const mediaType = media_type as "movie" | "tv";
+    if (saved) {
+      removeFromWatchlist(Number(id), mediaType);
+    } else {
+      addToWatchlist({
+        id: Number(id),
+        media_type: mediaType,
+        title: title ?? "",
+        year: year ?? "",
+        poster_path: poster_path ?? null,
+        added_at: Date.now(),
+      });
+    }
+  }, [
+    canSave,
+    saved,
+    id,
+    media_type,
+    title,
+    year,
+    poster_path,
+    addToWatchlist,
+    removeFromWatchlist,
+  ]);
+
+  const handleToggleExpanded = useCallback(() => {
+    setExpanded((prev) => !prev);
+  }, []);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Header bar with close button */}
+      {/* ── Top bar ── */}
       <View style={styles.topBar}>
         <Pressable
-          style={styles.closeButton}
+          style={styles.backButton}
           onPress={() => router.back()}
-          android_ripple={{ color: "rgba(255,255,255,0.1)", borderless: true }}
+          android_ripple={{
+            color: withOpacity(colors.primary, 0.08),
+            borderless: true,
+          }}
           hitSlop={10}
         >
-          <Ionicons name="arrow-back" size={24} color="#94A3B8" />
+          <Ionicons name="arrow-back" size={24} color={colors.textMuted} />
         </Pressable>
+
         <Text style={styles.topBarTitle} numberOfLines={1}>
           {title}
         </Text>
+
+        {/* X only in nested details — closes the full stack back to Explore */}
+        {isNested && (
+          <Pressable
+            style={styles.backButton}
+            onPress={() => router.navigate("/(tabs)")}
+            android_ripple={{
+              color: withOpacity(colors.primary, 0.08),
+              borderless: true,
+            }}
+            hitSlop={10}
+          >
+            <Ionicons name="close" size={24} color={colors.textMuted} />
+          </Pressable>
+        )}
       </View>
 
+      {/* ── Poster + Info — outside ScrollView ── */}
       <ScrollView
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: insets.bottom + 40 },
+        ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Poster + Info */}
         <View style={styles.header}>
-          <View style={styles.posterWrap}>
-            {poster_path ? (
-              <Image
-                source={{
-                  uri: `https://image.tmdb.org/t/p/w500${poster_path}`,
-                }}
-                style={styles.poster}
-                resizeMode="cover"
-              />
-            ) : (
-              <View style={[styles.poster, styles.posterPlaceholder]}>
-                <Ionicons
-                  name={
-                    media_type === "person" ? "person-outline" : "film-outline"
-                  }
-                  size={40}
-                  color="#475569"
+          <View style={styles.posterCol}>
+            <View style={styles.posterWrap}>
+              {poster_path ? (
+                <Image
+                  source={{
+                    uri: `https://image.tmdb.org/t/p/w500${poster_path}`,
+                  }}
+                  style={styles.poster}
+                  resizeMode="cover"
                 />
+              ) : (
+                // No poster_path
+                <View style={[styles.poster, styles.posterPlaceholder]}>
+                  <Ionicons
+                    name={
+                      media_type === "person"
+                        ? "person-outline"
+                        : "film-outline"
+                    }
+                    size={40}
+                    color={colors.surfaceAlt}
+                  />
+                </View>
+              )}
+              <View style={styles.badge}>
+                {media_type === "movie" && (
+                  <Ionicons name="film" size={16} color="#FFF" />
+                )}
+                {media_type === "tv" && (
+                  <Feather name="tv" size={16} color="#FFF" />
+                )}
+                {media_type === "person" && (
+                  <Ionicons name="person-circle" size={16} color="#FFF" />
+                )}
               </View>
-            )}
-
-            {/* Media type badge */}
-            <View style={styles.badge}>
-              {media_type === "movie" && (
-                <Ionicons name="film" size={16} color="#FFF" />
-              )}
-              {media_type === "tv" && (
-                <Feather name="tv" size={16} color="#FFF" />
-              )}
-              {media_type === "person" && (
-                <Ionicons name="person-circle" size={16} color="#FFF" />
-              )}
             </View>
+
+            {/* Watchlist button - below poster, only for movie/tv */}
+            {canSave && (
+              <Pressable
+                style={styles.watchlistBtn}
+                onPress={handleWatchlist}
+                android_ripple={{
+                  color: withOpacity(colors.primary, 0.1),
+                  borderless: false,
+                }}
+              >
+                <MaterialIcons
+                  name={saved ? "bookmark-added" : "bookmark-add"}
+                  size={16}
+                  color={saved ? colors.primary : colors.textMuted}
+                />
+                <Text
+                  style={[
+                    styles.watchlistLabel,
+                    saved && styles.watchlistLabelSaved,
+                  ]}
+                >
+                  {saved ? "Saved" : "Save"}
+                </Text>
+              </Pressable>
+            )}
           </View>
 
           <View style={styles.info}>
@@ -112,62 +255,120 @@ export default function DetailsScreen() {
             <View style={styles.yearBadge}>
               <Text style={styles.yearText}>{year}</Text>
             </View>
-            <Pressable onPress={() => setExpanded(!expanded)}>
-              <Text
-                style={styles.overview}
-                numberOfLines={expanded ? undefined : 3}
-              >
-                {overview || "No description available."}
-              </Text>
-              {overview && overview.length > 70 && (
-                <Text style={styles.readMore}>
-                  {expanded ? "Show less" : "Read more"}
-                </Text>
-              )}
-            </Pressable>
+
+            {/* Overview hidden for persons — info is shown in KnownForSection */}
+            {media_type !== "person" && (
+              <View style={{ marginTop: 4 }}>
+                {isLoadingDetails ? (
+                  <Text style={[styles.overview, { fontStyle: "italic" }]}>
+                    Loading description...
+                  </Text>
+                ) : (
+                  <Pressable onPress={handleToggleExpanded}>
+                    <Text
+                      style={styles.overview}
+                      numberOfLines={expanded ? undefined : 4}
+                    >
+                      {displayOverview || "No description available."}
+                    </Text>
+                    {displayOverview.length > 100 && (
+                      <Text style={styles.readMore}>
+                        {expanded ? "Show less" : "Read more"}
+                      </Text>
+                    )}
+                  </Pressable>
+                )}
+              </View>
+            )}
           </View>
         </View>
 
-        <View style={styles.separator} />
-
-        {/* Streaming Providers */}
-        <View style={styles.providers}>
-          <Text style={styles.providersTitle}>Where can you watch it?</Text>
+        {/* ── Bottom section (Providers / Known For)── */}
+        <View style={styles.bottomSection}>
+          <Text style={styles.sectionTitle}>
+            {media_type === "person"
+              ? "Notable Works"
+              : "Where can you watch it?"}
+          </Text>
 
           {media_type === "person" ? (
-            <Text style={styles.noProviders}>
-              Streaming info only available for movies and TV shows.
-            </Text>
+            <KnownForSection items={knownForItems} />
           ) : isLoading ? (
-            <ActivityIndicator color="#60A5FA" style={{ marginTop: 20 }} />
+            <ApiStateDisplay state="loading" />
+          ) : isError ? (
+            <ApiStateDisplay
+              state="error"
+              message="Could not load streaming providers. Check your connection and try again."
+            />
           ) : !hasProviders ? (
-            <View style={styles.emptyProviders}>
-              <Ionicons name="alert-circle-outline" size={24} color="#475569" />
-              <Text style={styles.noProviders}>
-                Not available in {country} currently.
-              </Text>
-            </View>
+            <ApiStateDisplay
+              state="empty"
+              message={
+                countries.length === 0
+                  ? "Not available on any streaming service."
+                  : `Not available in ${
+                      isSingleCountry
+                        ? countries[0].name
+                        : "your selected countries"
+                    } currently.`
+              }
+            />
+          ) : isSingleCountry ? (
+            <FadeView>
+              <>
+                <ProviderSection
+                  title="Free"
+                  providers={providers[0]?.free ?? []}
+                  subscribedKeys={subscribedKeys}
+                  countryCode={providers[0]?.countryCode ?? ""}
+                />
+                <ProviderSection
+                  title="Stream"
+                  providers={providers[0]?.flatrate ?? []}
+                  subscribedKeys={subscribedKeys}
+                  countryCode={providers[0]?.countryCode ?? ""}
+                />
+                <ProviderSection
+                  title="Rent"
+                  providers={providers[0]?.rent ?? []}
+                  subscribedKeys={subscribedKeys}
+                  countryCode={providers[0]?.countryCode ?? ""}
+                />
+                <ProviderSection
+                  title="Buy"
+                  providers={providers[0]?.buy ?? []}
+                  subscribedKeys={subscribedKeys}
+                  countryCode={providers[0]?.countryCode ?? ""}
+                />
+                {/* Footer — just in single-country search settings, multi-country is grouped by country */}
+                {providers[0]?.link && (
+                  <Pressable
+                    style={styles.justWatch}
+                    onPress={() =>
+                      void WebBrowser.openBrowserAsync(providers[0].link!)
+                    }
+                    android_ripple={{ color: withOpacity(colors.text, 0.05) }}
+                  >
+                    <Text style={styles.jwLabel}>Data provided by </Text>
+                    <Text style={styles.jwBrand}>JustWatch</Text>
+                    <Ionicons
+                      name="open-outline"
+                      size={11}
+                      color={colors.surfaceAlt}
+                      style={{ marginLeft: 4 }}
+                    />
+                  </Pressable>
+                )}
+              </>
+            </FadeView>
           ) : (
-            <>
-              <ProviderSection title="Free" providers={providers?.free ?? []} />
-              <ProviderSection
-                title="Stream"
-                providers={providers?.flatrate ?? []}
+            <FadeView>
+              <CountryProviderSection
+                data={providers}
+                subscribedKeys={subscribedKeys}
+                defaultExpanded={false}
               />
-              <ProviderSection title="Rent" providers={providers?.rent ?? []} />
-              <ProviderSection title="Buy" providers={providers?.buy ?? []} />
-
-              {providers?.link && (
-                <Pressable
-                  style={styles.justWatch}
-                  onPress={() => Linking.openURL(providers.link!)}
-                  android_ripple={{ color: "rgba(255,255,255,0.05)" }}
-                >
-                  <Text style={styles.jwLabel}>Data provided by </Text>
-                  <Text style={styles.jwBrand}>JustWatch</Text>
-                </Pressable>
-              )}
-            </>
+            </FadeView>
           )}
         </View>
       </ScrollView>
@@ -175,142 +376,118 @@ export default function DetailsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#0F172A",
-  },
-  topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(255,255,255,0.05)",
-    gap: 12,
-  },
-  closeButton: {
-    borderRadius: 20,
-    padding: 4,
-    overflow: "hidden",
-  },
-  topBarTitle: {
-    color: "#FFF",
-    fontSize: 17,
-    fontWeight: "600",
-    flex: 1,
-  },
-  scroll: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 40,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 15,
-  },
-  posterWrap: {
-    position: "relative",
-    elevation: 8,
-  },
-  poster: {
-    width: 110,
-    height: 165,
-    borderRadius: 12,
-    backgroundColor: "#1E293B",
-  },
-  posterPlaceholder: {
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  badge: {
-    position: "absolute",
-    top: 6,
-    left: 6,
-    backgroundColor: "rgba(15,23,42,0.8)",
-    padding: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.15)",
-  },
-  info: {
-    flex: 1,
-    marginLeft: 20,
-    paddingTop: 5,
-  },
-  title: {
-    color: "#FFF",
-    fontSize: 20,
-    fontWeight: "800",
-    lineHeight: 20,
-    marginBottom: 8,
-  },
-  yearBadge: {
-    backgroundColor: "#1E293B",
-    alignSelf: "flex-start",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    marginBottom: 8,
-  },
-  yearText: {
-    color: "#94A3B8",
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  overview: {
-    color: "#94A3B8",
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  readMore: {
-    color: "#60A5FA",
-    fontWeight: "500",
-    marginTop: 4,
-  },
-  separator: {
-    height: 1,
-    backgroundColor: "rgba(255,255,255,0.05)",
-    marginVertical: 10,
-  },
-  providers: {
-    marginTop: 10,
-  },
-  providersTitle: {
-    color: "#F8FAFC",
-    fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  noProviders: {
-    color: "#64748B",
-    textAlign: "center",
-    marginTop: 10,
-    fontSize: 14,
-  },
-  emptyProviders: {
-    alignItems: "center",
-    padding: 20,
-  },
-  justWatch: {
-    marginTop: 20,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.03)",
-    paddingVertical: 8,
-    borderRadius: 8,
-    overflow: "hidden",
-  },
-  jwLabel: {
-    color: "#475569",
-    fontSize: 11,
-  },
-  jwBrand: {
-    color: "#F8FAFC",
-    fontSize: 11,
-    fontWeight: "bold",
-  },
-});
+function makeStyles(colors: ColorScheme, isDark: boolean) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+
+    // — Top bar —
+    topBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 15,
+      paddingVertical: 12,
+      gap: 12,
+    },
+    backButton: { borderRadius: 20, padding: 4, overflow: "hidden" },
+    topBarTitle: {
+      color: colors.text,
+      fontSize: 16,
+      fontWeight: "600",
+      flex: 1,
+    },
+
+    scrollContent: {
+      paddingHorizontal: 20,
+    },
+
+    // — Poster + Info (static, outside scroll) —
+    header: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      paddingHorizontal: 20,
+      paddingBottom: 16,
+    },
+    posterWrap: {
+      position: "relative",
+      ...getShadow({ isDark, intensity: "high" }),
+    },
+    posterCol: {
+      alignItems: "center",
+      gap: 10,
+    },
+    poster: {
+      width: 110,
+      height: 165,
+      borderRadius: 12,
+      backgroundColor: colors.surface,
+    },
+    posterPlaceholder: { justifyContent: "center", alignItems: "center" },
+    badge: {
+      position: "absolute",
+      top: 6,
+      left: 6,
+      backgroundColor: isDark
+        ? withOpacity("#000000", 0.65)
+        : withOpacity("#0F172A", 0.72),
+      padding: 6,
+      borderRadius: 8,
+    },
+    watchlistBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
+      backgroundColor: colors.surface,
+      paddingHorizontal: 14,
+      paddingVertical: 7,
+      borderRadius: 50,
+      ...getShadow({ isDark }),
+    },
+    watchlistLabel: {
+      color: colors.textMuted,
+      fontSize: 12,
+      fontWeight: "600",
+    },
+    watchlistLabelSaved: {
+      color: colors.primary,
+    },
+    info: { flex: 1, marginLeft: 20, paddingTop: 5 },
+    title: {
+      color: colors.text,
+      fontSize: 16,
+      fontWeight: "800",
+      lineHeight: 20,
+      marginBottom: 8,
+    },
+    yearBadge: {
+      backgroundColor: colors.surfaceMid,
+      alignSelf: "flex-start",
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 6,
+      marginBottom: 8,
+    },
+    yearText: { color: colors.textSecondary, fontSize: 13, fontWeight: "600" },
+    overview: { color: colors.textMuted, fontSize: 12, lineHeight: 15 },
+    readMore: { color: colors.primary, fontWeight: "500", marginTop: 4 },
+
+    // — Scrollable providers/known-for section —
+    bottomSection: { gap: 4 },
+    sectionTitle: {
+      color: colors.text,
+      fontSize: 18,
+      fontWeight: "700",
+      marginBottom: 16,
+      textAlign: "center",
+    },
+
+    // — JustWatch link —
+    justWatch: {
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      marginTop: 5,
+    },
+    jwLabel: { color: colors.surfaceAlt, fontSize: 11 },
+    jwBrand: { color: colors.textSecondary, fontSize: 11, fontWeight: "bold" },
+  });
+}

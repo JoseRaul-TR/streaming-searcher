@@ -1,0 +1,13 @@
+{
+    "cmake.ignoreCMakeListsMissing": true,
+    "cSpell.words": [
+        "crossfade",
+        "flatrate",
+        "partialize",
+        "Pressable",
+        "refetches",
+        "RRGGBBAA",
+        "tmdb",
+        "watchlist"
+    ]
+}

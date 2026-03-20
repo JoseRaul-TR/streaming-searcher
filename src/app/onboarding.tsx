@@ -1,36 +1,61 @@
-import React, { useState } from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import React, { useState, useMemo } from "react";
+import { View, Text, Pressable, StyleSheet, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { useUserStore } from "@/store/useUserStore";
-import { CountryPickerModal } from "@/components/CountryPickerModal";
-import { TermsModal } from "@/components/TermsModal";
+
+import SubscriptionPickerModal from "@/components/modals/SubscriptionPickerModal";
+import TermsModal from "@/components/modals/TermsModal";
+import InfoTooltip from "@/components/common/InfoTooltip";
+import CountryPickerModal from "@/components/modals/CountryPickerModal";
+import { ColorScheme, withOpacity } from "@/constants/colors";
+import { useMode } from "@/hooks/useMode";
+import { getShadow } from "@/utils/shadow";
+import { formatCount, formatCountriesPickerLabel } from "@/utils/format";
+import PillButton from "@/components/common/PillButton";
+
+const TOTAL_STEPS = 4;
+
+const STEP_INFO = {
+  1: "Select one or more countries to filter streaming availability. Leave empty to check global availability across all countries.",
+  2: "Mark which streaming services you subscribe to. They will be highlighted when you find a match in search results.",
+};
 
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
-  const [step, setStep] = useState(1);
+  const { colors, isDark } = useMode();
+  const styles = useMemo(() => makeStyles(colors, isDark), [colors, isDark]);
+
+  const [step, setStep] = useState(0);
   const [showCountryModal, setShowCountryModal] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
 
   const {
-    country,
-    countryName,
-    setCountry,
+    countries,
+    subscriptions,
     completeOnboarding,
     hasAcceptedTerms,
-    acceptTerms,
+    toggleTerms,
   } = useUserStore();
 
   const handleComplete = () => {
-    if (hasAcceptedTerms && country) {
-      completeOnboarding();
-      router.replace("/(tabs)");
-    }
+    completeOnboarding();
+    router.replace("/(tabs)");
   };
+
+  const countriesLabel = formatCountriesPickerLabel(countries);
+
+  const subscriptionsLabel =
+    subscriptions.length === 0
+      ? "Select your services (optional)"
+      : `${formatCount(subscriptions.length, "service")} selected`;
+
+  const isGlobal = countries.length === 0;
 
   return (
     <View
@@ -39,43 +64,196 @@ export default function OnboardingScreen() {
         { paddingTop: insets.top, paddingBottom: insets.bottom },
       ]}
     >
-      <View style={styles.main}>
-        {step === 1 ? (
-          /* Step 1 – Welcome */
-          <View style={styles.centerContent}>
-            <View style={styles.iconCircle}>
-              <Ionicons name="film" size={80} color="#60A5FA" />
-            </View>
-            <Text style={styles.title}>Streaming Searcher</Text>
-            <Text style={styles.subtitle}>
-              Find where to watch movies and TV-series in seconds.
-            </Text>
-          </View>
+      {/* Progress dots – hidden on welcome slide */}
+      <View style={styles.progressBar}>
+        {step === 0 ? (
+          <View style={styles.progressPlaceholder} />
         ) : (
-          /* Step 2 – Setup */
-          <View style={styles.stepContainer}>
-            <Text style={styles.title}>Quick Setup</Text>
+          Array.from({ length: TOTAL_STEPS - 1 }).map((_, i) => (
+            <View
+              key={i}
+              style={[styles.progressDot, i < step && styles.progressDotActive]}
+            />
+          ))
+        )}
+      </View>
 
-            {/* Country */}
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>1. Select your country</Text>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ————— Step 0 — Welcome ————— */}
+        {step === 0 && (
+          <View style={styles.welcomeContainer}>
+            <View style={styles.logoWrap}>
+              <View style={styles.logoShadow}>
+                {/* ← Outer Shadow */}
+                <View style={styles.logoOuter}>
+                  <MaterialCommunityIcons
+                    name="filmstrip-box-multiple"
+                    size={38}
+                    color={colors.primary}
+                  />
+                </View>
+              </View>
+            </View>
+
+            <Text style={styles.welcomeTitle}>FoundIt</Text>
+            <Text style={styles.welcomeTagline}>
+              Find where to watch any movie or series anywhere.
+            </Text>
+
+            <View style={styles.welcomeFeatures}>
+              <FeatureRow
+                icon="search-outline"
+                text="Search movies, series and people"
+                colors={colors}
+              />
+              <FeatureRow
+                icon="globe-outline"
+                text="Check streaming availability by country"
+                colors={colors}
+              />
+              <FeatureRow
+                icon="star-outline"
+                text="Highlight the services you subscribe to"
+                colors={colors}
+              />
+              <FeatureRow
+                icon="bookmark-outline"
+                text="Add films to your watchlist"
+                colors={colors}
+              />
+            </View>
+          </View>
+        )}
+
+        {/* ————— Step 1 — Countries ————— */}
+        {step === 1 && (
+          <View style={styles.stepContainer}>
+            <Text style={styles.stepLabel}>Step 1 of 3</Text>
+
+            <View style={styles.titleRow}>
+              <Text style={styles.title}>Country Selection</Text>
+              <InfoTooltip text={STEP_INFO[1]} />
+            </View>
+
+            {/* Country selector — opens CountryPickerModal */}
+            <View style={styles.selectorShadow}>
               <Pressable
                 style={styles.selector}
                 onPress={() => setShowCountryModal(true)}
-                android_ripple={{ color: "rgba(96,165,250,0.15)" }}
+                android_ripple={{ color: withOpacity(colors.primary, 0.15) }}
               >
-                <Text style={styles.selectorText}>{countryName || "Select Country"}</Text>
-                <Ionicons name="chevron-down" size={20} color="#94A3B8" />
+                <Text
+                  style={[
+                    styles.selectorText,
+                    countries.length === 0 && styles.selectorPlaceholder,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {countriesLabel}
+                </Text>
+                <Ionicons
+                  name="chevron-down"
+                  size={20}
+                  color={colors.textMuted}
+                />
               </Pressable>
             </View>
 
-            {/* Terms */}
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>2. Terms of use</Text>
+            {countries.length === 0 && (
+              <View style={styles.perfHint}>
+                <Ionicons
+                  name="speedometer-outline"
+                  size={15}
+                  color={colors.surfaceAlt}
+                />
+                <Text style={styles.perfHintText}>
+                  By not selecting at least one country you will be performing
+                  global searches. A global search loads availability for every
+                  country at once and at this stage of app development can
+                  create performance issues.
+                </Text>
+              </View>
+            )}
+            <Text style={styles.hint}>
+              This can be edited later in Settings.
+            </Text>
+          </View>
+        )}
+
+        {/* ————— Step 2 — Streaming Providers ————— */}
+        {step === 2 && (
+          <View style={styles.stepContainer}>
+            <Text style={styles.stepLabel}>Step 2 of 3</Text>
+
+            <View style={styles.titleRow}>
+              <Text style={styles.title}>Your Services</Text>
+              <InfoTooltip text={STEP_INFO[2]} />
+            </View>
+
+            {isGlobal ? (
+              <View style={styles.infoBox}>
+                <Ionicons
+                  name="information-circle-outline"
+                  size={20}
+                  color={colors.primary}
+                />
+                <Text style={styles.infoText}>
+                  You selected global search. If you want to have highlighted
+                  the providers you are subscribed to in the search results go
+                  back and pick specific country or countries to enable
+                  subscription highlights.
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.selectorShadow}>
+                <Pressable
+                  style={styles.selector}
+                  onPress={() => setShowSubscriptionModal(true)}
+                  android_ripple={{ color: withOpacity(colors.primary, 0.15) }}
+                >
+                  <Text
+                    style={[
+                      styles.selectorText,
+                      subscriptions.length === 0 && styles.selectorPlaceholder,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {subscriptionsLabel}
+                  </Text>
+                  <Ionicons
+                    name="chevron-down"
+                    size={20}
+                    color={colors.textMuted}
+                  />
+                </Pressable>
+              </View>
+            )}
+
+            <Text style={styles.hint}>
+              This can be edited later in Settings.
+            </Text>
+          </View>
+        )}
+
+        {/* ————— Step 3 — Terms ————— */}
+        {step === 3 && (
+          <View style={styles.stepContainer}>
+            <Text style={styles.stepLabel}>Step 3 of 3</Text>
+            <Text style={styles.title}>Terms of Use</Text>
+
+            <View style={styles.checkboxRow}>
               <Pressable
-                style={styles.checkboxRow}
-                onPress={acceptTerms}
-                android_ripple={{ color: "rgba(96,165,250,0.15)" }}
+                onPress={toggleTerms}
+                android_ripple={{
+                  color: withOpacity(colors.primary, 0.1),
+                  borderless: true,
+                }}
+                hitSlop={10}
               >
                 <View
                   style={[
@@ -87,62 +265,63 @@ export default function OnboardingScreen() {
                     <Ionicons name="checkmark" size={16} color="white" />
                   )}
                 </View>
-                <Text style={styles.checkboxLabel}>
-                  I accept the{" "}
-                  <Text
-                    style={styles.link}
-                    onPress={() => setShowTermsModal(true)}
-                  >
-                    Terms of Use
-                  </Text>
-                </Text>
               </Pressable>
+
+              <Text style={styles.checkboxLabel}>
+                I accept the following{" "}
+                <Text
+                  style={styles.link}
+                  onPress={() => setShowTermsModal(true)}
+                >
+                  Terms of Use
+                </Text>
+              </Text>
             </View>
           </View>
         )}
-      </View>
+      </ScrollView>
 
       {/* Footer */}
       <View style={styles.footer}>
-        {step === 1 ? (
-          <Pressable
-            style={[styles.btnPrimary, styles.btnFull]}
-            onPress={() => setStep(2)}
-            android_ripple={{ color: "rgba(255,255,255,0.2)" }}
-          >
-            <Text style={styles.btnText}>Next</Text>
-            <Ionicons name="arrow-forward" size={20} color="white" />
-          </Pressable>
-        ) : (
-          <View style={styles.row}>
-            <Pressable
-              style={styles.btnSecondary}
-              onPress={() => setStep(1)}
-              android_ripple={{ color: "rgba(255,255,255,0.1)" }}
-            >
-              <Text style={styles.btnText}>Back</Text>
-            </Pressable>
-            <Pressable
-              style={[
-                styles.btnPrimary,
-                styles.btnRowItem,
-                (!hasAcceptedTerms || !country) && styles.disabled,
-              ]}
+        <View style={styles.footerRow}>
+          {/* Back button hidden on welcome slide */}
+          {step > 0 && (
+            <PillButton
+              label="Back"
+              variant="secondary"
+              onPress={() => setStep((s) => s - 1)}
+              flex={1}
+            />
+          )}
+
+          {/* Next / Get Started */}
+          {step < TOTAL_STEPS - 1 ? (
+            <PillButton
+              label={step === 0 ? "Get Started" : "Next"}
+              trailingIcon="arrow-forward"
+              onPress={() => setStep((s) => s + 1)}
+              flex={step === 0 ? 1 : 2}
+            />
+          ) : (
+            <PillButton
+              label="Get Started"
               onPress={handleComplete}
-              disabled={!hasAcceptedTerms || !country}
-              android_ripple={{ color: "rgba(255,255,255,0.2)" }}
-            >
-              <Text style={styles.btnText}>Get Started</Text>
-            </Pressable>
-          </View>
-        )}
+              disabled={!hasAcceptedTerms}
+              flex={2}
+            />
+          )}
+        </View>
       </View>
 
       <CountryPickerModal
         visible={showCountryModal}
         onClose={() => setShowCountryModal(false)}
-        selectedCountry={country}
-        onSelect={setCountry}
+      />
+
+      <SubscriptionPickerModal
+        visible={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+        countries={countries}
       />
 
       <TermsModal
@@ -153,101 +332,194 @@ export default function OnboardingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0F172A" },
-  main: { flex: 1, paddingHorizontal: 30, justifyContent: "center" },
-  centerContent: { alignItems: "center" },
-  iconCircle: {
-    backgroundColor: "#1E293B",
-    padding: 30,
-    borderRadius: 60,
-    marginBottom: 30,
-  },
-  title: {
-    color: "#FFF",
-    fontSize: 32,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 10,
-  },
-  subtitle: {
-    color: "#94A3B8",
-    fontSize: 18,
-    textAlign: "center",
-    lineHeight: 26,
-  },
-  stepContainer: { width: "100%" },
-  formGroup: { marginBottom: 30 },
-  label: {
-    color: "#60A5FA",
-    fontSize: 12,
-    fontWeight: "bold",
-    letterSpacing: 1,
-    marginBottom: 10,
-  },
-  selector: {
-    backgroundColor: "#1E293B",
-    padding: 18,
-    borderRadius: 15,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    overflow: "hidden",
-  },
-  selectorText: { color: "#FFF", fontSize: 16 },
-  checkboxRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 4,
-    overflow: "hidden",
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: "#60A5FA",
-    marginRight: 15,
+// ————— Feature row helper —————
+function FeatureRow({
+  icon,
+  text,
+  colors,
+}: {
+  icon: React.ComponentProps<typeof Ionicons>["name"];
+  text: string;
+  colors: ColorScheme;
+}) {
+  return (
+    <View style={featureStyles.row}>
+      <View
+        style={[
+          featureStyles.iconWrap,
+          { backgroundColor: withOpacity(colors.primary, 0.12) },
+        ]}
+      >
+        <Ionicons name={icon} size={18} color={colors.primary} />
+      </View>
+      <Text style={[featureStyles.text, { color: colors.textSecondary }]}>
+        {text}
+      </Text>
+    </View>
+  );
+}
+
+const featureStyles = StyleSheet.create({
+  row: { flexDirection: "row", alignItems: "center", gap: 14 },
+  iconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
   },
-  checkboxActive: { backgroundColor: "#60A5FA" },
-  checkboxLabel: { color: "#94A3B8", fontSize: 16 },
-  link: {
-    color: "#60A5FA",
-    fontWeight: "bold",
-    textDecorationLine: "underline",
-  },
-  footer: { padding: 30 },
-  row: { flexDirection: "row", gap: 15 },
-  btnPrimary: {
-    backgroundColor: "#60A5FA",
-    padding: 18,
-    borderRadius: 50,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    overflow: "hidden",
-  },
-  btnFull: {
-    alignSelf: "stretch",
-  },
-  btnRowItem: {
-    flex: 2,
-  },
-  btnSecondary: {
-    flex: 1,
-    backgroundColor: "#1E293B",
-    padding: 18,
-    borderRadius: 50,
-    alignItems: "center",
-    overflow: "hidden",
-  },
-  btnText: {
-    color: "#FFF",
-    fontSize: 16,
-    fontWeight: "bold",
-    marginHorizontal: 5,
-  },
-  disabled: { opacity: 0.4 },
+  text: { flex: 1, fontSize: 15, lineHeight: 20 },
 });
+
+function makeStyles(colors: ColorScheme, isDark: boolean) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    progressBar: {
+      flexDirection: "row",
+      justifyContent: "center",
+      gap: 8,
+      paddingTop: 16,
+      paddingBottom: 8,
+      minHeight: 28,
+    },
+    progressPlaceholder: { height: 4 },
+    progressDot: {
+      width: 28,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: colors.surfaceMid,
+    },
+    progressDotActive: { backgroundColor: colors.primary },
+    scroll: { flex: 1 },
+    scrollContent: { paddingHorizontal: 28, paddingTop: 20, paddingBottom: 20 },
+
+    // — Welcome —
+    welcomeContainer: {
+      flex: 1,
+      alignItems: "center",
+      paddingTop: 20,
+      gap: 24,
+    },
+    logoWrap: { position: "relative", marginBottom: 8 },
+    logoShadow: {
+      borderRadius: 28,
+      backgroundColor: withOpacity(colors.primary, 0.12),
+      ...getShadow({ isDark }),
+    },
+    logoOuter: {
+      width: 96,
+      height: 96,
+      borderRadius: 28,
+      backgroundColor: withOpacity(colors.primary, 0.12),
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    welcomeTitle: {
+      color: colors.text,
+      fontSize: 32,
+      fontWeight: "800",
+      letterSpacing: -0.5,
+    },
+    welcomeTagline: {
+      color: colors.textSecondary,
+      fontSize: 16,
+      lineHeight: 24,
+      textAlign: "center",
+    },
+    welcomeFeatures: {
+      width: "100%",
+      gap: 16,
+      marginTop: 8,
+      paddingHorizontal: 4,
+    },
+
+    // — Setup steps —
+    stepContainer: { gap: 20 },
+    stepLabel: {
+      color: colors.primary,
+      fontSize: 12,
+      fontWeight: "bold",
+      letterSpacing: 1,
+      textTransform: "uppercase",
+    },
+    titleRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+    title: {
+      color: colors.text,
+      fontSize: 28,
+      fontWeight: "bold",
+      lineHeight: 34,
+    },
+    infoBox: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: 10,
+      backgroundColor: withOpacity(colors.primary, 0.12),
+      borderRadius: 12,
+      padding: 14,
+    },
+    infoText: {
+      flex: 1,
+      color: colors.textMuted,
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    selectorShadow: {
+      borderRadius: 50,
+      backgroundColor: colors.surface,
+      ...getShadow({ isDark }),
+    },
+    selector: {
+      borderRadius: 50,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      overflow: "hidden",
+      padding: 18,
+    },
+    selectorText: { color: colors.text, fontSize: 15, flex: 1, marginRight: 8 },
+    selectorPlaceholder: { color: colors.textDisabled },
+    hint: { color: colors.textMuted, fontSize: 13, textAlign: "center" },
+    checkboxRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      padding: 4,
+      overflow: "hidden",
+    },
+    checkbox: {
+      width: 24,
+      height: 24,
+      borderRadius: 6,
+      borderWidth: 2,
+      borderColor: colors.surfaceAlt,
+      marginRight: 15,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    checkboxActive: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    checkboxLabel: { color: colors.textMuted, fontSize: 16, flex: 1 },
+    link: {
+      color: colors.primary,
+      fontWeight: "bold",
+      textDecorationLine: "underline",
+    },
+    footer: { paddingHorizontal: 28, paddingBottom: 16, paddingTop: 8 },
+    footerRow: { flexDirection: "row", gap: 12 },
+    perfHint: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: 8,
+      backgroundColor: colors.surfaceMid,
+      borderRadius: 10,
+      padding: 12,
+    },
+    perfHintText: {
+      flex: 1,
+      color: colors.textMuted,
+      fontSize: 12,
+      lineHeight: 18,
+    },
+  });
+}
