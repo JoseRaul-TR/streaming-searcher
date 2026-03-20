@@ -4,7 +4,7 @@ Find where to watch any movie, series or person — across any country, on any s
 
 Built with React Native, Expo and TypeScript as a final project for a mobile development course.
 
-<img width="98.33" height="213" alt="IMG_0956" src="https://github.com/user-attachments/assets/5953013e-744b-45f3-82f5-d51c8522f7a3" />
+<img width="98.33" height="213" alt="Captura 2026-03-20 a las 14 14 00" src="https://github.com/user-attachments/assets/7776ca51-4ba8-40b2-9a9f-4c948b451175" />
 
 <img width="98.33" height="213" alt="Captura 2026-03-19 a las 7 50 29" src="https://github.com/user-attachments/assets/ede3c99a-2265-422a-81c9-a56ca84934ce" />
 
