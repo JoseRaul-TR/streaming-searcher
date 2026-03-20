@@ -1,14 +1,9 @@
 import React, { useMemo } from "react";
-import {
-  Modal,
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-} from "react-native";
+import { Modal, View, Text, ScrollView, StyleSheet } from "react-native";
 import { ColorScheme } from "@/constants/colors";
 import { useMode } from "@/hooks/useMode";
 import ModalHeader from "../common/ModalHeader";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Props = {
   visible: boolean;
@@ -18,14 +13,24 @@ type Props = {
 export default function TermsModal({ visible, onClose }: Props) {
   const { colors } = useMode();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const insets = useSafeAreaInsets();
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <View style={styles.container}>
+      <View
+        style={[
+          styles.container,
+          { paddingTop: insets.top, paddingBottom: insets.bottom },
+        ]}
+      >
         {/* Header — uses same component for all modals to achieve the same layout*/}
         <ModalHeader title="Terms of Use" onClose={onClose} closeIcon="close" />
 
-        <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
           <Text style={styles.body}>
             This app uses data from The Movie Database (TMDB). Streaming
             provider information is sourced via JustWatch.{"\n\n"}
@@ -48,6 +53,10 @@ function makeStyles(colors: ColorScheme) {
       backgroundColor: colors.background,
     },
     scroll: { flex: 1 },
+    scrollContent: {
+      paddingHorizontal: 25,
+      paddingBottom: 20,
+    },
     body: {
       color: colors.textSecondary,
       fontSize: 15,
