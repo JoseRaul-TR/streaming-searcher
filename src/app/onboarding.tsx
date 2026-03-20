@@ -121,6 +121,11 @@ export default function OnboardingScreen() {
                 text="Highlight the services you subscribe to"
                 colors={colors}
               />
+              <FeatureRow
+                icon="bookmark-outline"
+                text="Add films to your watchlist"
+                colors={colors}
+              />
             </View>
           </View>
         )}
