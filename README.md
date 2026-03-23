@@ -201,3 +201,7 @@ npx tsc --noEmit
 
 Streaming data is provided by [JustWatch](https://www.justwatch.com/) via the TMDB API.
 This product uses the TMDB API but is not endorsed or certified by TMDB.
+
+## Author
+
+@JoseRaul-TR
