@@ -1,3 +1,4 @@
+// env.d.ts
 declare global {
   namespace NodeJS {
     interface ProcessEnv {

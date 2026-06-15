@@ -1,3 +1,5 @@
+// src/app/(tabs)/watchlist.tsx
+
 import React, { useEffect, useMemo, useState } from "react";
 import { View, FlatList, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";

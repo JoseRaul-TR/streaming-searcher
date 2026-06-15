@@ -1,3 +1,5 @@
+// src/constants/colors.ts
+
 /**
  * Design system color tokens and opacity utility.
  *

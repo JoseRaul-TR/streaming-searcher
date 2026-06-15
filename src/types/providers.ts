@@ -1,3 +1,5 @@
+// src/types/providers.ts
+
 /**
  * Domain types for streaming providers and country data from the TMDB API.
  *

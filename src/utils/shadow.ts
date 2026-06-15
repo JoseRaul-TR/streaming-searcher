@@ -1,3 +1,5 @@
+// src/utils/shadow.ts
+
 /**
  * Centralised shadow helper.
  *

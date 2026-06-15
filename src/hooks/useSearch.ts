@@ -1,3 +1,5 @@
+// src/hooks/useSearch.ts
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useUserStore } from "@/store/useUserStore";

@@ -1,3 +1,5 @@
+// src/types/watchlist.ts
+
 /**
  * Domain types for the user's personal watchlist and media detail fetching.
  */

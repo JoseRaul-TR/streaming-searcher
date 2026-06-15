@@ -1,3 +1,5 @@
+// src/components/media/MediaCard.tsx
+
 import React, { useCallback, useMemo } from "react";
 import {
   View,

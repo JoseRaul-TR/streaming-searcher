@@ -1,3 +1,5 @@
+// src/hooks/useProvidersByCountry.ts
+
 import { useQuery } from "@tanstack/react-query";
 import { tmdbApi } from "@/services/api";
 import { Provider } from "@/types/providers";

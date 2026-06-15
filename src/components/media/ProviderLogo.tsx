@@ -1,3 +1,5 @@
+// src/components/media/ProviderLogo.tsx
+
 import React, { useEffect, useRef, useMemo } from "react";
 import {
   View,

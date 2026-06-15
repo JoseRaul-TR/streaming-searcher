@@ -1,3 +1,5 @@
+// src/app/(tabs)/index.tsx
+
 import React, { useMemo } from "react";
 import { View, FlatList, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";

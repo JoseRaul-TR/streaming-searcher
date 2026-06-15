@@ -1,3 +1,5 @@
+// src/app/details.tsx
+
 import React, { useState, useCallback, useMemo } from "react";
 import {
   View,

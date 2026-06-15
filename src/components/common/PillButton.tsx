@@ -1,3 +1,5 @@
+// src/components/common/PillButton.tsx
+
 import React from "react";
 import { Pressable, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";

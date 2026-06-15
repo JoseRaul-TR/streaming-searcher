@@ -1,3 +1,5 @@
+// src/utils/format.ts
+
 /**
  * Shared formatting helpers.
  *

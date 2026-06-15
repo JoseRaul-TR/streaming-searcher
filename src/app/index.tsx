@@ -1,3 +1,5 @@
+// src/app/index.tsx
+
 import { Redirect } from "expo-router";
 import { useUserStore } from "@/store/useUserStore";
 

@@ -1,3 +1,5 @@
+// src/components/media/KnownForSection.tsx
+
 import React, { useCallback } from "react";
 import { FlatList, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";

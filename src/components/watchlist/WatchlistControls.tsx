@@ -1,3 +1,5 @@
+// src/components/watchlist/WatchlistControls.tsx
+
 import React, { useState, useMemo } from "react";
 import {
   View,

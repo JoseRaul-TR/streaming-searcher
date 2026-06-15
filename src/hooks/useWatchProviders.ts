@@ -1,3 +1,5 @@
+// src/hooks/useWatchProviders.ts
+
 import { useQuery } from "@tanstack/react-query";
 import { tmdbApi } from "@/services/api";
 import { SelectedCountry, WatchProvidersData } from "@/types/providers";

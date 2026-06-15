@@ -1,3 +1,5 @@
+// src/app/_layout.tsx
+
 import { StrictMode, useEffect } from "react";
 import { Appearance } from "react-native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";

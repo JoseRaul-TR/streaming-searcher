@@ -1,3 +1,5 @@
+// src/components/search/SearchBar.tsx
+
 import React, { useMemo } from "react";
 import {
   View,

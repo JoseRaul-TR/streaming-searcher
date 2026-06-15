@@ -1,3 +1,5 @@
+// src/types/searchedItem.ts
+
 /**
  * Domain types for TMDB search results.
  *

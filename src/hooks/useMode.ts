@@ -1,3 +1,5 @@
+// src/hooks/useMode.ts
+
 import { lightColors, darkColors, ColorScheme } from "@/constants/colors";
 import { useUserStore } from "@/store/useUserStore";
 

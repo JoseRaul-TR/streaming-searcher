@@ -1,3 +1,5 @@
+// src/components/modals/TermsModal.tsx
+
 import React, { useMemo } from "react";
 import { Modal, View, Text, ScrollView, StyleSheet } from "react-native";
 import { ColorScheme } from "@/constants/colors";

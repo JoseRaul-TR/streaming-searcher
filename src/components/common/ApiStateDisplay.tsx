@@ -1,4 +1,5 @@
-// src/components/ApiStateDisplay.tsx
+// src/components/common/ApiStateDisplay.tsx
+
 import React, { useMemo } from "react";
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";

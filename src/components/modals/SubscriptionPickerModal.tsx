@@ -1,3 +1,5 @@
+// src/components/modals/SubscriptionPickerModal.tsx
+
 import React, { useState, useCallback, useEffect, memo, useMemo } from "react";
 import {
   Modal,

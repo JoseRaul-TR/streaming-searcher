@@ -1,3 +1,5 @@
+// src/app/onboarding.tsx
+
 import React, { useState, useMemo } from "react";
 import { View, Text, Pressable, StyleSheet, ScrollView } from "react-native";
 import { useRouter } from "expo-router";

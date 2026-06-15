@@ -1,3 +1,5 @@
+// src/components/media/ProviderSection.tsx
+
 import React, { useMemo } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Provider } from "@/types/providers";
